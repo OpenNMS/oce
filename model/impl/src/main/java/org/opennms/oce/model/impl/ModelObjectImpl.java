@@ -1,7 +1,11 @@
 package org.opennms.oce.model.impl;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
+import org.opennms.oce.model.api.Group;
 import org.opennms.oce.model.api.ModelObject;
 
 /*******************************************************************************
@@ -38,7 +42,23 @@ public class ModelObjectImpl implements ModelObject {
     private String uniqueId;
     private String friendlyName;
     private ModelObject parent;
-    private Set<ModelObject> children;
+    private Map<String, Group> children = new HashMap<>(0);
+    private Map<String, Group> peers = new HashMap<>(0);
+    private Map<String, Group> nephews = new HashMap<>(0);
+    private Map<String, Group> uncles = new HashMap<>(0);
+    
+    public ModelObjectImpl() {
+		// TODO Auto-generated constructor stub
+	}
+
+    public ModelObjectImpl(ModelObject parent, String type) {
+    	this.parent = parent;
+    	this.type = type;
+    	if (type != "model") {
+        	// Parent must be null for the Root of the Model
+        	parent.addChild(this);
+    	}
+    }
     
     /**
      * non-null
@@ -96,6 +116,79 @@ public class ModelObjectImpl implements ModelObject {
 
     @Override
     public Set<ModelObject> getChildren() {
-        return children;
+        return children.values().stream().map(g -> g.getMembers()).flatMap(x -> x.stream()).collect(Collectors.toSet());
     }
+
+	@Override
+	public Set<ModelObject> getPeers() {
+        return peers.values().stream().map(g -> g.getMembers()).flatMap(x -> x.stream()).collect(Collectors.toSet());
+	}
+
+	@Override
+	public Set<ModelObject> getUncles() {
+        return uncles.values().stream().map(g -> g.getMembers()).flatMap(x -> x.stream()).collect(Collectors.toSet());
+	}
+
+	@Override
+	public Set<ModelObject> getNephews() {
+        return nephews.values().stream().map(g -> g.getMembers()).flatMap(x -> x.stream()).collect(Collectors.toSet());
+	}
+
+	@Override
+	public void addChild(ModelObject child) {
+		getGroup(children, child.getType()).addMember(child);		
+	}
+
+	@Override
+	public void addPeer(ModelObject child) {
+		getGroup(peers, child.getType()).addMember(child);		
+	}
+
+	@Override
+	public void addNephew(ModelObject child) {
+		getGroup(nephews, child.getType()).addMember(child);		
+	}
+
+	@Override
+	public void addUncle(ModelObject child) {
+		getGroup(uncles, child.getType()).addMember(child);		
+	}
+
+	@Override
+	public Group getChildGroup(ModelObject child) {
+		return children.get(child.getType());
+
+	}
+
+	@Override
+	public Group getPeerGroup(ModelObject peer) {
+		return peers.get(peer.getType());
+
+	}
+
+	@Override
+	public Group getNephewGroup(ModelObject nephew) {
+		return nephews.get(nephew.getType());
+
+	}
+
+	@Override
+	public Group getUncleGroup(ModelObject uncle) {
+		return uncles.get(uncle.getType());
+	}
+
+	private Group getGroup(Map<String, Group> map, String type) {
+		Group g = map.get(type);
+		if (g == null) {
+			g = new GroupImpl(this);
+			map.put(type, g);
+		}
+		return g;
+	}
+
+	@Override
+	public String toString() {
+		return "MO[" + type + "," + uniqueId + "]";
+	}
+	
 }

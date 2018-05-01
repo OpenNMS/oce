@@ -36,6 +36,28 @@ public interface ModelObject {
 
     Set<ModelObject> getChildren();
 
+    Set<ModelObject> getPeers();
+
+    Set<ModelObject> getUncles(); // Dependents
+
+    Set<ModelObject> getNephews(); // Dependencies
+
+    void addChild(ModelObject child);
+    
+    void addPeer(ModelObject child);
+    
+    void addNephew(ModelObject child);
+    
+    void addUncle(ModelObject child);
+    
+    Group getChildGroup(ModelObject child);
+    
+    Group getPeerGroup(ModelObject peer);
+    
+    Group getNephewGroup(ModelObject nephew);
+    
+    Group getUncleGroup(ModelObject uncle);
+    
     String getType();
 
     String getSubType();
@@ -43,5 +65,7 @@ public interface ModelObject {
     String getId();
 
     String getFriendlyName();
+    
+    
 
 }

@@ -51,9 +51,10 @@ public class ModelObjectImpl implements ModelObject {
 		// TODO Auto-generated constructor stub
 	}
 
-    public ModelObjectImpl(ModelObject parent, String type) {
+    public ModelObjectImpl(ModelObject parent, String type, String friendlyName) {
     	this.parent = parent;
     	this.type = type;
+    	this.friendlyName = friendlyName;
     	if (type != "model") {
         	// Parent must be null for the Root of the Model
         	parent.addChild(this);

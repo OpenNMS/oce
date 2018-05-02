@@ -42,14 +42,6 @@ public interface ModelObject {
 
     Set<ModelObject> getNephews(); // Dependencies
 
-    void addChild(ModelObject child);
-    
-    void addPeer(ModelObject child);
-    
-    void addNephew(ModelObject child);
-    
-    void addUncle(ModelObject child);
-    
     Group getChildGroup(ModelObject child);
     
     Group getPeerGroup(ModelObject peer);

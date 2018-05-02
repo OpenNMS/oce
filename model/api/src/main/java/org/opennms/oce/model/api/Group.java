@@ -42,8 +42,6 @@ public interface Group {
     int getNumberNonServiceAffecting();
     int getNumberServiceAffecting();
 
-    void addMember(ModelObject member);
-    
     Set<ModelObject> getMembers();
 
 }

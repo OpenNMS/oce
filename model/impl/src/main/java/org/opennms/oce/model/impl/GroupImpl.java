@@ -49,7 +49,6 @@ public class GroupImpl implements Group {
 		return members;
 	}
 
-	@Override
 	public void addMember(ModelObject member) {
 		// TODO validate member type?
 		members.add(member);

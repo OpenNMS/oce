@@ -57,7 +57,7 @@ public class ModelObjectImpl implements ModelObject {
     	this.friendlyName = friendlyName;
     	if (type != "model") {
         	// Parent must be null for the Root of the Model
-        	parent.addChild(this);
+            ((ModelObjectImpl) parent).addChild(this);
     	}
     }
     
@@ -135,25 +135,25 @@ public class ModelObjectImpl implements ModelObject {
         return nephews.values().stream().map(g -> g.getMembers()).flatMap(x -> x.stream()).collect(Collectors.toSet());
 	}
 
-	@Override
 	public void addChild(ModelObject child) {
-		getGroup(children, child.getType()).addMember(child);		
+        addMember(child, children);
 	}
 
-	@Override
 	public void addPeer(ModelObject child) {
-		getGroup(peers, child.getType()).addMember(child);		
+        addMember(child, peers);
 	}
 
-	@Override
 	public void addNephew(ModelObject child) {
-		getGroup(nephews, child.getType()).addMember(child);		
+        addMember(child, nephews);
 	}
 
-	@Override
 	public void addUncle(ModelObject child) {
-		getGroup(uncles, child.getType()).addMember(child);		
+        addMember(child, uncles);
 	}
+
+    private void addMember(ModelObject member, Map<String, Group> map) {
+        ((GroupImpl) getGroup(map, member.getType())).addMember(member);
+    }
 
 	@Override
 	public Group getChildGroup(ModelObject child) {

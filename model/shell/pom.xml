@@ -36,11 +36,7 @@
 
         <dependency>
             <groupId>org.opennms.oce.model</groupId>
-<<<<<<< HEAD
             <artifactId>org.opennms.oce.model.impl</artifactId>
-=======
-            <artifactId>impl</artifactId>
->>>>>>> e9c0be1... Model updates for linking ModelObjects via Groups (#1)
         </dependency>
 
 	<dependency>

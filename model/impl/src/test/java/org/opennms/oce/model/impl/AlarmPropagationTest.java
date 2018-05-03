@@ -1,7 +1,6 @@
 package org.opennms.oce.model.impl;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.fail;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -52,41 +51,32 @@ public class AlarmPropagationTest {
         // Propagate an SA alarm on the first port....
         port1.setOperationalState(OperationalState.SA);
         assertEquals(card1.getChildGroup("port").getNumberNormalState(), 1);
-        assertEquals(card1.getChildGroup("port").getNumberNonServiceAffecting(),
-                     0);
-        assertEquals(card1.getChildGroup("port").getNumberServiceAffecting(),
-                     1);
+        assertEquals(card1.getChildGroup("port").getNumberNonServiceAffecting(), 0);
+        assertEquals(card1.getChildGroup("port").getNumberServiceAffecting(), 1);
 
         // Ensure state clears properly
         port1.setOperationalState(OperationalState.NORMAL);
         assertEquals(card1.getChildGroup("port").getNumberNormalState(), 2);
-        assertEquals(card1.getChildGroup("port").getNumberNonServiceAffecting(),
-                     0);
-        assertEquals(card1.getChildGroup("port").getNumberServiceAffecting(),
-                     0);
+        assertEquals(card1.getChildGroup("port").getNumberNonServiceAffecting(), 0);
+        assertEquals(card1.getChildGroup("port").getNumberServiceAffecting(), 0);
 
         // and NSA....
         port1.setOperationalState(OperationalState.NSA);
-        assertEquals(card1.getChildGroup("port").getNumberNormalState(), 2);
-        assertEquals(card1.getChildGroup("port").getNumberNonServiceAffecting(),
-                     0);
-        assertEquals(card1.getChildGroup("port").getNumberServiceAffecting(),
-                     0);
+        assertEquals(card1.getChildGroup("port").getNumberNormalState(), 1);
+        assertEquals(card1.getChildGroup("port").getNumberNonServiceAffecting(), 1);
+        assertEquals(card1.getChildGroup("port").getNumberServiceAffecting(), 0);
 
         // Propagate an SA alarm on the first port....
         port1.setOperationalState(OperationalState.SA);
         assertEquals(card1.getChildGroup("port").getNumberNormalState(), 1);
-        assertEquals(card1.getChildGroup("port").getNumberNonServiceAffecting(),
-                     0);
-        assertEquals(card1.getChildGroup("port").getNumberServiceAffecting(),
-                     1);
+        assertEquals(card1.getChildGroup("port").getNumberNonServiceAffecting(), 0);
+        assertEquals(card1.getChildGroup("port").getNumberServiceAffecting(), 1);
 
         // TODO - add test for multiple groups - ie. parents, uncles,
         // associate/peer - uncle - BGPSession over a link
 
         // We need to track that the Status Count change direction
 
-        fail("Not yet implemented");
     }
 
 }

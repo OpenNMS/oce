@@ -86,7 +86,8 @@ public class GroupImpl implements Group {
     @Override
     public void updateOperationalState(ModelObject object, OperationalState previous) {
         assertInGroup(object);
-
+        incrementOperationStatus(object.getOperationalState());
+        decrementOperationStatus(previous);
     }
 
     @Override
@@ -153,15 +154,5 @@ public class GroupImpl implements Group {
             throw new InvalidParameterException("invalid invocation from a modelObject not in the group");
         }
     }
-
-	@Override
-	public Set<ModelObject> getMembers() {
-		return members;
-	}
-
-	public void addMember(ModelObject member) {
-		// TODO validate member type?
-		members.add(member);
-	}
 
 }

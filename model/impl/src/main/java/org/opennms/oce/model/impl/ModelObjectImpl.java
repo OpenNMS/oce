@@ -219,14 +219,30 @@ public class ModelObjectImpl implements ModelObject {
 
     private void propagateOperationalStateChange(OperationalState previous) {
         parent.getChildGroup(type).updateOperationalState(this, previous);
-        getPeerGroup(type).updateOperationalState(this, previous);
-        getUncleGroup(type).updateOperationalState(this, previous);
+        updateOperationalState(getPeerGroup(type), previous);
+        updateOperationalState(getUncleGroup(type), previous);
     }
 
     private void propagateServiceStateChange(ServiceState previous) {
         parent.getChildGroup(type).updateServiceState(this, previous);
-        getPeerGroup(type).updateServiceState(this, previous);
-        getUncleGroup(type).updateServiceState(this, previous);
+        updateServiceState(getPeerGroup(type), previous);
+        updateServiceState(getUncleGroup(type), previous);
+    }
+
+    // Update the Group OpStatus if this ModelObject has a group of that type
+    private void updateOperationalState(Group group, OperationalState previous) {
+        if (group == null) {
+            return;
+        }
+        group.updateOperationalState(this, previous);
+    }
+
+    // Update the Group SvcStatus if this ModelObject has a group of that type
+    private void updateServiceState(Group group, ServiceState previous) {
+        if (group == null) {
+            return;
+        }
+        group.updateServiceState(this, previous);
     }
 
 }

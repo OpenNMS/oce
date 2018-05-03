@@ -1,0 +1,284 @@
+[33mcommit 4658579b96708cb3a327086017575dff66d21a0f[m[33m ([m[1;36mHEAD -> [m[1;32mimpactGroups[m[33m)[m
+Merge: e9c0be1 4d39a58
+Author: David Smith <smith@opennms.com>
+Date:   Thu May 3 09:56:46 2018 -0400
+
+    Merge branch 'master' into impactGroups
+
+[33mcommit e9c0be1fc58e8f7309d944599ec6b97ca5315861[m
+Author: DavidSmith <38085611+smith-opennms@users.noreply.github.com>
+Date:   Wed May 2 15:07:49 2018 -0400
+
+    Model updates for linking ModelObjects via Groups (#1)
+    
+    * Model updates for linking ModelObjects via Groups
+    
+    * Minor fixes to DotGraph. Using FName to display
+    
+    * Move add methods from API to IMPL
+
+[33mcommit 4d39a58024f7d7d70b4360cb1413314b3786050f[m[33m ([m[1;31morigin/master[m[33m, [m[1;31morigin/HEAD[m[33m, [m[1;32mmaster[m[33m)[m
+Author: Sergey Kochetkov <skochetkov@Sergeys-MacBook-Pro.local>
+Date:   Wed May 2 16:57:09 2018 -0400
+
+    updated meta model objects and inventory
+
+[33mcommit 65981ca7eeaca42fc15d1d0930116274309a1957[m
+Author: Jesse White <jesse@opennms.org>
+Date:   Wed May 2 16:23:53 2018 -0400
+
+    Fix sources path for Eclipse.
+
+[33mcommit 2ff0a4f72cc19f26350d39dc15b11003bd51c528[m
+Author: Jesse White <jesse@opennms.org>
+Date:   Wed May 2 16:10:23 2018 -0400
+
+    Make the artifact ids unique.
+
+[33mcommit 6eac871ca1ed728022cc078c5fad59a8df81d0c8[m
+Author: Jesse White <jesse@opennms.org>
+Date:   Wed May 2 15:17:22 2018 -0400
+
+    Add test case.
+
+[33mcommit 868a2597967efee715c1b9cd896f0d8c58f0cc6c[m
+Author: DavidSmith <38085611+smith-opennms@users.noreply.github.com>
+Date:   Wed May 2 15:07:49 2018 -0400
+
+    Model updates for linking ModelObjects via Groups (#1)
+    
+    * Model updates for linking ModelObjects via Groups
+    
+    * Minor fixes to DotGraph. Using FName to display
+    
+    * Move add methods from API to IMPL
+
+[33mcommit ca574832e5f53129cff0bb498a85df40580683fd[m
+Author: Sergey Kochetkov <skochetkov@Sergeys-MacBook-Pro.local>
+Date:   Wed May 2 14:03:01 2018 -0400
+
+    enhancements for metamodel object
+
+[33mcommit 9672a0cf287e989a7f7560d7d2a96a6d117bc2bd[m
+Author: Jesse White <jesse@opennms.org>
+Date:   Tue May 1 15:58:05 2018 -0400
+
+    Fix schema reference.
+
+[33mcommit 7ef2476860a29c6fbf5af18b8431fb102cb5b969[m
+Author: Jesse White <jesse@opennms.org>
+Date:   Tue May 1 15:57:40 2018 -0400
+
+    Fix JAXB dependencies for model impl.
+
+[33mcommit e43ff2dc2d3a1630f03741f5d29e2c7e99e47d8e[m
+Merge: 367888e 59bd167
+Author: Sergey Kochetkov <skochetkov@Sergeys-MacBook-Pro.local>
+Date:   Tue May 1 15:40:57 2018 -0400
+
+    added bundle dependencies
+
+[33mcommit 367888edf26717688688b2c64c6e4949791d90b2[m
+Author: Sergey Kochetkov <skochetkov@Sergeys-MacBook-Pro.local>
+Date:   Tue May 1 15:38:31 2018 -0400
+
+    added bundle dependencies
+
+[33mcommit 59bd167c75d92c24831aa1efbfda8ff6df2ffe1d[m
+Author: Jesse White <jesse@opennms.org>
+Date:   Tue May 1 14:45:41 2018 -0400
+
+    Cleanup the API module.
+
+[33mcommit eece82972862ba13476b4c279c4eae6f06367eff[m
+Author: Jesse White <jesse@opennms.org>
+Date:   Tue May 1 14:25:59 2018 -0400
+
+    Revise XML, define an XSD and generate JAXB model objects from the XSD.
+
+[33mcommit 44d20695d92c31d54963683506bb7022e43206f7[m
+Author: David Smith <smith@opennms.com>
+Date:   Tue May 1 13:33:53 2018 -0400
+
+    Stub Group implementation
+
+[33mcommit f434493157bfa8360d663dd2370d55a91d009d22[m
+Author: David Smith <smith@opennms.com>
+Date:   Tue May 1 13:29:53 2018 -0400
+
+    GetRoot, GetParent, GetChildren
+
+[33mcommit 9e3f4c69df16f46d70cf4053a612320b9d05159b[m
+Author: Sergey Kochetkov <skochetkov@Sergeys-MacBook-Pro.local>
+Date:   Tue May 1 11:55:49 2018 -0400
+
+    injected bundle context to read resources
+
+[33mcommit e64e81b580dc13bb789a7420cfef5a3d5eb14e15[m
+Author: Sergey Kochetkov <skochetkov@Sergeys-MacBook-Pro.local>
+Date:   Tue May 1 10:00:11 2018 -0400
+
+    added meta model object and jaxb parser
+
+[33mcommit 3c412e727f6319bd8e46bcae72d663951e5f9b44[m
+Author: Sergey Kochetkov <skochetkov@Sergeys-MacBook-Pro.local>
+Date:   Mon Apr 30 22:28:13 2018 -0400
+
+    added impl bundle for model to create osgi service
+
+[33mcommit 8ec481f1c48f41520d3b14d4a1f7c1a5bcd5348d[m
+Merge: d39735b 3e9ba21
+Author: Sergey Kochetkov <skochetkov@Sergeys-MacBook-Pro.local>
+Date:   Mon Apr 30 18:20:05 2018 -0400
+
+    merging
+
+[33mcommit d39735b6fcf1bc90e8747499e7c4033bb0d6d2f7[m
+Author: Sergey Kochetkov <skochetkov@Sergeys-MacBook-Pro.local>
+Date:   Mon Apr 30 17:34:26 2018 -0400
+
+    wiring up model bundle
+
+[33mcommit 3e9ba215be09ed97a5df2be0d1dd104639f189b8[m
+Author: David Smith <smith@opennms.com>
+Date:   Mon Apr 30 17:28:34 2018 -0400
+
+    Change to reference modelBuilder
+
+[33mcommit 106a11c818be4782fb27e1fd3b1f14b4aff2ac1d[m
+Author: David Smith <smith@opennms.com>
+Date:   Mon Apr 30 16:30:49 2018 -0400
+
+    Adding model bundle to features
+
+[33mcommit e17eb88893e98590bbe854413200cb4a1e76317d[m
+Author: David Smith <smith@opennms.com>
+Date:   Mon Apr 30 16:09:28 2018 -0400
+
+    Initial Karaf shell commands for Topology Model
+
+[33mcommit 3cd2dadb332d524db5d5825e826672ecdb8f79ec[m
+Author: David Smith <smith@opennms.com>
+Date:   Mon Apr 30 14:20:23 2018 -0400
+
+    Pom fix
+
+[33mcommit 08b18553a444fc6b6e80152ae272e32ac2361ce9[m
+Author: Jesse White <jesse@opennms.org>
+Date:   Mon Apr 30 13:50:55 2018 -0400
+
+    Model, not TopologyModel!
+
+[33mcommit 1b4ba3cc58cac85b606f618b1c7bee2dd76ac62e[m
+Author: Jesse White <jesse@opennms.org>
+Date:   Mon Apr 30 13:46:37 2018 -0400
+
+    Simple model api.
+
+[33mcommit e4c8b92d9ed5118c76d6eebddefbdeb054d80aa3[m
+Author: Jesse White <jesse@opennms.org>
+Date:   Mon Apr 30 13:13:40 2018 -0400
+
+    fix whitespace
+
+[33mcommit 45698b869eb7030dfabfe047d7ce3bd107d816d9[m
+Author: Jesse White <jesse@opennms.org>
+Date:   Fri Apr 20 15:52:33 2018 -0400
+
+    Add more details and fix NPE.
+
+[33mcommit 1b1a9093e9a3aec6d4e371c224dfda7efa23fabd[m
+Author: Jesse White <jesse@opennms.org>
+Date:   Fri Apr 20 15:21:56 2018 -0400
+
+    Destroy too.
+
+[33mcommit 59ea0cdeff94d9692fead66af510a37a2d138996[m
+Author: Jesse White <jesse@opennms.org>
+Date:   Fri Apr 20 15:18:28 2018 -0400
+
+    Remove card mapping logic.
+
+[33mcommit 7944d521df9d341b5892635055ce33350131d555[m
+Author: Jesse White <jesse@opennms.org>
+Date:   Fri Apr 20 14:56:27 2018 -0400
+
+    More hacks for POC.
+
+[33mcommit 10f8da7798a41df8241797df7448d57a79a1402f[m
+Author: Jesse White <jesse@opennms.org>
+Date:   Wed Apr 11 14:16:21 2018 -0400
+
+    Working version with event feedback.
+
+[33mcommit 112f7a9523679b1550def4ff20ab6c0d80bf65dd[m
+Author: Jesse White <jesse@opennms.org>
+Date:   Tue Apr 10 21:03:17 2018 -0400
+
+    Fix the recovery case - need to review how engine facts are handled.
+
+[33mcommit 5a1fd20b4ade8a0d295eca0568e84494ac500c2d[m
+Author: Jesse White <jesse@opennms.org>
+Date:   Tue Apr 10 17:06:37 2018 -0400
+
+    Preliminary modeling work.
+
+[33mcommit fa675d24e82b234926d2fe8500b3b73b4347eb4a[m
+Author: Jesse White <jesse@opennms.org>
+Date:   Tue Apr 10 16:13:47 2018 -0400
+
+    Add Drools and a simple KIE session.
+
+[33mcommit 93c5c8224486fc691c30409322423ddb860874df[m
+Author: Jesse White <jesse@opennms.org>
+Date:   Tue Apr 10 13:39:10 2018 -0400
+
+    Fix CircleCI build.
+
+[33mcommit 172a2dadf5036522328bb62bba656e78ca82dbb5[m
+Author: Jesse White <jesse@opennms.org>
+Date:   Tue Apr 10 13:36:49 2018 -0400
+
+    Retrieve alarms from Kafka.
+
+[33mcommit ec25f303bb1b514f99752fca87eb9f77a812f7db[m
+Author: Jesse White <jesse@opennms.org>
+Date:   Tue Apr 10 12:24:19 2018 -0400
+
+    Add a basic Karaf shell command.
+
+[33mcommit 149600ba6661fa79391a946ee8fe1cbdac075c5a[m
+Author: Jesse White <jesse@opennms.org>
+Date:   Tue Apr 10 11:57:32 2018 -0400
+
+    Add connector api/impl modules.
+
+[33mcommit 356d936d8c8056b81d9515ddfd1a079cce4c1687[m
+Author: Jesse White <jesse@opennms.org>
+Date:   Tue Apr 10 11:49:19 2018 -0400
+
+    Include the Drools Karaf features.
+
+[33mcommit 2f2016273c606bf0e36480be2b63e171c0074b11[m
+Author: Jesse White <jesse@opennms.org>
+Date:   Tue Apr 10 11:41:50 2018 -0400
+
+    Add a simple features.xml and setup instructions.
+
+[33mcommit 0452d0033a142fb3e12a229c817b7122336ef713[m
+Author: Jesse White <jesse@opennms.org>
+Date:   Tue Apr 10 11:26:25 2018 -0400
+
+    Add the CircleCI badge.
+
+[33mcommit 37706cc585913b69f44a008a3d949144aee67a2d[m
+Author: Jesse White <jesse@opennms.org>
+Date:   Tue Apr 10 11:18:40 2018 -0400
+
+    Add CircleCI script
+
+[33mcommit 719cce1ae6f02f0372764a3ac8d06a58fd836183[m
+Author: Jesse White <jesse@opennms.org>
+Date:   Tue Apr 10 11:08:04 2018 -0400
+
+    Initial commit.

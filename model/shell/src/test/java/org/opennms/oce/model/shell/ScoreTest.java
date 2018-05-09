@@ -37,7 +37,7 @@ import org.junit.Test;
 public class ScoreTest {
 
     @Test
-    public void testSameAccuracy100() {
+    public void testSameAccuracy100() throws Exception {
         Path baseline = Paths.get("src", "test", "resources", "Baseline.xml");
         Score score = new Score(baseline, baseline);
         // Test for Incidents
@@ -49,7 +49,7 @@ public class ScoreTest {
     }
 
     @Test
-    public void testSeventyPercentAccuracy() {
+    public void testSeventyPercentAccuracy() throws Exception {
         Path baseline = Paths.get("src", "test", "resources", "Baseline.xml");
         Path seventyPercent = Paths.get("src", "test", "resources", "TwentyPercent.xml");
         Score score = new Score(baseline, seventyPercent);

@@ -31,7 +31,7 @@ public class ScoreTest {
         assertEquals(1, score.getTypeOneErrorCount());
         assertEquals(79, score.getFalseNegativeCount());
         // Test for Alarms coverage
-        assertEquals(20, score.getAlarmAccuracy());
+        assertEquals(26, score.getAlarmAccuracy());
     }
 
 }

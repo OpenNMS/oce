@@ -56,7 +56,22 @@ public class CommunityEngine implements Engine {
 
     @Override
     public void onAlarm(Alarm alarm) {
+        // a1 has key [a,b,c,d]
+        // a2 has key [a,b,c,d]
+        // a3 has key [a,b,c,z]
 
+        // (a) -- (a,b) -- (a,b,c) -- (a,b,c,d) -- a1
+        //
+        // (a) -- (a,b) -- (a,b,c) -- (a,b,c,d) -- a1
+        //                                      -- a2
+        //
+        // (a) -- (a,b) -- (a,b,c) -- (a,b,c,d) -- a1
+        //                     |                -- a2
+        //                     -   -- (a,b,c,z) -- a3
+
+        // (a,b,c,d) -- a1 (t=1)       weight = 100 - variance of times on associated alarm vertices
+        //           -- a2 (t=2)
+        //  weight = function(neighbors and time) - TBD
     }
 
     @Override
@@ -66,6 +81,16 @@ public class CommunityEngine implements Engine {
 
     @Override
     public void registerIncidentHandler(IncidentHandler handler) {
+
+    }
+
+    @Override
+    public long getTickResolutionMs() {
+        return 30 * 1000;
+    }
+
+    @Override
+    public void tick(long timestampInMillis) {
 
     }
 }

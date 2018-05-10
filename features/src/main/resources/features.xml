@@ -33,6 +33,7 @@
         <bundle>mvn:org.opennms.oce.engine/org.opennms.oce.engine.api/${project.version}</bundle>
         <bundle>mvn:org.opennms.oce.engine/org.opennms.oce.engine.common/${project.version}</bundle>
         <bundle>mvn:org.opennms.oce.engine/org.opennms.oce.engine.temporal/${project.version}</bundle>
+        <bundle>mvn:org.opennms.oce.engine/org.opennms.oce.engine.community/${project.version}</bundle>
     </feature>
 
     <feature name="oce-connector" description="OCE :: Connector" version="${project.version}">

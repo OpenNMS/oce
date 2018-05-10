@@ -13,8 +13,8 @@
     <modules>
         <module>api</module>
         <module>common</module>
+        <module>community</module>
         <module>temporal</module>
-	<!-- <module>cluster</module> -->
     </modules>
 </project>
 

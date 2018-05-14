@@ -1,0 +1,22 @@
+package org.opennms.oce.engine.community;
+
+import static org.hamcrest.CoreMatchers.not;
+import static org.hamcrest.core.IsNull.notNullValue;
+import static org.hamcrest.core.IsSame.sameInstance;
+import static org.junit.Assert.assertThat;
+
+import org.junit.Test;
+
+public class CommunityEngineFactoryTest {
+
+    @Test
+    public void canCreateEngine() {
+        CommunityEngineFactory factory = new CommunityEngineFactory();
+        CommunityEngine engine1 = factory.createEngine();
+        assertThat(engine1, notNullValue());
+
+        CommunityEngine engine2 = factory.createEngine();
+        assertThat(engine2, notNullValue());
+        assertThat(engine1, not(sameInstance(engine2)));
+    }
+}

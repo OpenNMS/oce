@@ -28,10 +28,25 @@
 
 package org.opennms.oce.engine.community;
 
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.atomic.AtomicLong;
+import java.util.stream.Collectors;
+
 import org.opennms.oce.engine.api.Engine;
 import org.opennms.oce.engine.api.IncidentHandler;
 import org.opennms.oce.model.alarm.api.Alarm;
+import org.opennms.oce.model.alarm.api.ResourceKey;
 import org.opennms.oce.model.api.Model;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import com.google.common.annotations.VisibleForTesting;
+
+import edu.uci.ics.jung.graph.Graph;
+import edu.uci.ics.jung.graph.SparseMultigraph;
+import edu.uci.ics.jung.graph.util.EdgeType;
 
 /**
  * Community detection based correlation
@@ -53,6 +68,13 @@ import org.opennms.oce.model.api.Model;
  *
  */
 public class CommunityEngine implements Engine {
+    private static final Logger LOG = LoggerFactory.getLogger(CommunityEngine.class);
+
+    private final Graph<Vertex, Edge> g = new SparseMultigraph<>();
+    private boolean alarmsChangedSinceLastTick = false;
+    private final AtomicLong vertexIdGenerator = new AtomicLong();
+    private final Map<Long, Vertex> idtoVertexMap = new HashMap<>();
+    private final Map<ResourceKey, Vertex> resourceToVertexMap = new HashMap<>();
 
     @Override
     public void onAlarm(Alarm alarm) {
@@ -72,6 +94,8 @@ public class CommunityEngine implements Engine {
         // (a,b,c,d) -- a1 (t=1)       weight = 100 - variance of times on associated alarm vertices
         //           -- a2 (t=2)
         //  weight = function(neighbors and time) - TBD
+        getVertexForResource(alarm.getResourceKey());
+        alarmsChangedSinceLastTick = true;
     }
 
     @Override
@@ -91,6 +115,50 @@ public class CommunityEngine implements Engine {
 
     @Override
     public void tick(long timestampInMillis) {
+        if (!alarmsChangedSinceLastTick) {
+            return;
+        } else {
+            // Reset
+            alarmsChangedSinceLastTick = false;
+        }
 
+        //Getting alarms which are verticis
+        final List<CDAlarm> alarms = g.getVertices().stream()
+                .filter(e -> e.getType() == VertexType.ALARM)
+                .map(a -> new CDAlarm())
+                .collect(Collectors.toList());
+
+        //TODO Removing JNI interface for a while
+    }
+
+    private Vertex getVertexForResource(ResourceKey resourceKey) {
+        Vertex vertex = resourceToVertexMap.get(resourceKey);
+        if (vertex != null) {
+            // it already exists
+            return vertex;
+        } else {
+            vertex = new Vertex(vertexIdGenerator.getAndIncrement(), resourceKey);
+            // Index it
+            resourceToVertexMap.put(vertex.getResourceKey(), vertex);
+            idtoVertexMap.put(vertex.getId(), vertex);
+            // Add it to the graph
+            g.addVertex(vertex);
+        }
+
+        if (resourceKey.length() <= 1) {
+            // This is a root element, no edges to add
+            return vertex;
+        } else {
+            // Retrieve the parent and link the two vertices
+            final Vertex parent = getVertexForResource(resourceKey.getParentKey());
+            g.addEdge(new Edge(), parent, vertex, EdgeType.UNDIRECTED);
+        }
+
+        return vertex;
+    }
+
+    @VisibleForTesting
+    Graph<Vertex, Edge> getGraph() {
+        return g;
     }
 }

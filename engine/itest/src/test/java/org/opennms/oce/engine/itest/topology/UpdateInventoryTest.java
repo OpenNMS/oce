@@ -54,8 +54,7 @@ public class UpdateInventoryTest {
     public void setUp() {
         topologyEngineFactory = new TopologyEngineFactory();
 
-        ModelBuilderImpl modelBuilder = new ModelBuilderImpl();
-        model = modelBuilder.buildModel();
+        model = new ModelBuilderImpl().buildModel();
     }
 
     /**
@@ -128,7 +127,7 @@ public class UpdateInventoryTest {
     }
 
     @Test
-    public void canDeleteModelObject() {
+    public void canDeleteDevice() {
         /** Case: Delete a new Network Element (simple case deleting previously added device with one card and four ports)
          *
          *  Expected Results:
@@ -165,21 +164,81 @@ public class UpdateInventoryTest {
         port3.setParent(card);
         port4.setParent(card);
 
+        //Print model after before a new device
         model.printModel();
 
         model.addObject(device);
 
+        //Print model after adding a new device
         model.printModel();
 
         model.removeObjectById(device.getType(), device.getId());
 
+        //Print model after removing a new device
         model.printModel();
+    }
 
+    @Test
+    public void canNotDeleteNonExistingDevice() {
         final ModelObjectImpl nonExistingDevice = new ModelObjectImpl("Device", "n999");
 
         // Exception to be thrown just before that method call
         exceptionGrabber.expect(IllegalStateException.class);
         // No such device in the model
         model.removeObjectById(nonExistingDevice.getType(), nonExistingDevice.getId());
+    }
+
+    @Test
+    public void canDeleteCard() {
+        /** Case: Delete a new Network Element (this time it is one card with two ports)
+         *
+         *  Expected Results:
+         *  - Detached from parent (Device)
+         *  - Detached from peers (if applicable)
+         *  - Detached from children (will be clean up in the next step)
+         *  - Cleared and removed
+         *  Note: currently we do not consider detachments from uncles and nephews
+         */
+
+        ModelObject root = model.getRoot();
+        assertThat(root, notNullValue());
+        assertThat(root.getParent(), nullValue());
+
+        //and have all levels of model object hierarchy (device, card, port)
+        assertThat(model.getTypes(), hasItem("Device"));
+        assertThat(model.getTypes(), hasItem("Card"));
+        assertThat(model.getTypes(), hasItem("Port"));
+
+        //Construct new device with one card and four ports
+        final ModelObjectImpl device = new ModelObjectImpl("Device", "n333");
+
+        final ModelObjectImpl card1 = new ModelObjectImpl("Card", "n333-c1");
+        final ModelObjectImpl card2 = new ModelObjectImpl("Card", "n333-c2");
+
+        final ModelObjectImpl port1 = new ModelObjectImpl("Port", "n333-c1-p1");
+        final ModelObjectImpl port2 = new ModelObjectImpl("Port", "n333-c1-p2");
+        final ModelObjectImpl port3 = new ModelObjectImpl("Port", "n333-c2-p1");
+        final ModelObjectImpl port4 = new ModelObjectImpl("Port", "n333-c2-p2");
+
+        card1.setParent(device);
+        card2.setParent(device);
+
+        port1.setParent(card1);
+        port2.setParent(card1);
+        port3.setParent(card2);
+        port4.setParent(card2);
+
+        //Print model before adding a new device
+        model.printModel();
+
+        model.addObject(device);
+
+        //Print model after adding a new device
+        model.printModel();
+
+        model.removeObjectById(card2.getType(), card2.getId());
+
+        //Print model after removing a card
+        model.printModel();
     }
 }

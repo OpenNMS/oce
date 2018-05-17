@@ -2,9 +2,7 @@ package org.opennms.oce.model.impl;
 
 import java.util.Comparator;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.LinkedHashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
@@ -159,6 +157,14 @@ public class ModelObjectImpl implements ModelObject {
 
     private void addMember(ModelObject member, Map<String, Group> map) {
         ((GroupImpl) getGroup(map, member.getType())).addMember(member);
+    }
+
+    public void detachChild(ModelObject child) {
+        removeMember(child, children);
+    }
+
+    private void removeMember(ModelObject member, Map<String, Group> map) {
+        ((GroupImpl) getGroup(map, member.getType())).removeMember(member);
     }
 
     @Override

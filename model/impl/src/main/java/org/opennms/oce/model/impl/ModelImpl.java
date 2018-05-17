@@ -136,7 +136,6 @@ public class ModelImpl implements Model {
     /**
      * The assumption is that model object contains all its hierarchy, for example if it is device,
      * then it should have cards and ports, but if it is a new card, then there should be parent provided
-     * @param mo
      */
     @Override
     public void addObject(ModelObject mo) {
@@ -145,7 +144,6 @@ public class ModelImpl implements Model {
 
     /**
      * Decouple abstraction from implementation
-     * @param mo
      */
     private void addObject(ModelObjectImpl mo) {
         String type = mo.getType();
@@ -200,7 +198,7 @@ public class ModelImpl implements Model {
 
         //start removing from the bottom up
         Deque<ModelObject> stack = new ArrayDeque<ModelObject>();
-        Queue<ModelObject> stackToRemove = new LinkedList<>();
+        Deque<ModelObject> stackToRemove = new ArrayDeque<>();
 
         ModelObject obj = getObjectById(type, id);
         stack.push(obj);
@@ -208,7 +206,7 @@ public class ModelImpl implements Model {
             int levelSize = stack.size();
             for(int i = 0; i < levelSize; i++) {
                 ModelObject currNode = stack.pop();
-                stackToRemove.add(currNode);
+                stackToRemove.push(currNode);
 
                 if(mosByTypeAndById.get(currNode.getType()) == null) {
                     mosByTypeAndById.put(currNode.getType(), new HashMap<>());
@@ -222,10 +220,16 @@ public class ModelImpl implements Model {
             }
         }
 
-        ModelObject first = ((LinkedList<ModelObject>) stackToRemove).peekFirst();
-        ModelObject last = ((LinkedList<ModelObject>) stackToRemove).peekLast();
+        //Using simple iteration as to preserve state in case of failure, for example, if one of obj cannot be deleted
+        int originalStackSize = stackToRemove.size();
+        for(int i = 0; i <  originalStackSize; i++) {
+            ModelObject objToRemove = stackToRemove.pop();
 
-        for(ModelObject objToRemove : stackToRemove) {
+            //Detaching last one (top level element) form its parent
+            if(stackToRemove.isEmpty()) {
+                //TODO - this case is valid only for top level model objects such as device which have directly model as parent
+                ((ModelObjectImpl)root).detachChild(objToRemove);
+            }
             mosByTypeAndById.get(objToRemove.getType()).remove(objToRemove.getId());
         }
 

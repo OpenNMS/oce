@@ -160,16 +160,28 @@ public class ModelObjectImpl implements ModelObject {
     }
 
     public void detachChild(ModelObject child) {
-        removeMember(child, children);
+        removeDescendant(child, children);
     }
 
+    public void detachDescendant(ModelObject child) {
+        removeDescendant(child, children);
+    }
     private void removeMember(ModelObject member, Map<String, Group> map) {
         ((GroupImpl) getGroup(map, member.getType())).removeMember(member);
+    }
+
+    private void removeDescendant(ModelObject member, Map<String, Group> map) {
+        ((GroupImpl) findGroupForParentMO(member, map)).removeMember(member);
     }
 
     @Override
     public Group getChildGroup(String objectType) {
         return children.get(objectType);
+    }
+
+    @Override
+    public Map<String, Group> getAllChildrenGroups() {
+        return children;
     }
 
     @Override
@@ -190,11 +202,45 @@ public class ModelObjectImpl implements ModelObject {
     private Group getGroup(Map<String, Group> map, String type) {
 		Group g = map.get(type);
 		if (g == null) {
+		    //if not found in hierarchy, create a new group
 			g = new GroupImpl(this);
 			map.put(type, g);
 		}
 		return g;
 	}
+
+    /**
+     * Finds a group for a given object, The group and object can be located on deeper level
+     * @param map - a map of groups that is a starting level for search
+     * @param member - an object that is a parent of the group
+     * @return
+     */
+	private Group findGroupForParentMO(ModelObject member, Map<String, Group> map) {
+        for (Map.Entry<String, Group> entry : map.entrySet())
+        {
+            Group pivotedGroup = entry.getValue(); //we need to keep reference to group that member might belong to
+            for(ModelObject mo : pivotedGroup.getMembers()) {
+                if(mo.equals(member)){
+                    //return group it belongs to
+                    return pivotedGroup;
+                }
+                //if we didn't find it, continue our search getting deep
+                Map<String, Group> childrenMap = mo.getAllChildrenGroups();
+
+                for(Map.Entry<String, Group> someChildGroup : childrenMap.entrySet()) {
+                    GroupImpl childGroup = (GroupImpl)someChildGroup.getValue();
+                    //The check is redundant but there might be cases for empty maps and who knows what happens
+                    if(someChildGroup != null && childGroup.getOwner().equals(member)) {
+                        return someChildGroup.getValue();
+                    }
+                    //if it is not on this level, try to find deeper
+                    Group foundGroup = findGroupForParentMO(member, childrenMap);
+                    if(foundGroup != null) return foundGroup;
+                }
+            }
+        }
+        return null;
+    }
 
 	@Override
 	public String toString() {

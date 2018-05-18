@@ -228,7 +228,8 @@ public class ModelImpl implements Model {
             //Detaching last one (top level element) form its parent
             if(stackToRemove.isEmpty()) {
                 //TODO - this case is valid only for top level model objects such as device which have directly model as parent
-                ((ModelObjectImpl)root).detachChild(objToRemove);
+                //((ModelObjectImpl)root).detachChild(objToRemove);
+                ((ModelObjectImpl)root).detachDescendant(objToRemove);
             }
             mosByTypeAndById.get(objToRemove.getType()).remove(objToRemove.getId());
         }

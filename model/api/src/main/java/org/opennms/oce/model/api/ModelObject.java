@@ -28,6 +28,7 @@
 
 package org.opennms.oce.model.api;
 
+import java.util.Map;
 import java.util.Set;
 
 import org.opennms.oce.model.alarm.api.Alarm;
@@ -45,7 +46,9 @@ public interface ModelObject {
     Set<ModelObject> getNephews(); // Dependencies
 
     Group getChildGroup(String objectType);
-    
+
+    Map<String, Group> getAllChildrenGroups();
+
     Group getPeerGroup(String objectType);
     
     Group getNephewGroup(String objectType);

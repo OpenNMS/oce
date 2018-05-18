@@ -191,6 +191,7 @@ public class UpdateInventoryTest {
     @Test
     public void canDeleteCard() {
         /** Case: Delete a new Network Element (this time it is one card with two ports)
+         * Element has to be removed from flat model (model's map of maps) and from hierarchical structure (root -> children (groups, parents etc))
          *
          *  Expected Results:
          *  - Detached from parent (Device)
@@ -198,6 +199,7 @@ public class UpdateInventoryTest {
          *  - Detached from children (will be clean up in the next step)
          *  - Cleared and removed
          *  Note: currently we do not consider detachments from uncles and nephews
+         *
          */
 
         ModelObject root = model.getRoot();

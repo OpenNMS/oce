@@ -1,0 +1,4 @@
+libigraph_la-fortran_intrinsics.lo: fortran_intrinsics.c \
+  /Library/Developer/CommandLineTools/usr/lib/clang/9.0.0/include/float.h
+
+/Library/Developer/CommandLineTools/usr/lib/clang/9.0.0/include/float.h:

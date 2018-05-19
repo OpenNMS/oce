@@ -107,6 +107,7 @@ public class UpdateInventoryTest {
         port4.setParent(card);
 
         /**
+         * TODO:
          * Design question: should updating model flow be delegated to ModelBuilder which is responsible for constructing initial model
          * It can be passed as reference to another build function (updateModel) function which is similar to existing buildModel
          */
@@ -160,7 +161,6 @@ public class UpdateInventoryTest {
         ModelObject root = model.getRoot();
 
         //Construct new device with one card and four ports
-        //Construct new device with one card and four ports
         final ModelObjectImpl device = new ModelObjectImpl("Device", "n3");
 
         final ModelObjectImpl card = new ModelObjectImpl("Card", "n3-c1");
@@ -189,17 +189,24 @@ public class UpdateInventoryTest {
 
         //card.setParent(device);
 
-        port21.setParent(card);
-        port22.setParent(card);
-        port23.setParent(card);
-        port24.setParent(card);
+        port21.setParent(card2);
+        port22.setParent(card2);
+        port23.setParent(card2);
+        port24.setParent(card2);
 
         model.printModel();
         //Adding a new card
-        model.addObject(card);
+        /**TODO:
+         * Question - how we add a new card to an existing device?
+         * Options:
+         * - Provide reference to the existing device (parent)
+         * - Provide a card as is and try to find parent
+         * - Both above options: first first and first is not found then second second
+        */
+        model.addObject(card2);
         model.printModel();
         //Removing new card
-        model.removeObjectById(card.getType(), card.getId());
+        model.removeObjectById(card2.getType(), card2.getId());
         model.printModel();
         //And removing device itself
         model.removeObjectById(device.getType(), device.getId());

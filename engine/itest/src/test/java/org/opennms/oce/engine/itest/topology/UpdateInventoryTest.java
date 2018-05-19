@@ -60,10 +60,8 @@ public class UpdateInventoryTest {
     /**
      *      <!-- Devices -->
      *      <model-object-entry type="Device" id="n3" parent-type="Model" parent-id="model"/>
-     *
      *      <!-- Cards -->
      *      <model-object-entry type="Card" id="n3-c1" parent-type="Device" parent-id="n3" />
-     *
      *      <!-- Ports -->
      *      <model-object-entry type="Port" id="n3-c1-p1" parent-type="Card" parent-id="n3-c1" />
      *      <model-object-entry type="Port" id="n3-c1-p2" parent-type="Card" parent-id="n3-c1" />
@@ -71,7 +69,7 @@ public class UpdateInventoryTest {
      *      <model-object-entry type="Port" id="n3-c1-p4" parent-type="Card" parent-id="n3-c1" />
     */
     @Test
-    public void canAddModelObject() {
+    public void canAddDeviceAsModelObject() {
         /** Case: Add new Network Element (simple case adding new device with one card and four ports)
          *
          * Expected Results:
@@ -124,6 +122,88 @@ public class UpdateInventoryTest {
 
         // Expectation is that no exception happens
         model.removeObjectById(device.getType(), device.getId());
+    }
+
+    /**
+     *      INITIAL INSERTION [{Device:1},{Card:1},{Ports:4}]
+     *      <!-- Devices -->
+     *      <model-object-entry type="Device" id="n3" parent-type="Model" parent-id="model"/>
+     *      <!-- Cards -->
+     *      <model-object-entry type="Card" id="n3-c1" parent-type="Device" parent-id="n3" />
+     *      <!-- Ports -->
+     *      <model-object-entry type="Port" id="n3-c1-p1" parent-type="Card" parent-id="n3-c1" />
+     *      <model-object-entry type="Port" id="n3-c1-p2" parent-type="Card" parent-id="n3-c1" />
+     *      <model-object-entry type="Port" id="n3-c1-p3" parent-type="Card" parent-id="n3-c1" />
+     *      <model-object-entry type="Port" id="n3-c1-p4" parent-type="Card" parent-id="n3-c1" />
+     *
+     *      INITIAL INSERTION [{Card:1},{Ports:4}] to existing device
+     *      <!-- Cards -->
+     *      <model-object-entry type="Card" id="n3-c2" parent-type="Device" parent-id="n3" />
+     *      <!-- Ports -->
+     *      <model-object-entry type="Port" id="n3-c2-p1" parent-type="Card" parent-id="n3-c2" />
+     *      <model-object-entry type="Port" id="n3-c2-p2" parent-type="Card" parent-id="n3-c2" />
+     *      <model-object-entry type="Port" id="n3-c2-p3" parent-type="Card" parent-id="n3-c2" />
+     *      <model-object-entry type="Port" id="n3-c2-p4" parent-type="Card" parent-id="n3-c2" />
+     */
+    @Test
+    public void canAddCardAsModelObject() {
+        /** Case: Add new Network Element (simple case adding new device with one card and four ports)
+         *
+         * Expected Results:
+         * - A new device is added with all its children (card and ports)
+         * - All relationships are established such as:
+         * -- A new device has parent
+         * -- A new device has peers (if applicable)
+         */
+
+        //Assert that inventory and model are constructed properly
+        ModelObject root = model.getRoot();
+
+        //Construct new device with one card and four ports
+        //Construct new device with one card and four ports
+        final ModelObjectImpl device = new ModelObjectImpl("Device", "n3");
+
+        final ModelObjectImpl card = new ModelObjectImpl("Card", "n3-c1");
+
+        final ModelObjectImpl port1 = new ModelObjectImpl("Port", "n3-c1-p1");
+        final ModelObjectImpl port2 = new ModelObjectImpl("Port", "n3-c1-p2");
+        final ModelObjectImpl port3 = new ModelObjectImpl("Port", "n3-c1-p3");
+        final ModelObjectImpl port4 = new ModelObjectImpl("Port", "n3-c1-p4");
+
+        card.setParent(device);
+
+        port1.setParent(card);
+        port2.setParent(card);
+        port3.setParent(card);
+        port4.setParent(card);
+
+        model.addObject(device);
+
+
+        final ModelObjectImpl card2 = new ModelObjectImpl("Card", "n3-c2");
+
+        final ModelObjectImpl port21 = new ModelObjectImpl("Port", "n3-c2-p1");
+        final ModelObjectImpl port22 = new ModelObjectImpl("Port", "n3-c2-p2");
+        final ModelObjectImpl port23 = new ModelObjectImpl("Port", "n3-c2-p3");
+        final ModelObjectImpl port24 = new ModelObjectImpl("Port", "n3-c2-p4");
+
+        //card.setParent(device);
+
+        port21.setParent(card);
+        port22.setParent(card);
+        port23.setParent(card);
+        port24.setParent(card);
+
+        model.printModel();
+        //Adding a new card
+        model.addObject(card);
+        model.printModel();
+        //Removing new card
+        model.removeObjectById(card.getType(), card.getId());
+        model.printModel();
+        //And removing device itself
+        model.removeObjectById(device.getType(), device.getId());
+        model.printModel();
     }
 
     @Test

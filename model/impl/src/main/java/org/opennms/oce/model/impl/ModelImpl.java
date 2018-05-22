@@ -33,7 +33,6 @@ import java.util.Collections;
 import java.util.Deque;
 import java.util.HashMap;
 import java.util.LinkedList;
-import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Queue;
@@ -105,41 +104,18 @@ public class ModelImpl implements Model {
     }
 
     @Override
-    public void updateObjects(List<ModelObject> moList){}
+    public void addObject(String type, String id, String parentType, String parentId) {
 
-    @Override
-    public void updateObject(ModelObject mo){}
-
-    @Override
-    public void addObjects(List<ModelObject> moList, ModelObject parent) {
-
-        if(moList.isEmpty()) {
-            LOG.info("Loaded model objects list is empty.");
-            return;
-        }
-        else {
-            LOG.debug("Model object list size is : {}", moList.size());
-        }
-
-        /** simple iteration for a while
-         * THINGS TO CONSIDER:
-         * - If model objects in the list are somehow related to each other, eg parent child (device and card)
-         * -- define order of insertion/orchestration?
-         * -- can they be combined as single insertion?
-         * -- etc
-        **/
-        for(ModelObject mo : moList) {
-            addObject(mo, parent);
-        }
     }
 
-    /**
-     * The assumption is that model object contains all its hierarchy, for example if it is device,
-     * then it should have cards and ports, but if it is a new card, then there should be parent provided
-     */
     @Override
-    public void addObject(ModelObject mo, ModelObject parent) {
-        addObject((ModelObjectImpl)mo, parent);
+    public void addPeerRelation(String type, String id, String typePeer1, String idPeer1, String typePeer2, String idPeer2) {
+
+    }
+
+    @Override
+    public void addRelativeRelation(String type, String id, String relativeType, String relativeId) {
+
     }
 
     /**
@@ -261,6 +237,16 @@ public class ModelImpl implements Model {
 
         //TODO
         // Handle cases of non top level objects (cards)
+    }
+
+    @Override
+    public void removePeerRelation(String type, String id, String typePeer1, String idPeer1, String typePeer2, String idPeer2) {
+
+    }
+
+    @Override
+    public void removeRelativeRelation(String type, String id, String relativeType, String relativeId) {
+
     }
 
     private void index(ModelObject mo) {

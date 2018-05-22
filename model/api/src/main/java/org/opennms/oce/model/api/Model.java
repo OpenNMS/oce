@@ -28,7 +28,6 @@
 
 package org.opennms.oce.model.api;
 
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -52,16 +51,18 @@ public interface Model {
 
     void printModel();
 
+    void addObject(String type, String id, String parentType, String parentId);
+
     /**
-     * To support both batch and single operations of updating model. Using list in case if we need ordering
+     * There could be one or two peers (eg link with one port only, link with two ports)
      */
-    void updateObjects(List<ModelObject> moList);
+    void addPeerRelation(String type, String id, String typePeer1, String idPeer1, String typePeer2, String idPeer2);
 
-    void updateObject(ModelObject mo);
-
-    void addObjects(List<ModelObject> moList, ModelObject parent);
-
-    void addObject(ModelObject mo, ModelObject parent);
+    void addRelativeRelation(String type, String id, String relativeType, String relativeId);
 
     void removeObjectById(String type, String id);
+
+    void removePeerRelation(String type, String id, String typePeer1, String idPeer1, String typePeer2, String idPeer2);
+
+    void removeRelativeRelation(String type, String id, String relativeType, String relativeId);
 }

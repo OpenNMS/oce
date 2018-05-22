@@ -166,6 +166,19 @@ public class ModelImpl implements Model {
         Map<String, ModelObject> typeMap = mosByTypeAndById.get(type);
         typeMap.put(mo.getId(), mo);
 
+        if(type.equals("Device") || type.equals("Card") || type.equals("Port")) {
+            addParentChildRel(mo);
+        }
+        else if(type.equals("Link")) {
+            Set<ModelObject> peers = mo.getPeers();
+            addPeerRel(mo, peers);
+        }
+        //TODO
+        // Check level of hierarchy
+        // -- If it is mid level (card), attach to the parent (check if parent exists)
+    }
+
+    private void addParentChildRel(ModelObject mo) {
         //handle hierarchy etc
         Queue<ModelObject> q = new LinkedList<>();
 
@@ -186,10 +199,20 @@ public class ModelImpl implements Model {
                 }
             }
         }
+    }
 
-        //TODO
-        // Check level of hierarchy
-        // -- If it is mid level (card), attach to the parent (check if parent exists)
+    /**
+     * There could be one peer only
+     */
+    private void addPeerRel(ModelObject mo, Set<ModelObject> peers) {
+        /*for(ModelObject peer : peers) {
+            //If type of a peer doesn't exist, create one
+            if(mosByTypeAndById.get(peer.getType()) == null) {
+                mosByTypeAndById.put(peer.getType(), new HashMap<>());
+            }
+
+            mosByTypeAndById.get(peer.getType()).put(peer.getId(), peer);
+        }*/
     }
 
     @Override

@@ -59,9 +59,9 @@ public interface Model {
 
     void updateObject(ModelObject mo);
 
-    void addObjects(List<ModelObject> moList);
+    void addObjects(List<ModelObject> moList, ModelObject parent);
 
-    void addObject(ModelObject mo);
+    void addObject(ModelObject mo, ModelObject parent);
 
     void removeObjectById(String type, String id);
 }

@@ -112,14 +112,14 @@ public class UpdateInventoryTest {
          * It can be passed as reference to another build function (updateModel) function which is similar to existing buildModel
          */
 
-        model.addObject(device);
+        model.addObject(device, root);
 
         //Try to add this device again...
         final ModelObjectImpl sameDevice = new ModelObjectImpl("Device", "n3");
 
         // Exception to be thrown just before that method call
         exceptionGrabber.expect(IllegalStateException.class);
-        model.addObject(sameDevice);
+        model.addObject(sameDevice, root);
 
         // Expectation is that no exception happens
         model.removeObjectById(device.getType(), device.getId());
@@ -177,7 +177,7 @@ public class UpdateInventoryTest {
         port3.setParent(card);
         port4.setParent(card);
 
-        model.addObject(device);
+        model.addObject(device, root);
 
 
         final ModelObjectImpl card2 = new ModelObjectImpl("Card", "n3-c2");
@@ -186,8 +186,6 @@ public class UpdateInventoryTest {
         final ModelObjectImpl port22 = new ModelObjectImpl("Port", "n3-c2-p2");
         final ModelObjectImpl port23 = new ModelObjectImpl("Port", "n3-c2-p3");
         final ModelObjectImpl port24 = new ModelObjectImpl("Port", "n3-c2-p4");
-
-        //card.setParent(device);
 
         port21.setParent(card2);
         port22.setParent(card2);
@@ -203,7 +201,7 @@ public class UpdateInventoryTest {
          * - Provide a card as is and try to find parent
          * - Both above options: first first and first is not found then second second
         */
-        model.addObject(card2);
+        model.addObject(card2, device);
         model.printModel();
         //Removing new card
         model.removeObjectById(card2.getType(), card2.getId());
@@ -254,7 +252,7 @@ public class UpdateInventoryTest {
         //Print model after before a new device
         model.printModel();
 
-        model.addObject(device);
+        model.addObject(device, root);
 
         //Print model after adding a new device
         model.printModel();
@@ -320,7 +318,7 @@ public class UpdateInventoryTest {
         //Print model before adding a new device
         model.printModel();
 
-        model.addObject(device);
+        model.addObject(device, root);
 
         //Print model after adding a new device
         model.printModel();
@@ -376,7 +374,7 @@ public class UpdateInventoryTest {
         //Print model before adding a new device
         model.printModel();
 
-        model.addObject(device);
+        model.addObject(device, root);
 
         //Print model after adding a new device
         model.printModel();

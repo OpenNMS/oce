@@ -111,7 +111,7 @@ public class ModelImpl implements Model {
     public void updateObject(ModelObject mo){}
 
     @Override
-    public void addObjects(List<ModelObject> moList) {
+    public void addObjects(List<ModelObject> moList, ModelObject parent) {
 
         if(moList.isEmpty()) {
             LOG.info("Loaded model objects list is empty.");
@@ -129,7 +129,7 @@ public class ModelImpl implements Model {
          * -- etc
         **/
         for(ModelObject mo : moList) {
-            addObject(mo);
+            addObject(mo, parent);
         }
     }
 
@@ -138,14 +138,14 @@ public class ModelImpl implements Model {
      * then it should have cards and ports, but if it is a new card, then there should be parent provided
      */
     @Override
-    public void addObject(ModelObject mo) {
-        addObject((ModelObjectImpl)mo);
+    public void addObject(ModelObject mo, ModelObject parent) {
+        addObject((ModelObjectImpl)mo, parent);
     }
 
     /**
      * Decouple abstraction from implementation
      */
-    private void addObject(ModelObjectImpl mo) {
+    private void addObject(ModelObjectImpl mo, ModelObject parent) {
         String type = mo.getType();
         if(getObjectById(type, mo.getId()) != null) {
             throw new IllegalStateException("Object " + mo.getId() + " with type " + type + " already exists '");
@@ -157,8 +157,10 @@ public class ModelImpl implements Model {
         }
 
         //if there is no parent we assume that this is top level network element
-        if(mo.getParent() == null) {
+        if(parent == null) {
             mo.setParent(root);
+        } else {
+            mo.setParent(parent);
         }
 
         Map<String, ModelObject> typeMap = mosByTypeAndById.get(type);

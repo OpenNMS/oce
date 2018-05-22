@@ -50,10 +50,15 @@ public interface ModelObject {
     Map<String, Group> getAllChildrenGroups();
 
     Group getPeerGroup(String objectType);
-    
+
     Group getNephewGroup(String objectType);
-    
+
     Group getUncleGroup(String objectType);
+
+    /**
+     * Get the groups that this ModelObject will propagate Alarms to.
+     */
+    Set<Group> getAlarmGroups();
 
     String getType();
 
@@ -62,7 +67,7 @@ public interface ModelObject {
     String getId();
 
     String getFriendlyName();
-    
+
     OperationalState getOperationalState();
 
     void setOperationalState(OperationalState state);

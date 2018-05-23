@@ -28,7 +28,6 @@
 
 package org.opennms.oce.engine.api;
 
-import java.util.ArrayList;
 import java.util.List;
 
 public interface ObjectEntry {

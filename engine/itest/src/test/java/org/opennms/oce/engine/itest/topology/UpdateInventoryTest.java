@@ -71,7 +71,7 @@ public class UpdateInventoryTest {
     }
 
     @Test
-    public void canBeClean() {
+    public void canCleanModel() {
         model = inventoryManager.getModel();
         ModelObject root = model.getRoot();
         assertThat(root.getChildren(), hasSize(0));
@@ -94,6 +94,28 @@ public class UpdateInventoryTest {
         TopologyInventory inventory = new TopologyInventory();
         ObjectEntry obj = new InventoryObjectEntry("Device", "n1", null, "Model", "model");
         inventory.addObject(obj);
+        inventoryManager.loadInventory(inventory);
+
+        model = inventoryManager.getModel();
+        ModelObject root = model.getRoot();
+
+        assertThat(root.getChildren(), hasSize(1));
+        assertThat(root.getType(), is("Model"));
+    }
+
+    @Test
+    public void canLoadNotThatSimpleInventory() {
+        inventoryManager.clean();
+
+        TopologyInventory inventory = new TopologyInventory();
+        ObjectEntry objDevice = new InventoryObjectEntry("Device", "n1", null, "Model", "model");
+        inventory.addObject(objDevice);
+        ObjectEntry objCard = new InventoryObjectEntry("Card", "n1-c1", null, "Device", "n1");
+        inventory.addObject(objCard);
+        ObjectEntry objPort1 = new InventoryObjectEntry("Port", "n1-c1-p1", null, "Card", "n1-c1");
+        inventory.addObject(objPort1);
+        ObjectEntry objPort2 = new InventoryObjectEntry("Port", "n1-c1-p2", null, "Card", "n1-c1");
+        inventory.addObject(objPort2);
         inventoryManager.loadInventory(inventory);
 
         model = inventoryManager.getModel();

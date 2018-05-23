@@ -63,7 +63,7 @@ public class InventoryModelManager {
     }
 
     public void loadInventory(Inventory inventory) {
-        this.inventory.append(inventory);
+        this.inventory.appendInventory(inventory);
 
         if(model != null) {
             //If model exists but there is no root:
@@ -152,5 +152,10 @@ public class InventoryModelManager {
         final ModelObjectImpl mo = new ModelObjectImpl(ioe.getType(), ioe.getId());
         mo.setFriendlyName(ioe.getFriendlyName());
         return mo;
+    }
+
+    public void clean() {
+        model = null;
+        inventory = new TopologyInventory();
     }
 }

@@ -44,8 +44,13 @@ public class TopologyInventory implements Inventory {
     }
 
     @Override
-    public void append(Inventory inventory) {
+    public void appendInventory(Inventory inventory) {
 
         inventoryList.addAll(inventory.getObjectEntryList());
+    }
+
+    @Override
+    public void addObject(ObjectEntry entry) {
+        inventoryList.add(entry);
     }
 }

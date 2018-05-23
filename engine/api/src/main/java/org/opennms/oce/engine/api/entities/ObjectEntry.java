@@ -34,7 +34,11 @@ public interface ObjectEntry {
 
     List<PeerRef> getPeerRef();
 
+    void setPeerRef(List<PeerRef> peerRef);
+
     List<RelativeRef> getRelativeRef();
+
+    void setRelativeRef(List<RelativeRef> relativeRef);
 
     String getId();
 

@@ -30,6 +30,7 @@ package org.opennms.oce.engine.topology;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 import org.opennms.oce.engine.api.entities.ObjectEntry;
 import org.opennms.oce.engine.api.entities.PeerRef;
@@ -45,6 +46,22 @@ public class InventoryObjectEntry implements ObjectEntry {
     protected String parentType;
     protected String parentId;
 
+    public InventoryObjectEntry() {}
+
+    public InventoryObjectEntry(String type, String id, String subtype, String parentType, String parentId) {
+        this.type = Objects.requireNonNull(type);
+        this.id = Objects.requireNonNull(id);
+        this.subtype = subtype;
+        this.parentType = parentType;
+        this.parentId = parentId;
+    }
+
+    @Override
+    public void setPeerRef(List<PeerRef> peerRef) {
+        this.peerRef = peerRef;
+    }
+
+    @Override
     public List<PeerRef> getPeerRef() {
         if (peerRef == null) {
             peerRef = new ArrayList<>();
@@ -52,6 +69,12 @@ public class InventoryObjectEntry implements ObjectEntry {
         return this.peerRef;
     }
 
+    @Override
+    public void setRelativeRef(List<RelativeRef> relativeRef) {
+        this.relativeRef = relativeRef;
+    }
+
+    @Override
     public List<RelativeRef> getRelativeRef() {
         if (relativeRef == null) {
             relativeRef = new ArrayList<>();
@@ -59,61 +82,73 @@ public class InventoryObjectEntry implements ObjectEntry {
         return this.relativeRef;
     }
 
+    @Override
     public String getId() {
 
         return id;
     }
 
+    @Override
     public void setId(String value) {
 
         this.id = value;
     }
 
+    @Override
     public String getType() {
 
         return type;
     }
 
+    @Override
     public void setType(String value) {
 
         this.type = value;
     }
 
+    @Override
     public String getSubtype() {
 
         return subtype;
     }
 
+    @Override
     public void setSubtype(String value) {
 
         this.subtype = value;
     }
 
+    @Override
     public String getFriendlyName() {
 
         return friendlyName;
     }
 
+    @Override
     public void setFriendlyName(String value) {
 
         this.friendlyName = value;
     }
 
+    @Override
     public String getParentType() {
 
         return parentType;
     }
 
+    @Override
     public void setParentType(String value) {
 
         this.parentType = value;
     }
 
+    @Override
     public String getParentId() {
 
         return parentId;
     }
 
+    @Override
     public void setParentId(String value) {
 
         this.parentId = value;

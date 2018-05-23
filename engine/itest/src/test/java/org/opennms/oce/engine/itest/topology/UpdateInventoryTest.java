@@ -30,12 +30,15 @@ package org.opennms.oce.engine.itest.topology;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasSize;
+import static org.hamcrest.Matchers.is;
 
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
+import org.opennms.oce.engine.api.entities.ObjectEntry;
 import org.opennms.oce.engine.topology.InventoryModelManager;
+import org.opennms.oce.engine.topology.InventoryObjectEntry;
 import org.opennms.oce.engine.topology.TopologyEngineFactory;
 import org.opennms.oce.engine.topology.TopologyInventory;
 import org.opennms.oce.model.api.Model;
@@ -59,9 +62,44 @@ public class UpdateInventoryTest {
     }
 
     @Test
-    public void canCreateEmptyModel() {
+    public void canBeEmptyModelButHaveRoot() {
+        model = inventoryManager.getModel();
+        ModelObject root = model.getRoot();
+
+        assertThat(root.getChildren(), hasSize(0));
+        assertThat(root.getType(), is("Model"));
+    }
+
+    @Test
+    public void canBeClean() {
         model = inventoryManager.getModel();
         ModelObject root = model.getRoot();
         assertThat(root.getChildren(), hasSize(0));
+        assertThat(root.getType(), is("Model"));
+
+        inventoryManager.clean();
+        inventoryManager.loadInventory(new TopologyInventory());
+
+        model = inventoryManager.getModel();
+        root = model.getRoot();
+
+        assertThat(root.getChildren(), hasSize(0));
+        assertThat(root.getType(), is("Model"));
+    }
+
+    @Test
+    public void canLoadSimpleInventory() {
+        inventoryManager.clean();
+
+        TopologyInventory inventory = new TopologyInventory();
+        ObjectEntry obj = new InventoryObjectEntry("Device", "n1", null, "Model", "model");
+        inventory.addObject(obj);
+        inventoryManager.loadInventory(inventory);
+
+        model = inventoryManager.getModel();
+        ModelObject root = model.getRoot();
+
+        assertThat(root.getChildren(), hasSize(1));
+        assertThat(root.getType(), is("Model"));
     }
 }

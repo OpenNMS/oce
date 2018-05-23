@@ -35,5 +35,7 @@ import org.opennms.oce.engine.api.entities.ObjectEntry;
 public interface Inventory {
     List<ObjectEntry> getObjectEntryList();
 
-    void append(Inventory inventory);
+    void appendInventory(Inventory inventory);
+
+    void addObject(ObjectEntry entry);
 }

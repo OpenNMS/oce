@@ -26,28 +26,29 @@
  *     http://www.opennms.com/
  *******************************************************************************/
 
-package org.opennms.oce.engine.itest.topology;
+package org.opennms.oce.engine.topology;
 
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.rules.ExpectedException;
-import org.opennms.oce.engine.topology.InventoryModelManager;
-import org.opennms.oce.engine.topology.TopologyEngineFactory;
-import org.opennms.oce.engine.topology.TopologyInventory;
-import org.opennms.oce.engine.topology.TopologyInventoryImpl;
+public class InventoryRelativeRef {
+    protected String type;
+    protected String id;
 
-public class UpdateInventoryTest {
+    public String getType() {
 
-    TopologyEngineFactory topologyEngineFactory;
-    InventoryModelManager inventoryManager;
-    @Rule
-    public ExpectedException exceptionGrabber = ExpectedException.none();
+        return type;
+    }
 
-    @Before
-    public void setUp() {
-        topologyEngineFactory = new TopologyEngineFactory();
-        inventoryManager = new InventoryModelManager();
-        TopologyInventory inventory = new TopologyInventoryImpl();
-        inventoryManager.loadInventory(inventory);
+    public void setType(String value) {
+
+        this.type = value;
+    }
+
+    public String getId() {
+
+        return id;
+    }
+
+    public void setId(String value) {
+
+        this.id = value;
     }
 }

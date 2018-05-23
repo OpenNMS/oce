@@ -28,7 +28,7 @@
 
 package org.opennms.oce.engine.topology;
 
-import org.opennms.oce.engine.api.PeerRef;
+import org.opennms.oce.engine.api.entities.PeerRef;
 
 public class InventoryPeerRef implements PeerRef {
     protected String type;

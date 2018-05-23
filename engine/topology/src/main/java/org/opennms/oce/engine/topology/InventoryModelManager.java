@@ -32,6 +32,9 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 import org.opennms.oce.engine.api.*;
+import org.opennms.oce.engine.api.entities.ObjectEntry;
+import org.opennms.oce.engine.api.entities.PeerRef;
+import org.opennms.oce.engine.api.entities.RelativeRef;
 import org.opennms.oce.model.api.Model;
 import org.opennms.oce.model.impl.ModelImpl;
 import org.opennms.oce.model.impl.ModelObjectImpl;
@@ -62,10 +65,27 @@ public class InventoryModelManager {
     public void loadInventory(Inventory inventory) {
         this.inventory.append(inventory);
 
+        if(model != null) {
+            //If model exists but there is no root:
+            if (model.getRoot() == null) {
+                throw new IllegalStateException("Inventory must contain a single object of type '"
+                        + MODEL_ROOT_TYPE + "' with id '" + MODEL_ROOT_ID + "'");
+            }
+            append(inventory);
+            return;
+        }
+
         // Create the initial model objects and index them by type/id
         // NOTE: This will throw a IllegalStateException if a duplicate key is found
         final Map<ModelObjectKey, ModelObjectImpl> mosByKey = inventory.getObjectEntryList().stream()
                 .collect(Collectors.toMap(ioe -> ModelObjectKey.key(ioe.getType(), ioe.getId()), InventoryModelManager::toModelObject));
+
+        // Create the root
+        final ObjectEntry rootEntry = new InventoryObjectEntry();
+        rootEntry.setType(MODEL_ROOT_TYPE);
+        rootEntry.setId(MODEL_ROOT_ID);
+
+        mosByKey.put(ModelObjectKey.key(MODEL_ROOT_TYPE, MODEL_ROOT_ID), new ModelObjectImpl(rootEntry.getType(), rootEntry.getId()));
 
         // Now build out the relationships
         inventory.getObjectEntryList().forEach(ioe -> {
@@ -73,7 +93,7 @@ public class InventoryModelManager {
             final ModelObjectImpl mo = mosByKey.get(key);
             if (mo == null) {
                 // Should not happen
-                throw new IllegalStateException("Oops. Cannot find an MO with key: " + key);
+                throw new IllegalStateException("Cannot find an MO with key: " + key);
             }
 
             if (MODEL_ROOT_TYPE.equals(mo.getType())) {
@@ -85,7 +105,7 @@ public class InventoryModelManager {
             final ModelObjectKey parentKey = ModelObjectKey.key(ioe.getParentType(), ioe.getParentId());
             final ModelObjectImpl parentMo = mosByKey.get(parentKey);
             if (parentMo == null) {
-                throw new IllegalStateException("Oops. Cannot find parent MO with key: " + parentKey + " on MO with key: " + key);
+                throw new IllegalStateException("Cannot find parent MO with key: " + parentKey + " on MO with key: " + key);
             }
             mo.setParent(parentMo);
             parentMo.addChild(mo);
@@ -95,7 +115,7 @@ public class InventoryModelManager {
                 final ModelObjectKey peerKey = ModelObjectKey.key(peerRef.getType(), peerRef.getId());
                 final ModelObjectImpl peerMo = mosByKey.get(peerKey);
                 if (peerMo == null) {
-                    throw new IllegalStateException("Oops. Cannot find peer MO with key: " + peerKey + " on MO with key: " + key);
+                    throw new IllegalStateException("Cannot find peer MO with key: " + peerKey + " on MO with key: " + key);
                 }
                 mo.addPeer(peerMo);
                 peerMo.addPeer(mo);
@@ -106,26 +126,26 @@ public class InventoryModelManager {
                 final ModelObjectKey relativeKey = ModelObjectKey.key(relativeRef.getType(), relativeRef.getId());
                 final ModelObjectImpl relativeMo = mosByKey.get(relativeKey);
                 if (relativeMo == null) {
-                    throw new IllegalStateException("Oops. Cannot find relative MO with key: " + relativeRef + " on MO with key: " + key);
+                    throw new IllegalStateException("Cannot find relative MO with key: " + relativeRef + " on MO with key: " + key);
                 }
                 mo.addUncle(relativeMo);
                 relativeMo.addNephew(mo);
             }
         });
 
-        // Find the root
+        // Create the root
         final ModelObjectImpl rootMo = mosByKey.get(ModelObjectKey.key(MODEL_ROOT_TYPE, MODEL_ROOT_ID));
-        if (rootMo == null) {
-            throw new IllegalStateException("Inventory must contain a single object of type '"
-                    + MODEL_ROOT_TYPE + "' with id '" + MODEL_ROOT_ID + "'");
-        }
-
         // Create a new model instance
         model = new ModelImpl(rootMo);
     }
 
     public Model getModel() {
         return model;
+    }
+
+
+    private void append(Inventory inventory) {
+
     }
 
     private static ModelObjectImpl toModelObject(ObjectEntry ioe) {

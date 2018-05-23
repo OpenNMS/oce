@@ -31,9 +31,9 @@ package org.opennms.oce.engine.topology;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.opennms.oce.engine.api.ObjectEntry;
-import org.opennms.oce.engine.api.PeerRef;
-import org.opennms.oce.engine.api.RelativeRef;
+import org.opennms.oce.engine.api.entities.ObjectEntry;
+import org.opennms.oce.engine.api.entities.PeerRef;
+import org.opennms.oce.engine.api.entities.RelativeRef;
 
 public class InventoryObjectEntry implements ObjectEntry {
     protected List<PeerRef> peerRef;

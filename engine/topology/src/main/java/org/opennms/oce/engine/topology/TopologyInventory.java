@@ -28,13 +28,14 @@
 
 package org.opennms.oce.engine.topology;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import org.opennms.oce.engine.api.Inventory;
-import org.opennms.oce.engine.api.ObjectEntry;
+import org.opennms.oce.engine.api.entities.ObjectEntry;
 
 public class TopologyInventory implements Inventory {
-    List<ObjectEntry>  inventoryList;
+    List<ObjectEntry>  inventoryList = new ArrayList<>();
 
     @Override
     public List<ObjectEntry> getObjectEntryList() {

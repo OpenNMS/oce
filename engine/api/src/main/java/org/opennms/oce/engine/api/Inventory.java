@@ -30,6 +30,8 @@ package org.opennms.oce.engine.api;
 
 import java.util.List;
 
+import org.opennms.oce.engine.api.entities.ObjectEntry;
+
 public interface Inventory {
     List<ObjectEntry> getObjectEntryList();
 

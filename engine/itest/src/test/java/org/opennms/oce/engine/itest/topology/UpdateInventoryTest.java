@@ -28,17 +28,25 @@
 
 package org.opennms.oce.engine.itest.topology;
 
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.hasSize;
+
 import org.junit.Before;
 import org.junit.Rule;
+import org.junit.Test;
 import org.junit.rules.ExpectedException;
 import org.opennms.oce.engine.topology.InventoryModelManager;
 import org.opennms.oce.engine.topology.TopologyEngineFactory;
 import org.opennms.oce.engine.topology.TopologyInventory;
+import org.opennms.oce.model.api.Model;
+import org.opennms.oce.model.api.ModelObject;
 
 public class UpdateInventoryTest {
 
     TopologyEngineFactory topologyEngineFactory;
     InventoryModelManager inventoryManager;
+    Model model;
+
     @Rule
     public ExpectedException exceptionGrabber = ExpectedException.none();
 
@@ -48,5 +56,12 @@ public class UpdateInventoryTest {
         inventoryManager = new InventoryModelManager();
         TopologyInventory inventory = new TopologyInventory();
         inventoryManager.loadInventory(inventory);
+    }
+
+    @Test
+    public void canCreateEmptyModel() {
+        model = inventoryManager.getModel();
+        ModelObject root = model.getRoot();
+        assertThat(root.getChildren(), hasSize(0));
     }
 }

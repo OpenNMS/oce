@@ -28,7 +28,7 @@
 
 package org.opennms.oce.engine.topology;
 
-import org.opennms.oce.engine.api.RelativeRef;
+import org.opennms.oce.engine.api.entities.RelativeRef;
 
 public class InventoryRelativeRef implements RelativeRef {
     protected String type;

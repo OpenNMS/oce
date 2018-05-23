@@ -31,6 +31,7 @@ package org.opennms.oce.engine.itest.topology;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
+import static org.hamcrest.core.IsNull.notNullValue;
 
 import org.junit.Before;
 import org.junit.Rule;
@@ -122,6 +123,56 @@ public class UpdateInventoryTest {
         ModelObject root = model.getRoot();
 
         assertThat(root.getChildren(), hasSize(1));
+        assertThat(root.getChildren(), hasSize(1));
         assertThat(root.getType(), is("Model"));
+        assertThat(model.getObjectById("Device", "n1"), notNullValue());
+        assertThat(model.getObjectById("Card", "n1-c1"), notNullValue());
+        assertThat(model.getObjectById("Port", "n1-c1-p1"), notNullValue());
+        assertThat(model.getObjectById("Port", "n1-c1-p2"), notNullValue());
+    }
+
+    @Test
+    public void canLoadInventoryWithDefaultTopology1_2_4() {
+        inventoryManager.clean();
+
+        TopologyInventory inventory = new TopologyInventory();
+
+        ObjectEntry objDevice = new InventoryObjectEntry("Device", "n1", null, "Model", "model");
+        inventory.addObject(objDevice);
+
+        ObjectEntry objCard1 = new InventoryObjectEntry("Card", "n1-c1", null, "Device", "n1");
+        inventory.addObject(objCard1);
+        ObjectEntry objCard2 = new InventoryObjectEntry("Card", "n1-c2", null, "Device", "n1");
+        inventory.addObject(objCard2);
+
+        ObjectEntry objPort1 = new InventoryObjectEntry("Port", "n1-c1-p1", null, "Card", "n1-c1");
+        inventory.addObject(objPort1);
+        ObjectEntry objPort2 = new InventoryObjectEntry("Port", "n1-c1-p2", null, "Card", "n1-c1");
+        inventory.addObject(objPort2);
+        ObjectEntry objPort3 = new InventoryObjectEntry("Port", "n1-c1-p3", null, "Card", "n1-c1");
+        inventory.addObject(objPort3);
+        ObjectEntry objPort4 = new InventoryObjectEntry("Port", "n1-c1-p4", null, "Card", "n1-c1");
+        inventory.addObject(objPort4);
+
+        ObjectEntry objPort11 = new InventoryObjectEntry("Port", "n1-c2-p1", null, "Card", "n1-c2");
+        inventory.addObject(objPort11);
+        ObjectEntry objPort22 = new InventoryObjectEntry("Port", "n1-c2-p2", null, "Card", "n1-c2");
+        inventory.addObject(objPort22);
+
+        inventoryManager.loadInventory(inventory);
+
+        model = inventoryManager.getModel();
+        ModelObject root = model.getRoot();
+
+        assertThat(root.getChildren(), hasSize(1));
+        assertThat(root.getType(), is("Model"));
+
+        assertThat(model.getObjectById("Device", "n1"), notNullValue());
+        assertThat(model.getObjectById("Card", "n1-c1"), notNullValue());
+        assertThat(model.getObjectById("Card", "n1-c2"), notNullValue());
+        assertThat(model.getObjectById("Port", "n1-c1-p1"), notNullValue());
+        assertThat(model.getObjectById("Port", "n1-c1-p2"), notNullValue());
+        assertThat(model.getObjectById("Port", "n1-c1-p3"), notNullValue());
+        assertThat(model.getObjectById("Port", "n1-c1-p4"), notNullValue());
     }
 }

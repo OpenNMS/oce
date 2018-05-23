@@ -26,27 +26,42 @@
  *     http://www.opennms.com/
  *******************************************************************************/
 
-package org.opennms.oce.engine.itest.topology;
+package org.opennms.oce.engine.topology;
 
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.rules.ExpectedException;
-import org.opennms.oce.engine.topology.InventoryModelManager;
-import org.opennms.oce.engine.topology.TopologyEngineFactory;
-import org.opennms.oce.engine.topology.TopologyInventory;
+import org.opennms.oce.engine.api.PeerRef;
 
-public class UpdateInventoryTest {
+public class InventoryPeerRef implements PeerRef {
+    protected String type;
+    protected String id;
+    protected String endpoint;
 
-    TopologyEngineFactory topologyEngineFactory;
-    InventoryModelManager inventoryManager;
-    @Rule
-    public ExpectedException exceptionGrabber = ExpectedException.none();
+    @Override
+    public String getType() {
 
-    @Before
-    public void setUp() {
-        topologyEngineFactory = new TopologyEngineFactory();
-        inventoryManager = new InventoryModelManager();
-        TopologyInventory inventory = new TopologyInventory();
-        inventoryManager.loadInventory(inventory);
+        return type;
+    }
+
+    @Override
+    public void setType(String value) {
+
+        this.type = value;
+    }
+
+    @Override
+    public String getId() {
+
+        return id;
+    }
+
+    @Override
+    public void setId(String value) {
+
+        this.id = value;
+    }
+
+    @Override
+    public String getEndpoint() {
+
+        return endpoint;
     }
 }

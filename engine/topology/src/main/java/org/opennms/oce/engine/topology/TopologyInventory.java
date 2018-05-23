@@ -26,27 +26,25 @@
  *     http://www.opennms.com/
  *******************************************************************************/
 
-package org.opennms.oce.engine.itest.topology;
+package org.opennms.oce.engine.topology;
 
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.rules.ExpectedException;
-import org.opennms.oce.engine.topology.InventoryModelManager;
-import org.opennms.oce.engine.topology.TopologyEngineFactory;
-import org.opennms.oce.engine.topology.TopologyInventory;
+import java.util.List;
 
-public class UpdateInventoryTest {
+import org.opennms.oce.engine.api.Inventory;
+import org.opennms.oce.engine.api.ObjectEntry;
 
-    TopologyEngineFactory topologyEngineFactory;
-    InventoryModelManager inventoryManager;
-    @Rule
-    public ExpectedException exceptionGrabber = ExpectedException.none();
+public class TopologyInventory implements Inventory {
+    List<ObjectEntry>  inventoryList;
 
-    @Before
-    public void setUp() {
-        topologyEngineFactory = new TopologyEngineFactory();
-        inventoryManager = new InventoryModelManager();
-        TopologyInventory inventory = new TopologyInventory();
-        inventoryManager.loadInventory(inventory);
+    @Override
+    public List<ObjectEntry> getObjectEntryList() {
+
+        return inventoryList;
+    }
+
+    @Override
+    public void append(Inventory inventory) {
+
+        inventoryList.addAll(inventory.getObjectEntryList());
     }
 }

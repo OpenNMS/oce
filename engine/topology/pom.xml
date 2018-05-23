@@ -41,5 +41,9 @@
 		  <artifactId>junit</artifactId>
 		  <scope>test</scope>
 	   </dependency>
+        <dependency>
+            <groupId>org.opennms.oce.model</groupId>
+            <artifactId>org.opennms.oce.model.impl</artifactId>
+        </dependency>
     </dependencies>
 </project>

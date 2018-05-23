@@ -31,6 +31,7 @@ package org.opennms.oce.engine.topology;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import org.opennms.oce.engine.api.*;
 import org.opennms.oce.model.api.Model;
 import org.opennms.oce.model.impl.ModelImpl;
 import org.opennms.oce.model.impl.ModelObjectImpl;
@@ -39,7 +40,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class InventoryModelManager {
-    private TopologyInventory inventory;
+    private Inventory inventory;
     private Model model;
 
     private static final Logger LOG = LoggerFactory.getLogger(InventoryModelManager.class);
@@ -48,26 +49,26 @@ public class InventoryModelManager {
     public static final String MODEL_ROOT_ID = "model";
 
     public InventoryModelManager() {
-        inventory = new TopologyInventoryImpl();
+        inventory = new TopologyInventory();
     }
     /**
      * Initial load of inventory.
      */
-    public InventoryModelManager(TopologyInventory inventory) {
+    public InventoryModelManager(Inventory inventory) {
         this();
         loadInventory(inventory);
     }
 
-    public void loadInventory(TopologyInventory inventory) {
+    public void loadInventory(Inventory inventory) {
         this.inventory.append(inventory);
 
         // Create the initial model objects and index them by type/id
         // NOTE: This will throw a IllegalStateException if a duplicate key is found
-        final Map<ModelObjectKey, ModelObjectImpl> mosByKey = inventory.getInventoryObjectEntryList().stream()
+        final Map<ModelObjectKey, ModelObjectImpl> mosByKey = inventory.getObjectEntryList().stream()
                 .collect(Collectors.toMap(ioe -> ModelObjectKey.key(ioe.getType(), ioe.getId()), InventoryModelManager::toModelObject));
 
         // Now build out the relationships
-        inventory.getInventoryObjectEntryList().forEach(ioe -> {
+        inventory.getObjectEntryList().forEach(ioe -> {
             final ModelObjectKey key = ModelObjectKey.key(ioe.getType(), ioe.getId());
             final ModelObjectImpl mo = mosByKey.get(key);
             if (mo == null) {
@@ -90,7 +91,7 @@ public class InventoryModelManager {
             parentMo.addChild(mo);
 
             // Setup the peers
-            for (InventoryPeerRef peerRef : ioe.getPeerRef()) {
+            for (PeerRef peerRef : ioe.getPeerRef()) {
                 final ModelObjectKey peerKey = ModelObjectKey.key(peerRef.getType(), peerRef.getId());
                 final ModelObjectImpl peerMo = mosByKey.get(peerKey);
                 if (peerMo == null) {
@@ -101,7 +102,7 @@ public class InventoryModelManager {
             }
 
             // Setup the relatives
-            for (InventoryRelativeRef relativeRef : ioe.getRelativeRef()) {
+            for (RelativeRef relativeRef : ioe.getRelativeRef()) {
                 final ModelObjectKey relativeKey = ModelObjectKey.key(relativeRef.getType(), relativeRef.getId());
                 final ModelObjectImpl relativeMo = mosByKey.get(relativeKey);
                 if (relativeMo == null) {
@@ -127,7 +128,7 @@ public class InventoryModelManager {
         return model;
     }
 
-    private static ModelObjectImpl toModelObject(InventoryObjectEntry ioe) {
+    private static ModelObjectImpl toModelObject(ObjectEntry ioe) {
         final ModelObjectImpl mo = new ModelObjectImpl(ioe.getType(), ioe.getId());
         mo.setFriendlyName(ioe.getFriendlyName());
         return mo;

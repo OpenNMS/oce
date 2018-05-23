@@ -26,42 +26,38 @@
  *     http://www.opennms.com/
  *******************************************************************************/
 
-package org.opennms.oce.engine.topology;
+package org.opennms.oce.engine.api;
 
-import org.opennms.oce.engine.api.PeerRef;
+import java.util.ArrayList;
+import java.util.List;
 
-public class InventoryPeerRef implements PeerRef {
-    protected String type;
-    protected String id;
-    protected String endpoint;
+public interface ObjectEntry {
 
-    @Override
-    public String getType() {
+    public List<PeerRef> getPeerRef();
 
-        return type;
-    }
+    public List<RelativeRef> getRelativeRef();
 
-    @Override
-    public void setType(String value) {
+    public String getId();
 
-        this.type = value;
-    }
+    public void setId(String value);
 
-    @Override
-    public String getId() {
+    public String getType();
 
-        return id;
-    }
+    public void setType(String value);
 
-    @Override
-    public void setId(String value) {
+    public String getSubtype();
 
-        this.id = value;
-    }
+    public void setSubtype(String value);
 
-    @Override
-    public String getEndpoint() {
+    public String getFriendlyName();
 
-        return endpoint;
-    }
+    public void setFriendlyName(String value);
+
+    public String getParentType();
+
+    public void setParentType(String value);
+
+    public String getParentId();
+
+    public void setParentId(String value);
 }

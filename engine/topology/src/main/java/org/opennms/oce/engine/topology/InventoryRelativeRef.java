@@ -28,25 +28,31 @@
 
 package org.opennms.oce.engine.topology;
 
-public class InventoryRelativeRef {
+import org.opennms.oce.engine.api.RelativeRef;
+
+public class InventoryRelativeRef implements RelativeRef {
     protected String type;
     protected String id;
 
+    @Override
     public String getType() {
 
         return type;
     }
 
+    @Override
     public void setType(String value) {
 
         this.type = value;
     }
 
+    @Override
     public String getId() {
 
         return id;
     }
 
+    @Override
     public void setId(String value) {
 
         this.id = value;

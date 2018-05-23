@@ -30,8 +30,21 @@ package org.opennms.oce.engine.topology;
 
 import java.util.List;
 
-public interface TopologyInventory {
-    List<InventoryObjectEntry> getInventoryObjectEntryList();
+import org.opennms.oce.engine.api.Inventory;
+import org.opennms.oce.engine.api.ObjectEntry;
 
-    void append(TopologyInventory inventory);
+public class TopologyInventory implements Inventory {
+    List<ObjectEntry>  inventoryList;
+
+    @Override
+    public List<ObjectEntry> getObjectEntryList() {
+
+        return inventoryList;
+    }
+
+    @Override
+    public void append(Inventory inventory) {
+
+        inventoryList.addAll(inventory.getObjectEntryList());
+    }
 }

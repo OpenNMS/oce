@@ -31,9 +31,13 @@ package org.opennms.oce.engine.topology;
 import java.util.ArrayList;
 import java.util.List;
 
-public class InventoryObjectEntry {
-    protected List<InventoryPeerRef> peerRef;
-    protected List<InventoryRelativeRef> relativeRef;
+import org.opennms.oce.engine.api.ObjectEntry;
+import org.opennms.oce.engine.api.PeerRef;
+import org.opennms.oce.engine.api.RelativeRef;
+
+public class InventoryObjectEntry implements ObjectEntry {
+    protected List<PeerRef> peerRef;
+    protected List<RelativeRef> relativeRef;
     protected String id;
     protected String type;
     protected String subtype;
@@ -41,16 +45,16 @@ public class InventoryObjectEntry {
     protected String parentType;
     protected String parentId;
 
-    public List<InventoryPeerRef> getPeerRef() {
+    public List<PeerRef> getPeerRef() {
         if (peerRef == null) {
-            peerRef = new ArrayList<InventoryPeerRef>();
+            peerRef = new ArrayList<>();
         }
         return this.peerRef;
     }
 
-    public List<InventoryRelativeRef> getRelativeRef() {
+    public List<RelativeRef> getRelativeRef() {
         if (relativeRef == null) {
-            relativeRef = new ArrayList<InventoryRelativeRef>();
+            relativeRef = new ArrayList<>();
         }
         return this.relativeRef;
     }

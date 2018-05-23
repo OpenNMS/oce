@@ -32,31 +32,31 @@ import java.util.List;
 
 public interface ObjectEntry {
 
-    public List<PeerRef> getPeerRef();
+    List<PeerRef> getPeerRef();
 
-    public List<RelativeRef> getRelativeRef();
+    List<RelativeRef> getRelativeRef();
 
-    public String getId();
+    String getId();
 
-    public void setId(String value);
+    void setId(String value);
 
-    public String getType();
+    String getType();
 
-    public void setType(String value);
+    void setType(String value);
 
-    public String getSubtype();
+    String getSubtype();
 
-    public void setSubtype(String value);
+    void setSubtype(String value);
 
-    public String getFriendlyName();
+    String getFriendlyName();
 
-    public void setFriendlyName(String value);
+    void setFriendlyName(String value);
 
-    public String getParentType();
+    String getParentType();
 
-    public void setParentType(String value);
+    void setParentType(String value);
 
-    public String getParentId();
+    String getParentId();
 
-    public void setParentId(String value);
+    void setParentId(String value);
 }

@@ -1,4 +1,4 @@
-package org.opennms.oce.engine.topology.model; /*******************************************************************************
+/*******************************************************************************
  * This file is part of OpenNMS(R).
  *
  * Copyright (C) 2018 The OpenNMS Group, Inc.
@@ -25,6 +25,8 @@ package org.opennms.oce.engine.topology.model; /********************************
  *     http://www.opennms.org/
  *     http://www.opennms.com/
  *******************************************************************************/
+
+package org.opennms.oce.engine.topology.model;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasSize;
@@ -167,8 +169,8 @@ public class UpdateInventoryTest {
         inventory.addObject(objPort22);
 
         InventoryObjectBean objLink = new InventoryObjectBean("LINK", "n1-c1-p1 <-> n2-c1-p1", null, "MODEL", "model");
-        objLink.setPeer(new InventoryObjectPeerRefBean("PORT", "n1-c1-p1", InventoryObjectPeerEndpoint.A));
-        objLink.setPeer(new InventoryObjectPeerRefBean("PORT", "n2-c1-p1", InventoryObjectPeerEndpoint.Z));
+        objLink.addPeer(new InventoryObjectPeerRefBean("PORT", "n1-c1-p1", InventoryObjectPeerEndpoint.A));
+        objLink.addPeer(new InventoryObjectPeerRefBean("PORT", "n2-c1-p1", InventoryObjectPeerEndpoint.Z));
         inventory.addObject(objLink);
 
         inventoryManager.loadInventory(inventory);

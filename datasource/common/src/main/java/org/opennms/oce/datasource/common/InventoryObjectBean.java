@@ -113,7 +113,7 @@ public class InventoryObjectBean implements InventoryObject {
         this.peers = peers;
     }
 
-    public void setPeer(InventoryObjectPeerRefBean pRef) {
+    public void addPeer(InventoryObjectPeerRefBean pRef) {
         if (peers == null) {
             peers = new ArrayList<>();
         }
@@ -129,7 +129,7 @@ public class InventoryObjectBean implements InventoryObject {
         this.relatives = relatives;
     }
 
-    public void setRelative(InventoryObjectRelativeRefBean relRef) {
+    public void addRelative(InventoryObjectRelativeRefBean relRef) {
         if (relatives == null) {
             relatives = new ArrayList<>();
         }

@@ -40,6 +40,7 @@ import org.junit.rules.ExpectedException;
 import org.opennms.oce.engine.api.entities.ObjectEntry;
 import org.opennms.oce.engine.topology.InventoryModelManager;
 import org.opennms.oce.engine.topology.InventoryObjectEntry;
+import org.opennms.oce.engine.topology.InventoryPeerRef;
 import org.opennms.oce.engine.topology.TopologyEngineFactory;
 import org.opennms.oce.engine.topology.TopologyInventory;
 import org.opennms.oce.model.api.Model;
@@ -105,7 +106,7 @@ public class UpdateInventoryTest {
     }
 
     @Test
-    public void canLoadNotThatSimpleInventory() {
+    public void canLoadDefaultInventory() {
         inventoryManager.clean();
 
         TopologyInventory inventory = new TopologyInventory();
@@ -132,18 +133,22 @@ public class UpdateInventoryTest {
     }
 
     @Test
-    public void canLoadInventoryWithDefaultTopology1_2_4() {
+    public void canLoadInventoryWithTopology_plus_Link() {
         inventoryManager.clean();
 
         TopologyInventory inventory = new TopologyInventory();
 
-        ObjectEntry objDevice = new InventoryObjectEntry("Device", "n1", null, "Model", "model");
-        inventory.addObject(objDevice);
+        ObjectEntry objDevice1 = new InventoryObjectEntry("Device", "n1", null, "Model", "model");
+        inventory.addObject(objDevice1);
+        ObjectEntry objDevice2 = new InventoryObjectEntry("Device", "n2", null, "Model", "model");
+        inventory.addObject(objDevice2);
 
         ObjectEntry objCard1 = new InventoryObjectEntry("Card", "n1-c1", null, "Device", "n1");
         inventory.addObject(objCard1);
         ObjectEntry objCard2 = new InventoryObjectEntry("Card", "n1-c2", null, "Device", "n1");
         inventory.addObject(objCard2);
+        ObjectEntry objCard3 = new InventoryObjectEntry("Card", "n2-c1", null, "Device", "n2");
+        inventory.addObject(objCard3);
 
         ObjectEntry objPort1 = new InventoryObjectEntry("Port", "n1-c1-p1", null, "Card", "n1-c1");
         inventory.addObject(objPort1);
@@ -156,8 +161,18 @@ public class UpdateInventoryTest {
 
         ObjectEntry objPort11 = new InventoryObjectEntry("Port", "n1-c2-p1", null, "Card", "n1-c2");
         inventory.addObject(objPort11);
-        ObjectEntry objPort22 = new InventoryObjectEntry("Port", "n1-c2-p2", null, "Card", "n1-c2");
+        ObjectEntry objPort12 = new InventoryObjectEntry("Port", "n1-c2-p2", null, "Card", "n1-c2");
+        inventory.addObject(objPort12);
+
+        ObjectEntry objPort21 = new InventoryObjectEntry("Port", "n2-c1-p1", null, "Card", "n2-c1");
+        inventory.addObject(objPort21);
+        ObjectEntry objPort22 = new InventoryObjectEntry("Port", "n2-c1-p2", null, "Card", "n2-c1");
         inventory.addObject(objPort22);
+
+        ObjectEntry objLink = new InventoryObjectEntry("Link", "n1-c1-p1 <-> n2-c1-p1", null);
+        objLink.setPeerRef(new InventoryPeerRef("PORT", "n1-c1-p1", "A"));
+        objLink.setPeerRef(new InventoryPeerRef("PORT", "n2-c1-p1", "Z"));
+        inventory.addObject(objLink);
 
         inventoryManager.loadInventory(inventory);
 
@@ -174,5 +189,7 @@ public class UpdateInventoryTest {
         assertThat(model.getObjectById("Port", "n1-c1-p2"), notNullValue());
         assertThat(model.getObjectById("Port", "n1-c1-p3"), notNullValue());
         assertThat(model.getObjectById("Port", "n1-c1-p4"), notNullValue());
+
+
     }
 }

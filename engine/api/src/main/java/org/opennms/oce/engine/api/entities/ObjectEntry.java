@@ -32,9 +32,13 @@ import java.util.List;
 
 public interface ObjectEntry {
 
+    void setPeerRef(PeerRef pRef);
+
     List<PeerRef> getPeerRef();
 
     void setPeerRef(List<PeerRef> peerRef);
+
+    void setRelativeRef(RelativeRef relRef);
 
     List<RelativeRef> getRelativeRef();
 

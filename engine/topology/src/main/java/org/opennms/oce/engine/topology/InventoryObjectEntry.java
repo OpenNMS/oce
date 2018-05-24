@@ -56,9 +56,23 @@ public class InventoryObjectEntry implements ObjectEntry {
         this.parentId = parentId;
     }
 
+    public InventoryObjectEntry(String type, String id, String subtype) {
+        this.type = Objects.requireNonNull(type);
+        this.id = Objects.requireNonNull(id);
+        this.subtype = subtype;
+    }
+
     @Override
     public void setPeerRef(List<PeerRef> peerRef) {
         this.peerRef = peerRef;
+    }
+
+    @Override
+    public void setPeerRef(PeerRef pRef) {
+        if (peerRef == null) {
+            peerRef = new ArrayList<>();
+        }
+        peerRef.add(pRef);
     }
 
     @Override
@@ -72,6 +86,14 @@ public class InventoryObjectEntry implements ObjectEntry {
     @Override
     public void setRelativeRef(List<RelativeRef> relativeRef) {
         this.relativeRef = relativeRef;
+    }
+
+    @Override
+    public void setRelativeRef(RelativeRef relRef) {
+        if (relativeRef == null) {
+            relativeRef = new ArrayList<>();
+        }
+        relativeRef.add(relRef);
     }
 
     @Override

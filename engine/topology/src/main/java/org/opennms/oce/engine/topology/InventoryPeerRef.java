@@ -28,12 +28,20 @@
 
 package org.opennms.oce.engine.topology;
 
+import java.util.Objects;
+
 import org.opennms.oce.engine.api.entities.PeerRef;
 
 public class InventoryPeerRef implements PeerRef {
     protected String type;
     protected String id;
     protected String endpoint;
+
+    public InventoryPeerRef(String type, String id, String endpoint) {
+        this.type = Objects.requireNonNull(type);
+        this.id = Objects.requireNonNull(id);
+        this.endpoint = endpoint;
+    }
 
     @Override
     public String getType() {

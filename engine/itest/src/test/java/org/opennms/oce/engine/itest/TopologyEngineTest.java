@@ -30,7 +30,6 @@ package org.opennms.oce.engine.itest;
 
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.anyOf;
 import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.equalTo;
@@ -40,6 +39,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import org.hamcrest.MatcherAssert;
 import org.junit.Before;
 import org.junit.Test;
 import org.opennms.oce.datasource.api.Alarm;
@@ -95,7 +95,7 @@ public class TopologyEngineTest {
         assertThat(incidents, hasSize(4));
         // The 2nd incident is the Card Down and must contain the 2 alarms
         Incident incident = incidents.get(1);
-        assertThat(Level2EngineComplianceTest.getAlarmIdsInIncident(incident), containsInAnyOrder("a1", "a2"));
+        MatcherAssert.assertThat(Level2EngineComplianceTest.getAlarmIdsInIncident(incident), containsInAnyOrder("a1", "a2"));
         assertThat(incident.getResourceKeys().get(0), equalTo(ResourceKey.key("Card", "n1-c1")));
     }
 

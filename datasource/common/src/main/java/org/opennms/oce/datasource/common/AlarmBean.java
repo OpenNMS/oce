@@ -94,4 +94,9 @@ public class AlarmBean implements Alarm {
     public void setSeverity(Severity severity) {
         this.severity = severity;
     }
+
+    @Override
+    public String toString() {
+        return "A[" + id + "|" + severity + "|" + time + "]";
+    }
 }

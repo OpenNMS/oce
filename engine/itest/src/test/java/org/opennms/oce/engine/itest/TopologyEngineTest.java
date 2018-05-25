@@ -31,6 +31,7 @@ package org.opennms.oce.engine.itest;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.contains;
+import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.hasSize;
 
@@ -86,8 +87,8 @@ public class TopologyEngineTest {
         assertThat(incidents, hasSize(1));
         // Incident is created and contains both causing alarms.
         Incident incident = incidents.get(0);
-        // FIXME - IncidentRefactor - assertThat(incident.getModelObject().getType(), equalTo("Card"));
-        // FIXME - IncidentRefactor - assertThat(incident.getModelObject().getOperationalState().toString(), equalTo(OperationalState.SA.toString()));
+        assertThat(incident.getResourceKeys().get(0), equalTo(ResourceKey.key("Card", "n1-c1")));
+        assertThat(incident.getSeverity(), equalTo(Severity.CRITICAL));
         assertThat(Level2EngineComplianceTest.getAlarmIdsInIncident(incident), containsInAnyOrder("a1", "a2"));
     }
 
@@ -125,8 +126,8 @@ public class TopologyEngineTest {
         assertThat(incidents, hasSize(1));
         // Incident is created and contains both causing alarms.
         Incident incident = incidents.get(0);
-        // FIXME - IncidentRefactor - assertThat(incident.getModelObject().getType(), equalTo("Card"));
-        // FIXME - IncidentRefactor - assertThat(incident.getModelObject().getOperationalState().toString(), equalTo(OperationalState.NORMAL.toString()));
+        assertThat(incident.getResourceKeys().get(0), equalTo(ResourceKey.key("Card", "n1-c1")));
+        assertThat(incident.getSeverity(), equalTo(Severity.CLEARED));
         // TODO - Incident should be to Clear but only contains remaining Port Alarm 'a2'
         assertThat(Level2EngineComplianceTest.getAlarmIdsInIncident(incident), contains("a2"));
     }

@@ -28,7 +28,21 @@
 
 package org.opennms.oce.engine.topology.model;
 
-public enum OperationalState {
-    UNKNOWN, NORMAL, NSA, SA
+import org.opennms.oce.datasource.api.Severity;
 
+public enum OperationalState {
+    UNKNOWN(Severity.INDETERMINATE), 
+    NORMAL(Severity.CLEARED),
+    NSA(Severity.MINOR),
+    SA(Severity.CRITICAL);
+
+    private final Severity severity;
+
+    private OperationalState(Severity severity) {
+        this.severity = severity;
+    }
+
+    public Severity getSeverity() {
+        return severity;
+    }
 }

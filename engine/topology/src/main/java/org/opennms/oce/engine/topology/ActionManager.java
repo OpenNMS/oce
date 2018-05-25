@@ -39,6 +39,7 @@ import org.opennms.oce.engine.topology.model.ModelObject;
 import org.opennms.oce.engine.topology.model.OperationalState;
 import org.opennms.oce.engine.topology.model.ReportObject;
 import org.opennms.oce.engine.topology.model.ReportObjectImpl;
+import org.opennms.oce.engine.topology.model.ReportStatus;
 import org.opennms.oce.engine.topology.model.WorkingMemoryObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -64,7 +65,13 @@ public class ActionManager {
     public void createIncident(ReportObject report) {
         IncidentBean incident = new IncidentBean(report.getId());
         LOG.info("Create Incident {} for: {}", incident.getId(), report);
-        // FIXME - incident no longer aware of ModelObjects - incident.setModelObject(report.getGroup().getOwner());
+        ModelObject owner = report.getGroup().getOwner();
+        incident.addResourceKey(ResourceKey.key(owner.getType(), owner.getId()));
+        if (report.getStatus() == ReportStatus.CLEARED || report.getStatus() == ReportStatus.CLEARING) {
+            incident.setSeverity(Severity.CLEARED);
+        } else {
+            incident.setSeverity(owner.getOperationalState().getSeverity());
+        }
         report.getGroup().getMembers().stream().flatMap(mo -> mo.getAlarms().stream()).forEach(incident::addAlarm);
         topologyEngine.getIncidentHandler().onIncident(incident);
         topologyEngine.addOrUpdateMemoryObject(report);

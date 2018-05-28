@@ -76,8 +76,64 @@ public class InventoryModelManager {
         //TODO
     }
 
-    public void removeInventory(TopologyInventory ti) {
+    public void removeInventory(TopologyInventory inventoryToRemove) {
+        final Map<ModelObjectKey, ModelObject> mosByKey = inventoryToRemove.getInventoryObjectList().stream()
+                .collect(Collectors.toMap(ioe -> ModelObjectKey.key(ioe.getType(), ioe.getId()), InventoryModelManager::toModelObject));
 
+        organizeTopologyInventory(mosByKey, inventoryToRemove);
+
+        for (InventoryObject ioe : inventoryToRemove.getInventoryObjectList()) {
+            if (((InventoryObjectBean) ioe).isTopLevel()) {
+                model.removeObjectById(ioe.getType(), ioe.getId());
+            }
+        }
+    }
+
+    //This assumes that input topology may not be organized structurally
+    private void organizeTopologyInventory(Map<ModelObjectKey,ModelObject> mosByKey, TopologyInventory inventoryToProcess) {
+        for (InventoryObject ioe : inventoryToProcess.getInventoryObjectList()) {
+            final ModelObjectKey key = ModelObjectKey.key(ioe.getType(), ioe.getId());
+            final ModelObject mo = mosByKey.get(key);
+            if (mo == null) {
+                // Should not happen
+                throw new IllegalStateException("Cannot find an MO with key: " + key);
+            }
+
+            if (MODEL_ROOT_TYPE.equals(mo.getType())) {
+                // This is the root element, nothing else to do here
+                continue;
+            }
+
+            // Setup the parent
+            if (ioe.getParentType() == null || ioe.getParentId() == null) {
+                throw new IllegalStateException("Parent for MO id '" + ioe.getId() + "' is not provided. " +
+                        "If you try appending inventory to existing model you must define a parent of the top level element.");
+            }
+
+            final ModelObjectKey parentKey = ModelObjectKey.key(ioe.getParentType(), ioe.getParentId());
+            ModelObject parentMo = mosByKey.get(parentKey);
+
+
+            /** if a parent is provided but it is not in current inventory, it means this is top level element and the parent must live
+             * in model. If not, an exception will throw
+             */
+
+            if (parentMo == null) {
+                parentMo = findParentInModel(ioe.getParentType(), ioe.getParentId());
+
+                //if parent from model found mark the object as top level, else it's bad
+                if (parentMo != null) {
+                    ((InventoryObjectBean) ioe).setTopLevel(true);
+                }
+                else {
+                    throw new IllegalStateException("Cannot find parent MO with key: " + parentKey + " on MO with key: " + key);
+                }
+            }
+            else {
+                mo.setParent(parentMo);
+                parentMo.addChild(mo);
+            }
+        }
     }
 
     public Model getModel() {
@@ -140,8 +196,19 @@ public class InventoryModelManager {
         //append if above was successful
         this.inventory.appendInventory(ti);
 
-        //TODO - (Another refactoring) It is more efficient to use buildRelationships for building relationships only and to insert top level properly structured elements
-        // after. Currently buildRelationships takes too much responsibilities...
+        indexModel(mosByKey, ti);
+    }
+
+    private void indexModel(Map<ModelObjectKey,ModelObject> mosByKey, TopologyInventory inventoryToAppend) {
+        for (InventoryObject ioe : inventoryToAppend.getInventoryObjectList()) {
+            final ModelObjectKey key = ModelObjectKey.key(ioe.getType(), ioe.getId());
+            final ModelObject mo = mosByKey.get(key);
+
+            //Index top level elements only to exclude "dangling" nodes
+            if (((InventoryObjectBean) ioe).isTopLevel()) {
+                model.indexHierarchy(mo);
+            }
+        }
     }
 
     /**
@@ -153,7 +220,7 @@ public class InventoryModelManager {
      * @param isAppend - specify if this is to append to existing inventory. False is default.
      */
     private void buildRelationships(Map<ModelObjectKey,ModelObject> mosByKey, TopologyInventory inventoryToProcess, boolean isAppend) {
-        inventoryToProcess.getInventoryObjectList().forEach(ioe -> {
+        for (InventoryObject ioe : inventoryToProcess.getInventoryObjectList()) {
             final ModelObjectKey key = ModelObjectKey.key(ioe.getType(), ioe.getId());
             final ModelObject mo = mosByKey.get(key);
             if (mo == null) {
@@ -163,11 +230,11 @@ public class InventoryModelManager {
 
             if (MODEL_ROOT_TYPE.equals(mo.getType())) {
                 // This is the root element, nothing else to do here
-                return;
+                continue;
             }
 
             // Setup the parent
-            if(ioe.getParentType() == null || ioe.getParentId() == null) {
+            if (ioe.getParentType() == null || ioe.getParentId() == null) {
                 throw new IllegalStateException("Parent for MO id '" + ioe.getId() + "' is not provided. " +
                         "If you try appending inventory to existing model you must define a parent of the top level element.");
             }
@@ -184,7 +251,7 @@ public class InventoryModelManager {
                 parentMo = findParentInModel(ioe.getParentType(), ioe.getParentId());
 
                 //Mark the object as top level
-                if(parentMo != null) {
+                if (parentMo != null) {
                     ((InventoryObjectBean) ioe).setTopLevel(true);
                 }
             }
@@ -196,11 +263,6 @@ public class InventoryModelManager {
 
             mo.setParent(parentMo);
             parentMo.addChild(mo);
-
-            if(isAppend) {
-                // we need to propagate relationship down to hierarchy
-                model.addObject(mo);
-            }
 
             // Setup the peers
             for (InventoryObjectPeerRef peerRef : ioe.getPeers()) {
@@ -223,7 +285,7 @@ public class InventoryModelManager {
                 mo.addUncle(relativeMo);
                 relativeMo.addNephew(mo);
             }
-        });
+        }
     }
 
     private ModelObject findParentInModel(String parentType, String parentId) {
@@ -234,9 +296,5 @@ public class InventoryModelManager {
         final ModelObject mo = new ModelObject(ioe.getType(), ioe.getId());
         mo.setFriendlyName(ioe.getFriendlyName());
         return mo;
-    }
-
-    private void appendObject(ModelObject mo) {
-        model.addObject(mo);
     }
 }

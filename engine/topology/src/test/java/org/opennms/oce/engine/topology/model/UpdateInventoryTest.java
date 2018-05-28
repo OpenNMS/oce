@@ -35,7 +35,6 @@ import static org.hamcrest.core.IsNull.notNullValue;
 import static org.hamcrest.core.IsNull.nullValue;
 
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
@@ -426,9 +425,8 @@ public class UpdateInventoryTest {
         assertThat(model.getObjectById("PORT", "n2-c1-p2"), notNullValue());
     }
 
-    @Ignore
     @Test
-    public void canRemoveInventory() {
+    public void canAddAndRemoveDevice() {
         inventoryManager.clean();
 
         TopologyInventory inventory = new TopologyInventory();
@@ -452,50 +450,177 @@ public class UpdateInventoryTest {
         assertThat(model.getObjectById("PORT", "n1-c1-p1"), notNullValue());
         assertThat(model.getObjectById("PORT", "n1-c1-p2"), notNullValue());
 
-        TopologyInventory newInventory = new TopologyInventory();
-        InventoryObject objDevice2 = new InventoryObjectBean("DEVICE", "n2", null, "MODEL", "model");
-        newInventory.addObject(objDevice2);
-        InventoryObject objCard2 = new InventoryObjectBean("CARD", "n2-c1", null, "DEVICE", "n2");
-        newInventory.addObject(objCard2);
-        InventoryObject objPort21 = new InventoryObjectBean("PORT", "n2-c1-p1", null, "CARD", "n2-c1");
-        newInventory.addObject(objPort21);
-        InventoryObject objPort22 = new InventoryObjectBean("PORT", "n2-c1-p2", null, "CARD", "n2-c1");
-        newInventory.addObject(objPort22);
 
-        inventoryManager.loadInventory(newInventory);
+        inventoryManager.removeInventory(inventory);
 
         model = inventoryManager.getModel();
         root = model.getRoot();
 
+        assertThat(root.getChildren(), hasSize(0));
+        assertThat(root.getType(), is("MODEL"));
+        assertThat(model.getObjectById("DEVICE", "n1"), is(nullValue()));
+        assertThat(model.getObjectById("CARD", "n1-c1"), is(nullValue()));
+        assertThat(model.getObjectById("PORT", "n1-c1-p1"), is(nullValue()));
+        assertThat(model.getObjectById("PORT", "n1-c1-p2"), is(nullValue()));
+    }
+
+    @Test
+    public void canRemoveByOnlyOneNode() {
+        inventoryManager.clean();
+
+        TopologyInventory inventory = new TopologyInventory();
+        InventoryObject objDevice = new InventoryObjectBean("DEVICE", "n1", null, "MODEL", "model");
+        inventory.addObject(objDevice);
+        InventoryObject objCard = new InventoryObjectBean("CARD", "n1-c1", null, "DEVICE", "n1");
+        inventory.addObject(objCard);
+        InventoryObject objPort1 = new InventoryObjectBean("PORT", "n1-c1-p1", null, "CARD", "n1-c1");
+        inventory.addObject(objPort1);
+        InventoryObject objPort2 = new InventoryObjectBean("PORT", "n1-c1-p2", null, "CARD", "n1-c1");
+        inventory.addObject(objPort2);
+        inventoryManager.loadInventory(inventory);
+
+        model = inventoryManager.getModel();
+        ModelObject root = model.getRoot();
+
+        assertThat(root.getChildren(), hasSize(1));
         assertThat(root.getType(), is("MODEL"));
         assertThat(model.getObjectById("DEVICE", "n1"), notNullValue());
         assertThat(model.getObjectById("CARD", "n1-c1"), notNullValue());
         assertThat(model.getObjectById("PORT", "n1-c1-p1"), notNullValue());
         assertThat(model.getObjectById("PORT", "n1-c1-p2"), notNullValue());
-        assertThat(model.getObjectById("DEVICE", "n2"), notNullValue());
-        assertThat(model.getObjectById("CARD", "n2-c1"), notNullValue());
-        assertThat(model.getObjectById("PORT", "n2-c1-p1"), notNullValue());
-        assertThat(model.getObjectById("PORT", "n2-c1-p2"), notNullValue());
 
-        TopologyInventory rmInventory = new TopologyInventory();
-        InventoryObject rmObjDevice = new InventoryObjectBean("DEVICE", "n1", null, "MODEL", "model");
-        rmInventory.addObject(rmObjDevice);
-        InventoryObject rmObjCard = new InventoryObjectBean("CARD", "n1-c1", null, "DEVICE", "n1");
-        rmInventory.addObject(rmObjCard);
-        InventoryObject rmObjPort1 = new InventoryObjectBean("PORT", "n1-c1-p1", null, "CARD", "n1-c1");
-        rmInventory.addObject(rmObjPort1);
-        InventoryObject rmObjPort2 = new InventoryObjectBean("PORT", "n1-c1-p2", null, "CARD", "n1-c1");
-        rmInventory.addObject(rmObjPort2);
-        inventoryManager.removeInventory(rmInventory);
+        inventory = new TopologyInventory();
+        InventoryObject onlyOneObj = new InventoryObjectBean("DEVICE", "n1", null, "MODEL", "model");
+        inventory.addObject(onlyOneObj);
+
+        inventoryManager.removeInventory(inventory);
 
         model = inventoryManager.getModel();
         root = model.getRoot();
 
+        assertThat(root.getChildren(), hasSize(0));
+        assertThat(root.getType(), is("MODEL"));
+        assertThat(model.getObjectById("DEVICE", "n1"), is(nullValue()));
+        assertThat(model.getObjectById("CARD", "n1-c1"), is(nullValue()));
+        assertThat(model.getObjectById("PORT", "n1-c1-p1"), is(nullValue()));
+        assertThat(model.getObjectById("PORT", "n1-c1-p2"), is(nullValue()));
+    }
+
+    @Test
+    public void canAddTwoDevicesAndRemoveOne() {
+        inventoryManager.clean();
+
+        TopologyInventory inventory = new TopologyInventory();
+        InventoryObject objDevice = new InventoryObjectBean("DEVICE", "n1", null, "MODEL", "model");
+        inventory.addObject(objDevice);
+        InventoryObject objCard = new InventoryObjectBean("CARD", "n1-c1", null, "DEVICE", "n1");
+        inventory.addObject(objCard);
+        InventoryObject objPort1 = new InventoryObjectBean("PORT", "n1-c1-p1", null, "CARD", "n1-c1");
+        inventory.addObject(objPort1);
+        InventoryObject objPort2 = new InventoryObjectBean("PORT", "n1-c1-p2", null, "CARD", "n1-c1");
+        inventory.addObject(objPort2);
+        InventoryObject objDevice2 = new InventoryObjectBean("DEVICE", "n2", null, "MODEL", "model");
+        inventory.addObject(objDevice2);
+        InventoryObject objCard2 = new InventoryObjectBean("CARD", "n2-c1", null, "DEVICE", "n2");
+        inventory.addObject(objCard2);
+        InventoryObject objPort21 = new InventoryObjectBean("PORT", "n2-c1-p1", null, "CARD", "n2-c1");
+        inventory.addObject(objPort21);
+        InventoryObject objPort22 = new InventoryObjectBean("PORT", "n2-c1-p2", null, "CARD", "n2-c1");
+        inventory.addObject(objPort22);
+        inventoryManager.loadInventory(inventory);
+
+        model = inventoryManager.getModel();
+        ModelObject root = model.getRoot();
+
+        assertThat(model.getObjectById("DEVICE", "n1"), notNullValue());
+        assertThat(model.getObjectById("DEVICE", "n2"), notNullValue());
+        assertThat(model.getObjectById("CARD", "n1-c1"), notNullValue());
+        assertThat(model.getObjectById("CARD", "n2-c1"), notNullValue());
+        assertThat(model.getObjectById("PORT", "n1-c1-p1"), notNullValue());
+        assertThat(model.getObjectById("PORT", "n1-c1-p2"), notNullValue());
+        assertThat(model.getObjectById("PORT", "n2-c1-p1"), notNullValue());
+        assertThat(model.getObjectById("PORT", "n2-c1-p2"), notNullValue());
+
+        inventory = new TopologyInventory();
+        InventoryObject objDeviceToRemove = new InventoryObjectBean("DEVICE", "n1", null, "MODEL", "model");
+        inventory.addObject(objDeviceToRemove);
+
+
+        inventoryManager.removeInventory(inventory);
+
+        model = inventoryManager.getModel();
+        root = model.getRoot();
+
+        assertThat(root.getType(), is("MODEL"));
+        assertThat(model.getObjectById("DEVICE", "n1"), is(nullValue()));
+        assertThat(model.getObjectById("CARD", "n1-c1"), is(nullValue()));
+        assertThat(model.getObjectById("PORT", "n1-c1-p1"), is(nullValue()));
+        assertThat(model.getObjectById("PORT", "n1-c1-p2"), is(nullValue()));
+    }
+
+    @Test
+    public void canRemoveCardOnly() {
+        inventoryManager.clean();
+
+        TopologyInventory inventory = new TopologyInventory();
+        InventoryObject objDevice = new InventoryObjectBean("DEVICE", "n1", null, "MODEL", "model");
+        inventory.addObject(objDevice);
+        InventoryObject objCard = new InventoryObjectBean("CARD", "n1-c1", null, "DEVICE", "n1");
+        inventory.addObject(objCard);
+        InventoryObject objPort1 = new InventoryObjectBean("PORT", "n1-c1-p1", null, "CARD", "n1-c1");
+        inventory.addObject(objPort1);
+        InventoryObject objPort2 = new InventoryObjectBean("PORT", "n1-c1-p2", null, "CARD", "n1-c1");
+        inventory.addObject(objPort2);
+        inventoryManager.loadInventory(inventory);
+
+        model = inventoryManager.getModel();
+        ModelObject root = model.getRoot();
+
         assertThat(root.getChildren(), hasSize(1));
         assertThat(root.getType(), is("MODEL"));
-        assertThat(model.getObjectById("DEVICE", "n1"), nullValue());
-        assertThat(model.getObjectById("CARD", "n1-c1"), nullValue());
-        assertThat(model.getObjectById("PORT", "n1-c1-p1"), nullValue());
-        assertThat(model.getObjectById("PORT", "n1-c1-p2"), nullValue());
+        assertThat(model.getObjectById("DEVICE", "n1"), notNullValue());
+        assertThat(model.getObjectById("CARD", "n1-c1"), notNullValue());
+        assertThat(model.getObjectById("PORT", "n1-c1-p1"), notNullValue());
+        assertThat(model.getObjectById("PORT", "n1-c1-p2"), notNullValue());
+
+        inventory = new TopologyInventory();
+        InventoryObject objOnlyCard = new InventoryObjectBean("CARD", "n1-c1", null, "DEVICE", "n1");
+        inventory.addObject(objOnlyCard);
+
+        inventoryManager.removeInventory(inventory);
+
+        model = inventoryManager.getModel();
+        root = model.getRoot();
+
+        assertThat(root.getType(), is("MODEL"));
+        assertThat(model.getObjectById("DEVICE", "n1"), is(notNullValue()));
+        assertThat(model.getObjectById("CARD", "n1-c1"), is(nullValue()));
+        assertThat(model.getObjectById("PORT", "n1-c1-p1"), is(nullValue()));
+        assertThat(model.getObjectById("PORT", "n1-c1-p2"), is(nullValue()));
+    }
+
+    @Test
+    public void canRemoveCardFromDeviceWithTwoCards() {
+        //TODO - device with one card, then add a new card (becomesa device with two cards), remove one of them
+    }
+
+    @Test
+    public void canRemoveLink() {
+        //TODO - remove link between two ports of different cards
+    }
+
+    @Test
+    public void canReplaceCard() {
+        //TODO - remove one card (2 ports) and add a new one (4 ports)
+    }
+
+    @Test
+    public void canReplaceLink() {
+        //TODO - add and remove link
+    }
+
+    @Test
+    public void canRearrangeLink() {
+        //TODO - remove link and add a new one but with different port
     }
 }

@@ -290,4 +290,9 @@ public class ModelObject {
         return getPeers().stream().map(u -> u.getPeerGroup(type)).collect(Collectors.toSet());
     }
 
+    @Override
+    public boolean equals(Object obj) {
+        return (this.getId().equals(((ModelObject)obj).getId()) &&
+                this.getType().equals(((ModelObject)obj).getType()));
+    }
 }

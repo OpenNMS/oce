@@ -26,16 +26,12 @@
  *     http://www.opennms.com/
  *******************************************************************************/
 
-package org.opennms.oce.datasource.opennms;
+package org.opennms.oce.engine.topology.model;
 
-import java.util.Collections;
-
-import org.opennms.oce.datasource.common.StaticInventoryDatasource;
-
-public class OpennmsInventoryDatasource extends StaticInventoryDatasource {
-
-    public OpennmsInventoryDatasource() {
-        super(Collections.emptyList());
-    }
-
+public enum ReportStatus {
+    NOT_PRESENT,
+    CLEARING,
+    CLEARED,
+    PENDING,
+    PRESENT
 }

@@ -63,6 +63,7 @@ public class InventoryModelManager {
         rootEntry.setId(MODEL_ROOT_ID);
         inventory.addObject(rootEntry);
     }
+
     /**
      * Initial load of inventory.
      */
@@ -70,7 +71,6 @@ public class InventoryModelManager {
         this();
         loadInventory(ti);
     }
-
 
     public void appendObject(InventoryObject io) {
         //TODO
@@ -117,7 +117,6 @@ public class InventoryModelManager {
             /** if a parent is provided but it is not in current inventory, it means this is top level element and the parent must live
              * in model. If not, an exception will throw
              */
-
             if (parentMo == null) {
                 parentMo = findParentInModel(ioe.getParentType(), ioe.getParentId());
 
@@ -167,8 +166,6 @@ public class InventoryModelManager {
         // NOTE: This will throw a IllegalStateException if a duplicate key is found
         final Map<ModelObjectKey, ModelObject> mosByKey = inventory.getInventoryObjectList().stream()
                 .collect(Collectors.toMap(ioe -> ModelObjectKey.key(ioe.getType(), ioe.getId()), InventoryModelManager::toModelObject));
-
-        //mosByKey.put(ModelObjectKey.key(MODEL_ROOT_TYPE, MODEL_ROOT_ID), new ModelObject(rootEntry.getType(), rootEntry.getId()));
 
         // Now build out the relationships
         buildRelationships(mosByKey, inventory, false);
@@ -241,7 +238,6 @@ public class InventoryModelManager {
 
             final ModelObjectKey parentKey = ModelObjectKey.key(ioe.getParentType(), ioe.getParentId());
             ModelObject parentMo = mosByKey.get(parentKey);
-
 
             /** if a parent is provided but it is not in current inventory, it means this is top level element and the parent must live
              * in model. If not, an exception will throw

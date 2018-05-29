@@ -145,12 +145,22 @@ public class TopologyEngine implements Engine, IncidentHandler {
 
     @Override
     public void onInventoryAdded(Collection<InventoryObject> inventory) {
-        // TODO
+        final Object mutex = new Object();
+        synchronized (mutex) {
+            inventoryManager.appendInventory((List<InventoryObject>) inventory);
+        }
+        //update engine model instance
+        model = inventoryManager.getModel();
     }
 
     @Override
     public void onInventoryRemoved(Collection<InventoryObject> inventory) {
-        // TODO
+        final Object mutex = new Object();
+        synchronized (mutex) {
+            inventoryManager.removeInventory((List<InventoryObject>) inventory);
+        }
+        //update engine model instance
+        model = inventoryManager.getModel();
     }
 
     @Override

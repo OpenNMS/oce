@@ -78,8 +78,8 @@ public class InventoryModelManager {
         inventory.addObject(rootEntry);
     }
 
-    public void appendObject(InventoryObject io) {
-        //TODO
+    public void removeInventory(List<InventoryObject> inventoryObjectList) {
+        removeInventory(mapToTopologyInventory(inventoryObjectList));
     }
 
     public void removeInventory(TopologyInventory inventoryToRemove) {
@@ -180,6 +180,10 @@ public class InventoryModelManager {
         final ModelObject rootMo = mosByKey.get(ModelObjectKey.key(MODEL_ROOT_TYPE, MODEL_ROOT_ID));
         // Create a new model instance
         model = new Model(rootMo);
+    }
+
+    public void appendInventory(List<InventoryObject> inventoryObjectList) {
+        loadInventory(mapToTopologyInventory(inventoryObjectList));
     }
 
     /**

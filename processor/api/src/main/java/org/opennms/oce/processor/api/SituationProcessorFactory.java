@@ -26,27 +26,16 @@
  *     http://www.opennms.com/
  *******************************************************************************/
 
-package org.opennms.oce.datasource.api;
+package org.opennms.oce.processor.api;
 
-import java.util.Set;
-
-public interface Alarm {
-
-    String getId();
-
-    long getTime();
-
-    boolean isClear();
-
-    Severity getSeverity();
-
-    String getInventoryObjectId();
-
-    String getInventoryObjectType();
-
-    String getSummary();
-
-    String getDescription();
-
-    Set<Alarm> getRelatedAlarms();
+/**
+ * A factory that supplies a {@link SituationProcessor}.
+ */
+public interface SituationProcessorFactory {
+    /**
+     * Get the situation processor.
+     *
+     * @return the situation processor instance
+     */
+    SituationProcessor getInstance();
 }

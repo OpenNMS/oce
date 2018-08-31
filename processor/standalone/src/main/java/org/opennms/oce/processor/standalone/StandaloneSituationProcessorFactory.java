@@ -26,27 +26,32 @@
  *     http://www.opennms.com/
  *******************************************************************************/
 
-package org.opennms.oce.datasource.api;
+package org.opennms.oce.processor.standalone;
 
-import java.util.Set;
+import org.opennms.oce.datasource.api.IncidentDatasource;
+import org.opennms.oce.processor.api.SituationProcessor;
+import org.opennms.oce.processor.api.SituationProcessorFactory;
 
-public interface Alarm {
+/**
+ * A factory that supplies a singleton {@link StandaloneSituationProcessor}.
+ */
+public class StandaloneSituationProcessorFactory implements SituationProcessorFactory {
+    /**
+     * The singleton instance.
+     */
+    private final StandaloneSituationProcessor INSTANCE;
 
-    String getId();
+    /**
+     * Constructor.
+     * 
+     * @param incidentDatasource the incident data source
+     */
+    public StandaloneSituationProcessorFactory(IncidentDatasource incidentDatasource) {
+        INSTANCE = new StandaloneSituationProcessor(incidentDatasource);
+    }
 
-    long getTime();
-
-    boolean isClear();
-
-    Severity getSeverity();
-
-    String getInventoryObjectId();
-
-    String getInventoryObjectType();
-
-    String getSummary();
-
-    String getDescription();
-
-    Set<Alarm> getRelatedAlarms();
+    @Override
+    public SituationProcessor getInstance() {
+        return INSTANCE;
+    }
 }

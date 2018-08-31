@@ -26,27 +26,34 @@
  *     http://www.opennms.com/
  *******************************************************************************/
 
-package org.opennms.oce.datasource.api;
+package org.opennms.oce.processor.redundant;
 
-import java.util.Set;
+import org.apache.karaf.shell.api.action.Action;
+import org.apache.karaf.shell.api.action.Command;
+import org.apache.karaf.shell.api.action.lifecycle.Reference;
+import org.apache.karaf.shell.api.action.lifecycle.Service;
+import org.opennms.oce.processor.api.SituationProcessor;
+import org.opennms.oce.processor.api.SituationProcessorFactory;
 
-public interface Alarm {
+/**
+ * A command to display the current role for a redundant situation processor.
+ */
+@Command(scope = "processor", name = "current-role", description = "Displays the current role")
+@Service
+public class CurrentRole implements Action {
+    @Reference
+    private SituationProcessorFactory situationProcessorFactory;
 
-    String getId();
+    @Override
+    public Object execute() {
+        SituationProcessor situationProcessor = situationProcessorFactory.getInstance();
 
-    long getTime();
+        try {
+            System.out.println(((ActiveStandbySituationProcessor) situationProcessor).getCurrentRole());
+        } catch (ClassCastException ignored) {
+            System.out.println("No role available for processor: " + situationProcessor);
+        }
 
-    boolean isClear();
-
-    Severity getSeverity();
-
-    String getInventoryObjectId();
-
-    String getInventoryObjectType();
-
-    String getSummary();
-
-    String getDescription();
-
-    Set<Alarm> getRelatedAlarms();
+        return null;
+    }
 }

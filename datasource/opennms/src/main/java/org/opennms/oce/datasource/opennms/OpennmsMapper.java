@@ -46,6 +46,7 @@ public class OpennmsMapper {
         bean.setInventoryObjectId(alarm.getManagedObjectInstance());
         bean.setSummary(alarm.getLogMessage());
         bean.setDescription(alarm.getDescription());
+        alarm.getRelatedAlarmList().forEach(relatedAlarm -> bean.addRelatedAlarm(OpennmsMapper.toAlarm(relatedAlarm)));
         return bean;
     }
 

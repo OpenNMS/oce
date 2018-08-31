@@ -26,27 +26,41 @@
  *     http://www.opennms.com/
  *******************************************************************************/
 
-package org.opennms.oce.datasource.api;
+package org.opennms.oce.processor.redundant;
 
-import java.util.Set;
+import org.opennms.features.distributed.coordination.api.DomainManagerFactory;
+import org.opennms.oce.datasource.api.IncidentDatasource;
+import org.opennms.oce.processor.api.SituationProcessor;
+import org.opennms.oce.processor.api.SituationProcessorFactory;
 
-public interface Alarm {
+/**
+ * A factory that supplies a singleton {@link ActiveStandbySituationProcessor}.
+ */
+public class ActiveStandbySituationProcessorFactory implements SituationProcessorFactory {
+    /**
+     * The singleton instance.
+     */
+    private final ActiveStandbySituationProcessor INSTANCE;
 
-    String getId();
+    /**
+     * Constructor.
+     *
+     * @param domainManagerFactory the domain manager factory
+     */
+    public ActiveStandbySituationProcessorFactory(IncidentDatasource incidentDatasource,
+                                                  DomainManagerFactory domainManagerFactory) {
+        INSTANCE = new ActiveStandbySituationProcessor(incidentDatasource, domainManagerFactory);
+    }
 
-    long getTime();
+    /**
+     * Destroy the instance.
+     */
+    public void destroy() {
+        INSTANCE.destroy();
+    }
 
-    boolean isClear();
-
-    Severity getSeverity();
-
-    String getInventoryObjectId();
-
-    String getInventoryObjectType();
-
-    String getSummary();
-
-    String getDescription();
-
-    Set<Alarm> getRelatedAlarms();
+    @Override
+    public SituationProcessor getInstance() {
+        return INSTANCE;
+    }
 }

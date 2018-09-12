@@ -43,9 +43,9 @@ import org.awaitility.core.ConditionTimeoutException;
 import org.junit.Test;
 
 /**
- * Tests for {@link ExpiringLinkedHashMap}.
+ * Tests for {@link SynchronizedExpiringLinkedHashMap}.
  */
-public class ExpiringLinkedHashMapTest {
+public class SynchronizedExpiringLinkedHashMapTest {
     private Throwable throwableEncountered;
 
     /**
@@ -56,7 +56,7 @@ public class ExpiringLinkedHashMapTest {
         int timeToLive = 100;
         TimeUnit sleepUnits = TimeUnit.MILLISECONDS;
 
-        Map<String, String> map = ExpiringLinkedHashMap.getNewSynchronizedInstance(timeToLive, sleepUnits);
+        Map<String, String> map = SynchronizedExpiringLinkedHashMap.newInstance(timeToLive, sleepUnits);
 
         map.put("Hello", "World");
         // Sleep half the expiry time
@@ -78,7 +78,7 @@ public class ExpiringLinkedHashMapTest {
     public void testOrdering() {
         // A list that we know will be hashed out of order
         List<String> insertion = Arrays.asList("a", "z", "b", "12345", "9876", "y", "c", "x");
-        Map<String, String> map = ExpiringLinkedHashMap.getNewSynchronizedInstance(1, TimeUnit.SECONDS);
+        Map<String, String> map = SynchronizedExpiringLinkedHashMap.newInstance(1, TimeUnit.SECONDS);
         insertion.forEach(e -> map.put(e, "test.value"));
         List<String> retrieval = new ArrayList<>(map.keySet());
         assertEquals(insertion, retrieval);
@@ -89,7 +89,7 @@ public class ExpiringLinkedHashMapTest {
      */
     @Test(expected = ConditionTimeoutException.class)
     public void testConcurrency() {
-        final Map<String, String> map = ExpiringLinkedHashMap.getNewSynchronizedInstance(10,
+        final Map<String, String> map = SynchronizedExpiringLinkedHashMap.newInstance(10,
                 TimeUnit.MILLISECONDS);
 
         // One thread continuously puts entries into the map

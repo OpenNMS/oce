@@ -93,8 +93,8 @@ public class ActiveStandbySituationProcessor implements SituationProcessor, Role
      * Entries in this map will age out after one minute. Therefore if a situation takes greater than this time to
      * complete a round trip then it can potentially be dropped in the case of a switchover.
      */
-    private final Map<Set<String>, Incident> unconfirmedSituations = ExpiringLinkedHashMap
-            .getNewSynchronizedInstance(1, TimeUnit.MINUTES);
+    private final Map<Set<String>, Incident> unconfirmedSituations = SynchronizedExpiringLinkedHashMap.newInstance(1,
+            TimeUnit.MINUTES);
 
     /**
      * Constructor.
@@ -103,10 +103,10 @@ public class ActiveStandbySituationProcessor implements SituationProcessor, Role
      * @param domainManagerFactory the domain manager factory
      */
     ActiveStandbySituationProcessor(IncidentDatasource incidentDatasource,
-                                           DomainManagerFactory domainManagerFactory) {
+                                    DomainManagerFactory domainManagerFactory) {
         this.incidentDatasource = Objects.requireNonNull(incidentDatasource);
         LOG.debug("Registering service {} for domain {}", OCE_SERVICE_ID, OCE_DOMAIN);
-        domainManager = Objects.requireNonNull(domainManagerFactory).getManagerForDomain(OCE_DOMAIN);        
+        domainManager = Objects.requireNonNull(domainManagerFactory).getManagerForDomain(OCE_DOMAIN);
         domainManager.register(OCE_SERVICE_ID, this);
     }
 
@@ -184,7 +184,7 @@ public class ActiveStandbySituationProcessor implements SituationProcessor, Role
 
     /**
      * Get a copy of the current queue of unconfirmed situations.
-     * 
+     *
      * @return a copy of the current unconfirmed situations map
      */
     Map<Set<String>, Incident> getUnconfirmedSituations() {

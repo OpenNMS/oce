@@ -35,17 +35,19 @@ import java.util.Objects;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.DelayQueue;
 import java.util.concurrent.Delayed;
-import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.function.BiFunction;
 
 /**
- * A {@link LinkedHashMap} with keys that expire automatically after a predetermined delay.
+ * A conditionally thread safe {@link LinkedHashMap} with keys that expire automatically after a predetermined delay.
+ * <p>
+ * This class is wrapped using {@link java.util.Collections#synchronizedMap}. Iteration of this map must be done only
+ * after acquiring a lock on the instance of this map.
  *
  * @param <K> the key type
  * @param <V> the value type
  */
-public class ExpiringLinkedHashMap<K, V> extends LinkedHashMap<K, V> {
+public class SynchronizedExpiringLinkedHashMap<K, V> extends LinkedHashMap<K, V> {
     /**
      * The time to live for entries in milliseconds.
      */
@@ -60,40 +62,50 @@ public class ExpiringLinkedHashMap<K, V> extends LinkedHashMap<K, V> {
      * The synchronized map wrapping this map to ensure thread safety. This instance is used as a shared lock to ensure
      * thread safety when expired entries are removed.
      */
-    private final Map<K, V> synchronizedWrapperMap;
+    private final Map<K, V> wrapper;
 
     /**
-     * Constructor.
+     * A thread that runs forever that manages the asynchronous removal of expired entries.
+     */
+    private final Thread expiringThread = new Thread(this::expireEntries);
+
+    /**
+     * Private Constructor.
+     * <p>
+     * Factory methods must return the {@link #wrapper wrapper map} rather than this instance directly.
+     * <p>
+     * Factory methods must start the {@link #expiringThread} or entries will not expire.
+     *
+     * @param timeToLive the time to live for entries
+     * @param timeUnit   the time unit for the time to live
+     */
+    private SynchronizedExpiringLinkedHashMap(long timeToLive, TimeUnit timeUnit) {
+        timeToLiveMillis = timeUnit.toMillis(timeToLive);
+        wrapper = Collections.synchronizedMap(this);
+    }
+
+    /**
+     * Get a new {@link SynchronizedExpiringLinkedHashMap} instance.
      * <p>
      * The time to live is converted to milliseconds from the given time unit which can cause a potential loss of
      * precision if using a time unit smaller than milliseconds.
      *
      * @param timeToLive the time to live for entries
      * @param timeUnit   the time unit for the time to live
+     * @return the new instance
      */
-    private ExpiringLinkedHashMap(long timeToLive, TimeUnit timeUnit) {
-        timeToLiveMillis = timeUnit.toMillis(timeToLive);
-        synchronizedWrapperMap = Collections.synchronizedMap(this);
-        // Spawn a thread that will run forever that manages expiring the keys
-        Executors.newSingleThreadExecutor().submit(this::expireEntries);
+    static <K, V> Map<K, V> newInstance(long timeToLive, TimeUnit timeUnit) {
+        SynchronizedExpiringLinkedHashMap<K, V> instance = new SynchronizedExpiringLinkedHashMap<>(timeToLive,
+                timeUnit);
+        instance.expiringThread.start();
+
+        // We must return the wrapped map so that clients can lock on the wrapper to ensure thread safety while entries
+        // are expiring asynchronously
+        return instance.wrapper;
     }
 
     /**
-     * Get a thread safe instance of an {@link ExpiringLinkedHashMap}.
-     * <p>
-     * The instance returned is conditionally thread safe wrapped using {@link java.util.Collections#synchronizedMap}.
-     * The thread-safe caveats for the synchronized map apply to this map as well.
-     *
-     * @param timeToLive the time to live for entries
-     * @param timeUnit   the time unit for the time to live
-     * @return a conditionally thread-safe new instance
-     */
-    static <K, V> Map<K, V> getNewSynchronizedInstance(long timeToLive, TimeUnit timeUnit) {
-        return new ExpiringLinkedHashMap<K, V>(timeToLive, timeUnit).synchronizedWrapperMap;
-    }
-
-    /**
-     * A task that expires entries as they are dequeued.
+     * A task that expires entries as they are dequeued. This should only be invoked from the {@link #expiringThread}.
      */
     @SuppressWarnings("InfiniteLoopStatement")
     private void expireEntries() {
@@ -103,7 +115,7 @@ public class ExpiringLinkedHashMap<K, V> extends LinkedHashMap<K, V> {
                 DelayedKey delayedKey = expiryQueue.take();
 
                 // We need to obtain the lock on the synchronized map while we are removing expired entries
-                synchronized (synchronizedWrapperMap) {
+                synchronized (wrapper) {
                     remove(delayedKey.getKey());
                 }
             } catch (InterruptedException ignored) {

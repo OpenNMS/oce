@@ -72,7 +72,8 @@ public class ActiveStandbySituationProcessorTest {
     @Before
     public void setUp() {
         when(mockDomainManagerFactory.getManagerForDomain(anyString())).thenReturn(mockDomainManager);
-        situationProcessor = new ActiveStandbySituationProcessor(mockIncidentDataSource, mockDomainManagerFactory);
+        situationProcessor = ActiveStandbySituationProcessor.newInstance(mockIncidentDataSource,
+                mockDomainManagerFactory);
         when(mockIncident.getId()).thenReturn(id);
         when(mockIncident.getAlarms()).thenReturn(mockAlarmSet);
         when(mockAlarm1.getId()).thenReturn(mockAlarm1Id);

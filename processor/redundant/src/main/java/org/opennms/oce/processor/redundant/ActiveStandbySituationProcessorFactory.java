@@ -49,7 +49,7 @@ public class ActiveStandbySituationProcessorFactory implements SituationProcesso
      */
     public ActiveStandbySituationProcessorFactory(IncidentDatasource incidentDatasource,
                                                   DomainManagerFactory domainManagerFactory) {
-        INSTANCE = new ActiveStandbySituationProcessor(incidentDatasource, domainManagerFactory);
+        INSTANCE = ActiveStandbySituationProcessor.newInstance(incidentDatasource, domainManagerFactory);
     }
 
     /**

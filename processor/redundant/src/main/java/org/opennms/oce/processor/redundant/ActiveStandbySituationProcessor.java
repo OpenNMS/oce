@@ -97,17 +97,37 @@ public class ActiveStandbySituationProcessor implements SituationProcessor, Role
             TimeUnit.MINUTES);
 
     /**
-     * Constructor.
+     * Private Constructor.
+     * <p>
+     * Factory methods must perform the registration with the {@link #domainManager} or this instance will never become
+     * active.
      *
      * @param incidentDatasource   the incident data source
      * @param domainManagerFactory the domain manager factory
      */
-    ActiveStandbySituationProcessor(IncidentDatasource incidentDatasource,
-                                    DomainManagerFactory domainManagerFactory) {
+    private ActiveStandbySituationProcessor(IncidentDatasource incidentDatasource,
+                                            DomainManagerFactory domainManagerFactory) {
         this.incidentDatasource = Objects.requireNonNull(incidentDatasource);
-        LOG.debug("Registering service {} for domain {}", OCE_SERVICE_ID, OCE_DOMAIN);
         domainManager = Objects.requireNonNull(domainManagerFactory).getManagerForDomain(OCE_DOMAIN);
-        domainManager.register(OCE_SERVICE_ID, this);
+    }
+
+    /**
+     * Default factory method.
+     *
+     * @param incidentDatasource   the incident data source
+     * @param domainManagerFactory the domain manager factory
+     * @return a new {@link ActiveStandbySituationProcessor} instance
+     */
+    static ActiveStandbySituationProcessor newInstance(IncidentDatasource incidentDatasource,
+                                                       DomainManagerFactory domainManagerFactory) {
+        ActiveStandbySituationProcessor instance = new ActiveStandbySituationProcessor(incidentDatasource,
+                domainManagerFactory);
+        LOG.debug("Registering service {} for domain {}", OCE_SERVICE_ID, OCE_DOMAIN);
+        // The domain registration has to happen after the instance has been created to prevent leaking a 'this'
+        // reference that may be used by the domain manager before the processor has been fully constructed
+        instance.domainManager.register(OCE_SERVICE_ID, instance);
+
+        return instance;
     }
 
     /**

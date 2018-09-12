@@ -69,16 +69,6 @@ public class TickLoggingEngine implements Engine {
     }
 
     @Override
-    public void onAlarmCreatedOrUpdated(Alarm alarm) {
-
-    }
-
-    @Override
-    public void onAlarmCleared(Alarm alarm) {
-
-    }
-
-    @Override
     public void onInventoryAdded(Collection<InventoryObject> inventoryObject) {
 
     }

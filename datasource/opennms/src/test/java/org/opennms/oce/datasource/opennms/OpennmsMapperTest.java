@@ -61,16 +61,11 @@ public class OpennmsMapperTest {
                         .setForeignId("FID")
                         .setId(22)
                         .build())
-                .addRelatedAlarm(OpennmsModelProtos.Alarm.newBuilder()
-                        .setReductionKey("nodeLostService::2")
-                        .build())
                 .build();
         AlarmBean alarmBean = OpennmsMapper.toAlarm(alarm);
         assertThat(alarmBean.getId(), equalTo(alarm.getReductionKey()));
         assertThat(alarmBean.getTime(), equalTo(alarm.getLastEventTime()));
         assertThat(alarmBean.getSeverity(), equalTo(Severity.CRITICAL));
-        assertThat(alarmBean.getRelatedAlarms().iterator().next().getId(),
-                equalTo(alarm.getRelatedAlarmList().iterator().next().getReductionKey()));
     }
 
 

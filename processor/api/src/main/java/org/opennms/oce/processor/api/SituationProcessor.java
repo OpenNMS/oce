@@ -28,12 +28,8 @@
 
 package org.opennms.oce.processor.api;
 
-import java.util.Collections;
 import java.util.Set;
-import java.util.stream.Collectors;
 
-import org.opennms.oce.datasource.api.Alarm;
-import org.opennms.oce.datasource.api.AlarmHandler;
 import org.opennms.oce.datasource.api.Incident;
 
 /**
@@ -54,52 +50,5 @@ public interface SituationProcessor {
      * @param reductionKeysInAlarm the reduction keys contained in the individual alarms in the situation
      */
     default void confirm(Set<String> reductionKeysInAlarm) {
-    }
-
-    /**
-     * An {@link AlarmHandler} that confirms situations via a situation processor.
-     */
-    class SituationAlarmHandler implements AlarmHandler {
-        /**
-         * The situation processor.
-         */
-        private final SituationProcessor situationProcessor;
-
-        /**
-         * Constructor.
-         *
-         * @param situationProcessor the situation processor
-         */
-        private SituationAlarmHandler(SituationProcessor situationProcessor) {
-            this.situationProcessor = situationProcessor;
-        }
-
-        /**
-         * Default factory method.
-         *
-         * @param situationProcessor the situation processor to handle confirmations
-         * @return the SituationAlarmHandler instance for the given situation processor
-         */
-        public static SituationAlarmHandler with(SituationProcessor situationProcessor) {
-            return new SituationAlarmHandler(situationProcessor);
-        }
-
-        @Override
-        public void onAlarmCreatedOrUpdated(Alarm alarm) {
-            if (alarm != null && !alarm.getRelatedAlarms().isEmpty()) {
-                // Collect each of the reduction keys (Ids) contained in the related alarms so we can use these to
-                // uniquely identify the situation to confirm it via the situation processor
-                Set<String> reductionKeysInAlarm = alarm.getRelatedAlarms().stream()
-                        .map(Alarm::getId)
-                        .collect(Collectors.toSet());
-
-                situationProcessor.confirm(Collections.unmodifiableSet(reductionKeysInAlarm));
-            }
-        }
-
-        @Override
-        public void onAlarmCleared(Alarm alarm) {
-            // TODO: Are situations ever cleared? If not, this can be a no-op
-        }
     }
 }

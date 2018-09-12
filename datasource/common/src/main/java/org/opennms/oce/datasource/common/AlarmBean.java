@@ -28,10 +28,7 @@
 
 package org.opennms.oce.datasource.common;
 
-import java.util.Collection;
-import java.util.HashSet;
 import java.util.Objects;
-import java.util.Set;
 
 import org.opennms.oce.datasource.api.Alarm;
 import org.opennms.oce.datasource.api.Severity;
@@ -44,7 +41,6 @@ public class AlarmBean implements Alarm {
     private String inventoryObjectType;
     private String summary;
     private String description;
-    private final Set<Alarm> relatedAlarms = new HashSet<>();
 
     public AlarmBean() {
         this(null);
@@ -130,15 +126,6 @@ public class AlarmBean implements Alarm {
     }
 
     @Override
-    public Set<Alarm> getRelatedAlarms() {
-        return relatedAlarms;
-    }
-    
-    public void addRelatedAlarm(Alarm alarm) {
-        relatedAlarms.add(alarm);
-    }
-
-    @Override
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
@@ -149,14 +136,12 @@ public class AlarmBean implements Alarm {
                 Objects.equals(inventoryObjectId, alarmBean.inventoryObjectId) &&
                 Objects.equals(inventoryObjectType, alarmBean.inventoryObjectType) &&
                 Objects.equals(summary, alarmBean.summary) &&
-                Objects.equals(description, alarmBean.description) &&
-                Objects.equals(relatedAlarms, alarmBean.relatedAlarms);
+                Objects.equals(description, alarmBean.description);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(id, time, severity, inventoryObjectId, inventoryObjectType, summary, description,
-                relatedAlarms);
+        return Objects.hash(id, time, severity, inventoryObjectId, inventoryObjectType, summary, description);
     }
 
     @Override
@@ -169,7 +154,6 @@ public class AlarmBean implements Alarm {
                 ", inventoryObjectType='" + inventoryObjectType + '\'' +
                 ", summary='" + summary + '\'' +
                 ", description='" + description + '\'' +
-                ", relatedAlarms='" + relatedAlarms + '\'' +
                 '}';
     }
 }

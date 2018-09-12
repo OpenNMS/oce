@@ -36,6 +36,7 @@ import org.apache.kafka.streams.state.KeyValueStore;
 import org.opennms.oce.datasource.api.AlarmHandler;
 import org.opennms.oce.datasource.common.AlarmBean;
 import org.opennms.oce.datasource.opennms.HandlerRegistry;
+import org.opennms.oce.datasource.opennms.IncidentToEvent;
 import org.opennms.oce.datasource.opennms.OpennmsMapper;
 import org.opennms.oce.datasource.opennms.proto.OpennmsModelProtos;
 import org.opennms.oce.datasource.opennms.OpennmsDatasource;
@@ -65,9 +66,14 @@ public class AlarmTableProcessor implements Processor<String, OpennmsModelProtos
             final AlarmBean alarmBean = OpennmsMapper.toAlarm(alarm);
             alarmHandlers.forEach(h -> {
                 try {
-                    h.onAlarmCreatedOrUpdated(alarmBean);
+                    // Check if alarm is a situation (meaning the situation originally correlated has come round-trip)
+                    if(alarm.getReductionKey().startsWith(IncidentToEvent.SITUATION_UEI)) {
+                        h.onSituationAlarm(OpennmsMapper.toIncident(alarm));
+                    } else {
+                        h.onAlarmCreatedOrUpdated(alarmBean);
+                    }
                 } catch (Exception e) {
-                    LOG.error("onAlarmCreatedOrUpdated() call failed with alarm: {} on handler: {}", alarmBean, h, e);
+                    LOG.error("Failed to handle alarm: {} on handler: {}", alarmBean, h, e);
                 }
             });
         } else {

@@ -30,8 +30,13 @@ package org.opennms.oce.datasource.api;
 
 public interface AlarmHandler {
 
-    void onAlarmCreatedOrUpdated(Alarm alarm);
+    default void onAlarmCreatedOrUpdated(Alarm alarm) {
+    }
 
-    void onAlarmCleared(Alarm alarm);
+    default void onAlarmCleared(Alarm alarm) {
+    }
+
+    default void onSituationAlarm(Incident incident) {
+    }
 
 }

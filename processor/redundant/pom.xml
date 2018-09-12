@@ -29,21 +29,30 @@
             </plugin>
         </plugins>
     </build>
+    <repositories>
+        <repository>
+            <id>opennms</id>
+            <url>http://maven.opennms.org/content/groups/opennms.org-snapshot</url>
+        </repository>
+    </repositories>
     <dependencies>
         <dependency>
             <groupId>org.opennms.features.distributed</groupId>
             <artifactId>coordination-api</artifactId>
+            <!--
+            TODO: This is now tying us to a specific version of OpenNMS. We need a better solution that doesn't do that
+            -->
             <version>23.0.0-SNAPSHOT</version>
         </dependency>
         <dependency>
             <groupId>org.opennms.oce.datasource</groupId>
             <artifactId>org.opennms.oce.datasource.api</artifactId>
-            <version>1.0.0-SNAPSHOT</version>
+            <version>${project.version}</version>
         </dependency>
         <dependency>
             <groupId>org.opennms.oce</groupId>
             <artifactId>processor-standalone</artifactId>
-            <version>1.0.0-SNAPSHOT</version>
+            <version>${project.version}</version>
         </dependency>
         <dependency>
             <groupId>org.slf4j</groupId>

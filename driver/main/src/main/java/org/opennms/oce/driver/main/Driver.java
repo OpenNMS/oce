@@ -49,6 +49,7 @@ import org.opennms.oce.engine.api.EngineFactory;
 import org.opennms.oce.features.graph.api.GraphProvider;
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.ServiceRegistration;
+import org.opennms.oce.processor.api.SituationAlarmHandler;
 import org.opennms.oce.processor.api.SituationProcessor;
 import org.opennms.oce.processor.api.SituationProcessorFactory;
 import org.slf4j.Logger;
@@ -71,7 +72,8 @@ public class Driver {
     private Timer timer;
 
     public Driver(BundleContext bundleContext, AlarmDatasource alarmDatasource, InventoryDatasource inventoryDatasource,
-                  IncidentDatasource incidentDatasource, EngineFactory engineFactory, SituationProcessorFactory situationProcessorFactory) {
+                  IncidentDatasource incidentDatasource, EngineFactory engineFactory,
+                  SituationProcessorFactory situationProcessorFactory) {
         this.bundleContext = Objects.requireNonNull(bundleContext);
         this.alarmDatasource = Objects.requireNonNull(alarmDatasource);
         this.inventoryDatasource = Objects.requireNonNull(inventoryDatasource);
@@ -79,7 +81,7 @@ public class Driver {
         this.engineFactory = Objects.requireNonNull(engineFactory);
         this.situationProcessor =
                 Objects.requireNonNull(situationProcessorFactory).getInstance();
-        situationProcessorAlarmHandler = SituationProcessor.SituationAlarmHandler.with(situationProcessor);
+        situationProcessorAlarmHandler = SituationAlarmHandler.newInstance(situationProcessor);
     }
 
     public void init() {

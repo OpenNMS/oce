@@ -28,8 +28,6 @@
 
 package org.opennms.oce.datasource.api;
 
-import java.util.Set;
-
 public interface Alarm {
 
     String getId();
@@ -48,5 +46,4 @@ public interface Alarm {
 
     String getDescription();
 
-    Set<Alarm> getRelatedAlarms();
 }

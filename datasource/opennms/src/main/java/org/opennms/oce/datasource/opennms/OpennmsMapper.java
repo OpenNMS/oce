@@ -46,11 +46,10 @@ public class OpennmsMapper {
         bean.setInventoryObjectId(alarm.getManagedObjectInstance());
         bean.setSummary(alarm.getLogMessage());
         bean.setDescription(alarm.getDescription());
-        alarm.getRelatedAlarmList().forEach(relatedAlarm -> bean.addRelatedAlarm(OpennmsMapper.toAlarm(relatedAlarm)));
         return bean;
     }
 
-    protected static IncidentBean toIncident(OpennmsModelProtos.Alarm alarm) {
+    public static IncidentBean toIncident(OpennmsModelProtos.Alarm alarm) {
         final IncidentBean bean = new IncidentBean();
         bean.setCreationTime(alarm.getFirstEventTime());
         final OpennmsModelProtos.Event lastEvent = alarm.getLastEvent();
@@ -61,6 +60,7 @@ public class OpennmsMapper {
                     .ifPresent(p -> bean.setId(p.getValue()));
         }
         bean.setSeverity(toSeverity(alarm.getSeverity()));
+        alarm.getRelatedAlarmList().forEach(relatedAlarm -> bean.addAlarm(toAlarm(relatedAlarm)));
         return bean;
     }
 

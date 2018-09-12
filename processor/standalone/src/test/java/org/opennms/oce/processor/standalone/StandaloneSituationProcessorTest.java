@@ -50,7 +50,7 @@ public class StandaloneSituationProcessorTest {
      * Tests that an incident accepted by the processor is forwarded via the incident data source.
      */
     @Test
-    public void testForward() throws Exception {
+    public void testAccept() throws Exception {
         IncidentDatasource mockIncidentDataSource = mock(IncidentDatasource.class);
         SituationProcessor situationProcessor = new StandaloneSituationProcessor(mockIncidentDataSource);
 

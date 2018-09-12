@@ -24,6 +24,11 @@
             <artifactId>org.opennms.oce.features.graph.api</artifactId>
         </dependency>
         <dependency>
+            <groupId>org.opennms.oce</groupId>
+            <artifactId>processor-api</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-api</artifactId>
         </dependency>
@@ -55,11 +60,6 @@
             <groupId>org.opennms.oce.datasource</groupId>
             <artifactId>org.opennms.oce.datasource.jaxb</artifactId>
             <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.opennms.oce</groupId>
-            <artifactId>processor-api</artifactId>
-            <version>1.0.0-SNAPSHOT</version>
         </dependency>
     </dependencies>
 

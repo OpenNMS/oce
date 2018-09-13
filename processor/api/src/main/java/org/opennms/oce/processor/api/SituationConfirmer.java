@@ -34,13 +34,13 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.opennms.oce.datasource.api.Alarm;
-import org.opennms.oce.datasource.api.AlarmHandler;
 import org.opennms.oce.datasource.api.Incident;
+import org.opennms.oce.datasource.api.SituationHandler;
 
 /**
- * An {@link AlarmHandler} that confirms situations via a situation processor.
+ * A {@link SituationHandler} that confirms situations via a {@link SituationProcessor}.
  */
-public class SituationAlarmHandler implements AlarmHandler {
+public class SituationConfirmer implements SituationHandler {
     /**
      * The situation processor.
      */
@@ -51,7 +51,7 @@ public class SituationAlarmHandler implements AlarmHandler {
      *
      * @param situationProcessor the situation processor
      */
-    private SituationAlarmHandler(SituationProcessor situationProcessor) {
+    private SituationConfirmer(SituationProcessor situationProcessor) {
         this.situationProcessor = situationProcessor;
     }
 
@@ -59,14 +59,14 @@ public class SituationAlarmHandler implements AlarmHandler {
      * Default factory method.
      *
      * @param situationProcessor the situation processor to handle confirmations
-     * @return the SituationAlarmHandler instance for the given situation processor
+     * @return the SituationConfirmer instance for the given situation processor
      */
-    public static SituationAlarmHandler newInstance(SituationProcessor situationProcessor) {
-        return new SituationAlarmHandler(situationProcessor);
+    public static SituationConfirmer newInstance(SituationProcessor situationProcessor) {
+        return new SituationConfirmer(situationProcessor);
     }
 
     @Override
-    public void onSituationAlarm(Incident incident) {
+    public void onSituation(Incident incident) {
         // Collect each of the reduction keys (Ids) contained in the related alarms so we can use these to
         // uniquely identify the situation to confirm it via the situation processor
         Set<String> reductionKeysInAlarm = Objects.requireNonNull(incident).getAlarms().stream()

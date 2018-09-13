@@ -33,6 +33,7 @@ import java.util.Objects;
 
 import org.opennms.oce.datasource.api.Incident;
 import org.opennms.oce.datasource.api.IncidentDatasource;
+import org.opennms.oce.datasource.api.SituationHandler;
 
 public class StaticIncidentDatasource implements IncidentDatasource {
     private final List<Incident> incidents;
@@ -49,5 +50,13 @@ public class StaticIncidentDatasource implements IncidentDatasource {
     @Override
     public void forwardIncident(Incident incident) {
         // pass
+    }
+
+    @Override
+    public void registerHandler(SituationHandler handler) {
+    }
+
+    @Override
+    public void unregisterHandler(SituationHandler handler) {
     }
 }

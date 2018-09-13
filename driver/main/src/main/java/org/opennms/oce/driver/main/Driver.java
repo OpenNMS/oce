@@ -39,19 +39,19 @@ import java.util.concurrent.atomic.AtomicReference;
 
 import org.opennms.oce.datasource.api.Alarm;
 import org.opennms.oce.datasource.api.AlarmDatasource;
-import org.opennms.oce.datasource.api.AlarmHandler;
 import org.opennms.oce.datasource.api.Incident;
 import org.opennms.oce.datasource.api.IncidentDatasource;
 import org.opennms.oce.datasource.api.InventoryDatasource;
 import org.opennms.oce.datasource.api.InventoryObject;
+import org.opennms.oce.datasource.api.SituationHandler;
 import org.opennms.oce.engine.api.Engine;
 import org.opennms.oce.engine.api.EngineFactory;
 import org.opennms.oce.features.graph.api.GraphProvider;
-import org.osgi.framework.BundleContext;
-import org.osgi.framework.ServiceRegistration;
-import org.opennms.oce.processor.api.SituationAlarmHandler;
+import org.opennms.oce.processor.api.SituationConfirmer;
 import org.opennms.oce.processor.api.SituationProcessor;
 import org.opennms.oce.processor.api.SituationProcessorFactory;
+import org.osgi.framework.BundleContext;
+import org.osgi.framework.ServiceRegistration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -65,7 +65,7 @@ public class Driver {
     private final BundleContext bundleContext;
     private final AtomicReference<ServiceRegistration<?>> graphProviderServiceRegistrationRef = new AtomicReference<>();
     private final SituationProcessor situationProcessor;
-    private final AlarmHandler situationProcessorAlarmHandler;
+    private final SituationHandler situationHandler;
 
     private Thread initThread;
     private Engine engine;
@@ -81,7 +81,7 @@ public class Driver {
         this.engineFactory = Objects.requireNonNull(engineFactory);
         this.situationProcessor =
                 Objects.requireNonNull(situationProcessorFactory).getInstance();
-        situationProcessorAlarmHandler = SituationAlarmHandler.newInstance(situationProcessor);
+        situationHandler = SituationConfirmer.newInstance(situationProcessor);
     }
 
     public void init() {
@@ -93,7 +93,7 @@ public class Driver {
         final CompletableFuture<Void> future = new CompletableFuture<>();
         engine = engineFactory.createEngine();
         // Register the handler that confirms situations that have come round trip back to this driver
-        alarmDatasource.registerHandler(situationProcessorAlarmHandler);
+        incidentDatasource.registerHandler(situationHandler);
         // Register the situation processor responsible for accepting and processing all situations generated via the
         // engine
         engine.registerIncidentHandler(situationProcessor::accept);
@@ -140,7 +140,7 @@ public class Driver {
     }
 
     public void destroy() {
-        alarmDatasource.unregisterHandler(situationProcessorAlarmHandler);
+        incidentDatasource.unregisterHandler(situationHandler);
         
         if (initThread != null && initThread.isAlive()) {
             initThread.interrupt();

@@ -28,10 +28,14 @@
 
 package org.opennms.oce.datasource.api;
 
-public interface AlarmHandler {
-
-    void onAlarmCreatedOrUpdated(Alarm alarm);
-
-    void onAlarmCleared(Alarm alarm);
-
+/**
+ * A handler that deals with situations.
+ */
+public interface SituationHandler {
+    /**
+     * Handle a situation.
+     *
+     * @param incident the situation
+     */
+    void onSituation(Incident incident);
 }

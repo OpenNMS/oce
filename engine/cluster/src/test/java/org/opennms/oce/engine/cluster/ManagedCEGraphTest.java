@@ -47,15 +47,15 @@ import org.opennms.oce.driver.test.MockInventory;
 import org.opennms.oce.driver.test.MockInventoryBuilder;
 import org.opennms.oce.driver.test.MockInventoryType;
 
-public class GraphManagerTest {
+public class ManagedCEGraphTest {
 
     @Test
     public void canBuildGraphAndMaintainGraph() {
         // Create a new graph manager and add some inventory
-        final GraphManager graphManager = new GraphManager();
-        graphManager.addInventory(MockInventory.SAMPLE_NETWORK);
+        final ManagedCEGraph ManagedCEGraph = new ManagedCEGraph();
+        ManagedCEGraph.addInventory(MockInventory.SAMPLE_NETWORK);
         // Validate the graph
-        graphManager.withGraph(g -> {
+        ManagedCEGraph.withGraph(g -> {
             // The number of vertices should match the number of elements in the inventory
             assertThat(g.getVertices(), hasSize(MockInventory.SAMPLE_NETWORK.size()));
 
@@ -72,9 +72,9 @@ public class GraphManagerTest {
                 .withInventoryObject(MockInventoryType.PORT, "n1-c1-p1")
                 .withEvent(SECONDS.toMillis(31), Severity.MAJOR)
                 .build();
-        graphManager.addOrUpdateAlarms(alarms);
+        ManagedCEGraph.addOrUpdateAlarms(alarms);
 
-        graphManager.withVertex("Port", "n1-c1-p1", (g,v) -> {
+        ManagedCEGraph.withVertex("Port", "n1-c1-p1", (g, v) -> {
             // No new vertices should of been added
             assertThat(g.getVertices(), hasSize(MockInventory.SAMPLE_NETWORK.size()));
 
@@ -86,21 +86,21 @@ public class GraphManagerTest {
     @Test
     public void canHandleSameInventory() {
         // Create a new graph manager and add some inventory
-        final GraphManager graphManager = new GraphManager();
-        graphManager.addInventory(MockInventory.SAMPLE_NETWORK);
+        final ManagedCEGraph ManagedCEGraph = new ManagedCEGraph();
+        ManagedCEGraph.addInventory(MockInventory.SAMPLE_NETWORK);
 
         AtomicInteger numEdges = new AtomicInteger();
         // Validate the graph
-        graphManager.withGraph(g -> {
+        ManagedCEGraph.withGraph(g -> {
             // The number of vertices should match the number of elements in the inventory
             assertThat(g.getVertices(), hasSize(MockInventory.SAMPLE_NETWORK.size()));
             // Capture the number of edges
             numEdges.set(g.getEdgeCount());
         });
         // Now add the same inventory again
-        graphManager.addInventory(MockInventory.SAMPLE_NETWORK);
+        ManagedCEGraph.addInventory(MockInventory.SAMPLE_NETWORK);
         // Validate the graph
-        graphManager.withGraph(g -> {
+        ManagedCEGraph.withGraph(g -> {
             // The number of vertices should match the number of elements in the inventory
             assertThat(g.getVertices(), hasSize(MockInventory.SAMPLE_NETWORK.size()));
             // The number of edges should match the number from the last count
@@ -114,50 +114,50 @@ public class GraphManagerTest {
      */
     @Test
     public void canHandleDeferredVertices() {
-        final GraphManager graphManager = new GraphManager();
+        final ManagedCEGraph ManagedCEGraph = new ManagedCEGraph();
         // Add a link that references two non-existent peers
-        graphManager.addInventory(new MockInventoryBuilder()
+        ManagedCEGraph.addInventory(new MockInventoryBuilder()
                 .withInventoryObject(MockInventoryType.LINK, "n1-c1-p1___n2-c1-p1")
                 .withPeerRelation(MockInventoryType.LINK, "n1-c1-p1___n2-c1-p1", MockInventoryType.PORT, "n1-c1-p1", MockInventoryType.PORT, "n2-c1-p1")
                 .getInventory());
 
         // The graph should contain a single vertex with no edges
-        graphManager.withGraph(g -> {
+        ManagedCEGraph.withGraph(g -> {
             assertThat(g.getVertices(), hasSize(1));
             assertThat(g.getEdges(), hasSize(0));
         });
 
-        assertThat(graphManager.getNumDeferredObjects(), equalTo(1));
+        assertThat(ManagedCEGraph.getNumDeferredObjects(), equalTo(1));
 
         // Now, let's add the objects that the link refers to
-        graphManager.addInventory(new MockInventoryBuilder()
+        ManagedCEGraph.addInventory(new MockInventoryBuilder()
                 .withInventoryObject(MockInventoryType.PORT, "n1-c1-p1")
                 .withInventoryObject(MockInventoryType.PORT, "n2-c1-p1")
                 .getInventory());
 
         // The graph should contain 3 vertices and 2 edges
-        graphManager.withGraph(g -> {
+        ManagedCEGraph.withGraph(g -> {
             assertThat(g.getVertices(), hasSize(3));
             assertThat(g.getEdges(), hasSize(2));
         });
 
-        assertThat(graphManager.getNumDeferredObjects(), equalTo(0));
+        assertThat(ManagedCEGraph.getNumDeferredObjects(), equalTo(0));
     }
 
     @Test
     public void canDeleteInventory() {
         // Create a new graph manager and add some inventory
-        final GraphManager graphManager = new GraphManager();
-        graphManager.addInventory(MockInventory.SAMPLE_NETWORK);
+        final ManagedCEGraph ManagedCEGraph = new ManagedCEGraph();
+        ManagedCEGraph.addInventory(MockInventory.SAMPLE_NETWORK);
         // The graph should contain some vertices and edges
-        graphManager.withGraph(g -> {
+        ManagedCEGraph.withGraph(g -> {
             assertThat(g.getVertexCount(), greaterThanOrEqualTo(1));
             assertThat(g.getEdgeCount(), greaterThanOrEqualTo(1));
         });
         // Now delete that same inventory
-        graphManager.removeInventory(MockInventory.SAMPLE_NETWORK);
+        ManagedCEGraph.removeInventory(MockInventory.SAMPLE_NETWORK);
         // The graph should be empty
-        graphManager.withGraph(g -> {
+        ManagedCEGraph.withGraph(g -> {
             assertThat(g.getVertexCount(), equalTo(0));
             assertThat(g.getEdgeCount(),  equalTo(0));
         });
@@ -166,7 +166,7 @@ public class GraphManagerTest {
     @Test
     public void canIgnoreAlarmsWithoutInventoryObjects() {
         // Create a new graph manager
-        final GraphManager graphManager = new GraphManager();
+        final ManagedCEGraph ManagedCEGraph = new ManagedCEGraph();
 
         // Add an alarm to the graph
         AlarmBean a1 = new AlarmBean();
@@ -174,10 +174,10 @@ public class GraphManagerTest {
         a1.setId("a1");
         a1.setInventoryObjectType(null);
         a1.setInventoryObjectId(null);
-        graphManager.addOrUpdateAlarm(a1);
+        ManagedCEGraph.addOrUpdateAlarm(a1);
 
         // The graph should remain empty
-        graphManager.withGraph(g -> {
+        ManagedCEGraph.withGraph(g -> {
             assertThat(g.getVertexCount(), equalTo(0));
         });
     }

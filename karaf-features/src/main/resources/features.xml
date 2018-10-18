@@ -129,6 +129,11 @@
         <bundle>mvn:org.opennms.oce.features.graph/org.opennms.oce.features.graph.rest/${project.version}</bundle>
     </feature>
 
+    <feature name="oce-features-graph-janusgraph" description="OCE :: Features :: Graph :: JanusGraph" version="${project.version}">
+        <feature dependency="true" version="${project.version}">oce-features-graph-api</feature>
+        <bundle>mvn:org.opennms.oce.features.graph/org.opennms.oce.features.graph.janusgraph/${project.version}</bundle>
+    </feature>
+
     <!-- Situation Processors -->
 
     <feature name="oce-processor-api" description="OCE :: Processor :: API" version="${project.version}">

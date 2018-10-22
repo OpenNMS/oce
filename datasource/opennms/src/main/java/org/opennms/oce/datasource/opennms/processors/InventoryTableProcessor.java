@@ -30,10 +30,13 @@ package org.opennms.oce.datasource.opennms.processors;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.apache.kafka.streams.KeyValue;
 import org.apache.kafka.streams.processor.Processor;
@@ -64,6 +67,8 @@ public class InventoryTableProcessor implements Processor<String, InventoryModel
 
     private ProcessorContext context;
     private KeyValueStore<String, InventoryModelProtos.InventoryObjects> kvStore;
+    
+    private final Map<InventoryObject, Integer> inventoryReferences = new HashMap<>();
 
     public InventoryTableProcessor(HandlerRegistry<InventoryHandler> inventoryHandlers, long inventoryGcIntervalMs, long inventoryTtlMs) {
         this.inventoryHandlers = Objects.requireNonNull(inventoryHandlers);
@@ -103,13 +108,35 @@ public class InventoryTableProcessor implements Processor<String, InventoryModel
             });
 
             if (inventoryObjects.size() > 0) {
-                inventoryHandlers.forEach(h -> {
-                    try {
-                        h.onInventoryRemoved(toInventory(inventoryObjects));
-                    } catch (Exception e) {
-                        LOG.error("onInventoryRemoved() call failed with inventory: {} on handler: {}", inventoryObjects, h, e);
-                    }
-                });
+                // Only notify handlers of a removal for inventory that is no longer referenced
+                List<InventoryObject> inventoryToDelete = toInventory(inventoryObjects).stream()
+                        .filter(io -> {
+                            Integer references = inventoryReferences.get(io);
+
+                            if (--references > 0) {
+                                inventoryReferences.put(io, references);
+                                LOG.trace("Inventory object {} references decreased to {}", io, references);
+
+                                return false;
+                            }
+
+                            LOG.debug("Inventory object {} is no longer referenced and will be removed", io);
+                            inventoryReferences.remove(io);
+
+                            return true;
+                        })
+                        .collect(Collectors.toList());
+
+                if (!inventoryToDelete.isEmpty()) {
+                    inventoryHandlers.forEach(h -> {
+                        try {
+                            h.onInventoryRemoved(inventoryToDelete);
+                        } catch (Exception e) {
+                            LOG.error("onInventoryRemoved() call failed with inventory: {} on handler: {}",
+                                    inventoryObjects, h, e);
+                        }
+                    });
+                }
             }
 
             // commit the current processing progress
@@ -130,13 +157,34 @@ public class InventoryTableProcessor implements Processor<String, InventoryModel
             }
         } else {
             this.kvStore.put(key, inventory);
-            inventoryHandlers.forEach(h -> {
-                try {
-                    h.onInventoryAdded(toInventory(Collections.singletonList(inventory)));
-                } catch (Exception e) {
-                    LOG.error("onInventoryAdded() call failed with inventory: {} on handler: {}", inventory, h, e);
-                }
-            });
+
+            // Only handle inventory that has not been referenced before
+            List<InventoryObject> newInventory = toInventory(Collections.singletonList(inventory)).stream()
+                    .filter(io -> {
+                        Integer references = inventoryReferences.putIfAbsent(io, 1);
+
+                        if (references == null) {
+                            LOG.debug("Inventory object {} is new and will be added", io);
+
+                            return true;
+                        }
+
+                        inventoryReferences.put(io, ++references);
+                        LOG.trace("Inventory object {} references increased to {}", io, references);
+
+                        return false;
+                    })
+                    .collect(Collectors.toList());
+
+            if (!newInventory.isEmpty()) {
+                inventoryHandlers.forEach(h -> {
+                    try {
+                        h.onInventoryAdded(newInventory);
+                    } catch (Exception e) {
+                        LOG.error("onInventoryAdded() call failed with inventory: {} on handler: {}", inventory, h, e);
+                    }
+                });
+            }
         }
     }
 

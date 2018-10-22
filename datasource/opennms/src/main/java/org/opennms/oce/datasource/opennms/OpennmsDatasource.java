@@ -34,10 +34,13 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Dictionary;
 import java.util.Enumeration;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Properties;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.ProducerConfig;
@@ -326,7 +329,23 @@ public class OpennmsDatasource implements IncidentDatasource, AlarmDatasource, I
         } catch (InterruptedException e) {
             throw new RuntimeException(e);
         }
-        return InventoryTableProcessor.toInventory(inventory);
+
+        Set<String> uniqueIds = new HashSet<>();
+
+        // Discard any duplicate inventory objects
+        return InventoryTableProcessor.toInventory(inventory).stream()
+                .filter(io -> {
+                    String id = io.getId();
+
+                    if (uniqueIds.contains(id)) {
+                        return false;
+                    }
+
+                    uniqueIds.add(id);
+
+                    return true;
+                })
+                .collect(Collectors.toList());
     }
 
     @Override

@@ -37,7 +37,7 @@ import java.util.Map;
 import java.util.Objects;
 
 import org.opennms.oce.datasource.api.Alarm;
-import org.opennms.oce.datasource.api.Incident;
+import org.opennms.oce.datasource.api.Situation;
 import org.opennms.oce.features.graph.api.Edge;
 import org.opennms.oce.features.graph.api.OceGraph;
 import org.opennms.oce.features.graph.api.Vertex;
@@ -50,7 +50,8 @@ import edu.uci.ics.jung.graph.Graph;
 
 public class GraphMLConverter {
     private final Graph<Vertex, Edge> g;
-    private final List<Incident> incidents;
+
+    private final List<Situation> situations;
 
 
     private final GraphML doc = new GraphML();
@@ -58,7 +59,8 @@ public class GraphMLConverter {
 
     private final Map<String,GraphMLNode> alarmIdToGraphMLNode = new HashMap<>();
     private Vertex vertexWithMostAlarms = null;
-    private Incident situationWithMostAlarms = null;
+
+    private Situation situationWithMostAlarms = null;
     private boolean includeAlarms = true;
 
     private static final String ONMS_GRAPHML_GRAPH_NAMESPACE = "namespace";
@@ -78,18 +80,19 @@ public class GraphMLConverter {
     private static final String CREATED_TIMESTAMP_KEY = "createdTimestamp";
     private static final String UPDATED_TIMESTAMP_KEY = "updatedTimestamp";
 
-    private GraphMLConverter(Graph<Vertex,Edge> g, List<Incident> incidents) {
+    private GraphMLConverter(Graph<Vertex, Edge> g, List<Situation> situations) {
         this.g = Objects.requireNonNull(g);
-        this.incidents = Objects.requireNonNull(incidents);
+        this.situations = Objects.requireNonNull(situations);
         graph.setProperty(ONMS_GRAPHML_GRAPH_NAMESPACE, "oce");
         doc.addGraph(graph);
     }
 
-    public static GraphML toGraphMLWithSituations(Graph<? extends Vertex,? extends Edge> graph, List<Incident> situations) {
+    public static GraphML toGraphMLWithSituations(Graph<? extends Vertex, ? extends Edge> graph, List<Situation> situations) {
         return toGraphMLWithSituations(graph, situations, true);
     }
 
-    public static GraphML toGraphMLWithSituations(Graph<? extends Vertex,? extends Edge> graph, List<Incident> situations, boolean includeAlarms) {
+    public static GraphML toGraphMLWithSituations(Graph<? extends Vertex, ? extends Edge> graph, List<Situation> situations,
+            boolean includeAlarms) {
         final GraphMLConverter converter = new GraphMLConverter((Graph<Vertex,Edge>)graph, situations);
         converter.setIncludeAlarms(includeAlarms);
         converter.processGraph();
@@ -110,7 +113,7 @@ public class GraphMLConverter {
             handleEdge(e);
         }
         if (includeAlarms) {
-            for (Incident situation : incidents) {
+            for (Situation situation : situations) {
                 handleSituation(situation);
             }
         }
@@ -191,14 +194,14 @@ public class GraphMLConverter {
         e.getInventoryObjectPeerRef().ifPresent(peerRef ->  edge.setProperty(ONMS_GRAPHML_LABEL, "peer reference"));
         e.getInventoryObjectRelativeRef().ifPresent(relativeRef ->  edge.setProperty(ONMS_GRAPHML_LABEL, "relative reference"));
 
-        Collection<Vertex> incidentVertices = g.getIncidentVertices(e);
-        if (incidentVertices.size() == 1) {
-            Vertex v = incidentVertices.iterator().next();
+        Collection<Vertex> situationVertices = g.getIncidentVertices(e);
+        if (situationVertices.size() == 1) {
+            Vertex v = situationVertices.iterator().next();
             GraphMLNode node = graph.getNodeById(getVertexIdFor(v));
             edge.setSource(node);
             edge.setTarget(node);
-        } else if (incidentVertices.size() == 2) {
-            Iterator<Vertex> it = incidentVertices.iterator();
+        } else if (situationVertices.size() == 2) {
+            Iterator<Vertex> it = situationVertices.iterator();
             Vertex v1 = it.next();
             Vertex v2 = it.next();
             GraphMLNode node1 = graph.getNodeById(getVertexIdFor(v1));
@@ -206,12 +209,13 @@ public class GraphMLConverter {
             edge.setSource(node1);
             edge.setTarget(node2);
         } else {
-            throw new IllegalStateException(String.format("Edge with id: '%s' has %d incident vertices.", e.getId(), incidentVertices.size()));
+            throw new IllegalStateException(String.format("Edge with id: '%s' has %d situation vertices.", e.getId(),
+                                                          situationVertices.size()));
         }
         graph.addEdge(edge);
     }
 
-    private void handleSituation(Incident situation) {
+    private void handleSituation(Situation situation) {
         final GraphMLNode nodeForSituation = new GraphMLNode();
         nodeForSituation.setId(getVertexIdFor(situation));
         nodeForSituation.setProperty(ONMS_GRAPHML_ICON_KEY, ONMS_ICON_IP_SERVICE);
@@ -250,7 +254,7 @@ public class GraphMLConverter {
         this.includeAlarms = includeAlarms;
     }
 
-    public static String getVertexIdFor(Incident situation) {
+    public static String getVertexIdFor(Situation situation) {
         return "situation-" + situation.getId();
     }
 

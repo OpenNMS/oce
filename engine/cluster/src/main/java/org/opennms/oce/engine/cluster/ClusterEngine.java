@@ -393,14 +393,22 @@ public class ClusterEngine implements Engine, GraphProvider {
             initLock.await();
             graphManager.addOrUpdateAlarm(alarm);
             alarmsChangedSinceLastTick = true;
-        } catch (InterruptedException e) {
-            LOG.warn("Interrupted while handling callback");
+        } catch (InterruptedException ignore) {
+            LOG.debug("Interrupted while handling callback, skipping processing onAlarmCreatedOrUpdated");
+            Thread.currentThread().interrupt();
         }
     }
 
     @Override
     public void onAlarmCleared(Alarm alarm) {
-        onAlarmCreatedOrUpdated(alarm);
+        try {
+            initLock.await();
+            graphManager.addOrUpdateAlarm(alarm);
+            alarmsChangedSinceLastTick = true;
+        } catch (InterruptedException ignore) {
+            LOG.debug("Interrupted while handling callback, skipping processing onAlarmCleared");
+            Thread.currentThread().interrupt();
+        }
     }
 
     @Override
@@ -408,8 +416,9 @@ public class ClusterEngine implements Engine, GraphProvider {
         try {
             initLock.await();
             graphManager.addInventory(inventory);
-        } catch (InterruptedException e) {
-            LOG.warn("Interrupted while handling callback");
+        } catch (InterruptedException ignore) {
+            LOG.debug("Interrupted while handling callback, skipping processing onInventoryAdded");
+            Thread.currentThread().interrupt();
         }
     }
 
@@ -418,8 +427,9 @@ public class ClusterEngine implements Engine, GraphProvider {
         try {
             initLock.await();
             graphManager.removeInventory(inventory);
-        } catch (InterruptedException e) {
-            LOG.warn("Interrupted while handling callback");
+        } catch (InterruptedException ignore) {
+            LOG.debug("Interrupted while handling callback, skipping processing onInventoryRemoved");
+            Thread.currentThread().interrupt();
         }
     }
 

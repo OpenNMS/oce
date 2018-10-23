@@ -28,19 +28,18 @@
 
 package org.opennms.oce.datasource.opennms.processors;
 
-import static org.awaitility.Awaitility.await;
-import static org.junit.Assert.fail;
+import static org.hamcrest.CoreMatchers.equalTo;
+import static org.junit.Assert.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
 
 import org.apache.kafka.streams.KeyValue;
 import org.apache.kafka.streams.processor.ProcessorContext;
@@ -48,7 +47,6 @@ import org.apache.kafka.streams.processor.PunctuationType;
 import org.apache.kafka.streams.processor.Punctuator;
 import org.apache.kafka.streams.state.KeyValueIterator;
 import org.apache.kafka.streams.state.KeyValueStore;
-import org.awaitility.core.ConditionTimeoutException;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.stubbing.Answer;
@@ -58,8 +56,8 @@ import org.opennms.oce.datasource.opennms.HandlerRegistry;
 import org.opennms.oce.datasource.opennms.proto.InventoryModelProtos;
 
 public class InventoryTableProcessorTest {
-    private final AtomicInteger addCallbackCounter = new AtomicInteger(0);
-    private final AtomicInteger removeCallbackCounter = new AtomicInteger(0);
+    private int addCallbackCounter;
+    private int removeCallbackCounter;
     private final Map<String, InventoryModelProtos.InventoryObjects> inventoryMap = new HashMap<>();
 
     @Test
@@ -70,6 +68,7 @@ public class InventoryTableProcessorTest {
         //noinspection unchecked
         when(inventoryStore.delete(any(String.class))).thenAnswer((Answer) invocation ->
                 inventoryMap.remove((String) invocation.getArguments()[0]));
+        when(inventoryStore.all()).thenReturn(new MockKeyValueIteratorImpl(Collections.emptyMap()));
 
         ProcessorContext mockProcessorContext = mock(ProcessorContext.class);
         when(mockProcessorContext.getStateStore(any(String.class))).thenReturn(inventoryStore);
@@ -90,19 +89,19 @@ public class InventoryTableProcessorTest {
         inventoryMap.put("owner2", getInventoryObjectExpiringAt(step * 2));
         inventoryMap.forEach(inventoryTableProcessor::process);
         // Two of the same inventory should result in only one add
-        verifyCalledNTimes(addCallbackCounter, 1);
+        assertThat(addCallbackCounter, equalTo(1));
 
         // Since the inventory object had two references the first delete should not result in handlers being notified
         // of a remove
         when(inventoryStore.all()).thenReturn(new MockKeyValueIteratorImpl(inventoryMap));
         capturedPunctuator.punctuate(step);
-        verifyCalledNTimes(removeCallbackCounter, 0);
+        assertThat(removeCallbackCounter, equalTo(0));
 
         // The second delete should result in the inventory object no longer being referenced and now the handler should
         // be notified
         when(inventoryStore.all()).thenReturn(new MockKeyValueIteratorImpl(inventoryMap));
         capturedPunctuator.punctuate(step * 2);
-        verifyCalledNTimes(removeCallbackCounter, 1);
+        assertThat(removeCallbackCounter, equalTo(1));
     }
 
     private InventoryModelProtos.InventoryObjects getInventoryObjectExpiringAt(long expiryTime) {
@@ -115,26 +114,15 @@ public class InventoryTableProcessorTest {
                 .build();
     }
 
-    private void verifyCalledNTimes(AtomicInteger callbackCounter, int numTimes) {
-        await().atMost(1, TimeUnit.SECONDS).until(() -> callbackCounter.get() == numTimes);
-
-        // Wait a little while longer to make sure the counter doesn't increment beyond what we expect
-        try {
-            await().atMost(1, TimeUnit.SECONDS).until(() -> callbackCounter.get() > numTimes);
-            fail("The callback was called more than " + numTimes + " times");
-        } catch (ConditionTimeoutException ignore) {
-        }
-    }
-
     private final class TestInventoryHandler implements InventoryHandler {
         @Override
         public void onInventoryAdded(Collection<InventoryObject> inventoryObjects) {
-            addCallbackCounter.getAndIncrement();
+            addCallbackCounter++;
         }
 
         @Override
         public void onInventoryRemoved(Collection<InventoryObject> inventoryObjects) {
-            removeCallbackCounter.getAndIncrement();
+            removeCallbackCounter++;
         }
     }
 

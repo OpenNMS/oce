@@ -49,6 +49,7 @@ import org.apache.kafka.streams.state.KeyValueStore;
 import org.opennms.oce.datasource.api.InventoryHandler;
 import org.opennms.oce.datasource.api.InventoryObject;
 import org.opennms.oce.datasource.api.InventoryObjectPeerEndpoint;
+import org.opennms.oce.datasource.api.ResourceKey;
 import org.opennms.oce.datasource.common.InventoryObjectBean;
 import org.opennms.oce.datasource.common.InventoryObjectPeerRefBean;
 import org.opennms.oce.datasource.common.InventoryObjectRelativeRefBean;
@@ -70,7 +71,7 @@ public class InventoryTableProcessor implements Processor<String, InventoryModel
     private ProcessorContext context;
     private KeyValueStore<String, InventoryModelProtos.InventoryObjects> kvStore;
 
-    private final Map<OpennmsDatasource.InventoryIdentifier, AtomicInteger> inventoryReferences =
+    private final Map<ResourceKey, AtomicInteger> inventoryReferences =
             new ConcurrentHashMap<>();
     private final CountDownLatch initLock = new CountDownLatch(1);
 
@@ -127,8 +128,7 @@ public class InventoryTableProcessor implements Processor<String, InventoryModel
             // Only notify handlers of a removal for inventory that is no longer referenced
             List<InventoryObject> inventoryToDelete = toInventory(inventoryObjects).stream()
                     .filter(io -> {
-                        OpennmsDatasource.InventoryIdentifier id =
-                                OpennmsDatasource.InventoryIdentifier.fromInventoryObject(io);
+                        ResourceKey id = new ResourceKey(io.getId(), io.getType());
                         AtomicInteger references = inventoryReferences.get(id);
 
                         if (references.decrementAndGet() > 0) {
@@ -161,8 +161,7 @@ public class InventoryTableProcessor implements Processor<String, InventoryModel
     }
     
     private boolean recordReference(InventoryObject inventoryObject) {
-        OpennmsDatasource.InventoryIdentifier id =
-                OpennmsDatasource.InventoryIdentifier.fromInventoryObject(inventoryObject);
+        ResourceKey id = new ResourceKey(inventoryObject.getId(), inventoryObject.getType());
         AtomicInteger references = inventoryReferences.putIfAbsent(id, new AtomicInteger(1));
 
         if (references == null) {
@@ -182,7 +181,10 @@ public class InventoryTableProcessor implements Processor<String, InventoryModel
         try {
             initLock.await();
         } catch (InterruptedException e) {
-            LOG.warn("Interrupted while waiting for init lock to unlock", e);
+            LOG.debug("Interrupted while waiting for init lock to unlock, skipping processing");
+            Thread.currentThread().interrupt();
+
+            return;
         }
 
         if (inventory == null) {

@@ -68,6 +68,7 @@ import org.opennms.oce.datasource.api.IncidentDatasource;
 import org.opennms.oce.datasource.api.InventoryDatasource;
 import org.opennms.oce.datasource.api.InventoryHandler;
 import org.opennms.oce.datasource.api.InventoryObject;
+import org.opennms.oce.datasource.api.ResourceKey;
 import org.opennms.oce.datasource.api.SituationHandler;
 import org.opennms.oce.datasource.opennms.events.Event;
 import org.opennms.oce.datasource.opennms.events.JaxbUtils;
@@ -330,12 +331,12 @@ public class OpennmsDatasource implements IncidentDatasource, AlarmDatasource, I
             throw new RuntimeException(e);
         }
 
-        Set<InventoryIdentifier> uniqueIds = new HashSet<>();
+        Set<ResourceKey> uniqueIds = new HashSet<>();
 
         // Discard any duplicate inventory objects
         return InventoryTableProcessor.toInventory(inventory).stream()
                 .filter(io -> {
-                    InventoryIdentifier id = InventoryIdentifier.fromInventoryObject(io);
+                    ResourceKey id = new ResourceKey(io.getId(), io.getType());
 
                     if (uniqueIds.contains(id)) {
                         return false;
@@ -472,33 +473,5 @@ public class OpennmsDatasource implements IncidentDatasource, AlarmDatasource, I
 
     public void setInventoryTtlMs(long inventoryTtlMs) {
         this.inventoryTtlMs = inventoryTtlMs;
-    }
-
-    public static final class InventoryIdentifier {
-        private final String id;
-        private final String type;
-
-        private InventoryIdentifier(String id, String type) {
-            this.id = id;
-            this.type = type;
-        }
-        
-        public static InventoryIdentifier fromInventoryObject(InventoryObject inventoryObject) {
-            return new InventoryIdentifier(inventoryObject.getId(), inventoryObject.getType());
-        }
-
-        @Override
-        public boolean equals(Object o) {
-            if (this == o) return true;
-            if (o == null || getClass() != o.getClass()) return false;
-            InventoryIdentifier that = (InventoryIdentifier) o;
-            return Objects.equals(id, that.id) &&
-                    Objects.equals(type, that.type);
-        }
-
-        @Override
-        public int hashCode() {
-            return Objects.hash(id, type);
-        }
     }
 }

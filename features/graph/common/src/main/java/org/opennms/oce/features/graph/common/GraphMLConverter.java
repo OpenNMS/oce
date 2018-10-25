@@ -194,14 +194,14 @@ public class GraphMLConverter {
         e.getInventoryObjectPeerRef().ifPresent(peerRef ->  edge.setProperty(ONMS_GRAPHML_LABEL, "peer reference"));
         e.getInventoryObjectRelativeRef().ifPresent(relativeRef ->  edge.setProperty(ONMS_GRAPHML_LABEL, "relative reference"));
 
-        Collection<Vertex> situationVertices = g.getIncidentVertices(e);
-        if (situationVertices.size() == 1) {
-            Vertex v = situationVertices.iterator().next();
+        Collection<Vertex> incidentVertices = g.getIncidentVertices(e);
+        if (incidentVertices.size() == 1) {
+            Vertex v = incidentVertices.iterator().next();
             GraphMLNode node = graph.getNodeById(getVertexIdFor(v));
             edge.setSource(node);
             edge.setTarget(node);
-        } else if (situationVertices.size() == 2) {
-            Iterator<Vertex> it = situationVertices.iterator();
+        } else if (incidentVertices.size() == 2) {
+            Iterator<Vertex> it = incidentVertices.iterator();
             Vertex v1 = it.next();
             Vertex v2 = it.next();
             GraphMLNode node1 = graph.getNodeById(getVertexIdFor(v1));
@@ -210,7 +210,7 @@ public class GraphMLConverter {
             edge.setTarget(node2);
         } else {
             throw new IllegalStateException(String.format("Edge with id: '%s' has %d situation vertices.", e.getId(),
-                                                          situationVertices.size()));
+                                                          incidentVertices.size()));
         }
         graph.addEdge(edge);
     }

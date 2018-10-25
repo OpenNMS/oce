@@ -110,7 +110,7 @@ public class Driver {
                 LOG.info("Waiting for alarm datasource...");
                 alarmDatasource.waitUntilReady();
                 LOG.info("Waiting for situation datasource...");
-                incidentDatasource.waitUntilReady();
+                situationDatasource.waitUntilReady();
 
                 LOG.info("Retrieving inventory...");
                 final List<InventoryObject> inventory = inventoryDatasource.getInventoryAndRegisterHandler(engine);

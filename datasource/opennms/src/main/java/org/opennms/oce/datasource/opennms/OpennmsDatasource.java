@@ -66,6 +66,7 @@ import org.opennms.oce.datasource.api.AlarmHandler;
 import org.opennms.oce.datasource.api.InventoryDatasource;
 import org.opennms.oce.datasource.api.InventoryHandler;
 import org.opennms.oce.datasource.api.InventoryObject;
+import org.opennms.oce.datasource.api.ResourceKey;
 import org.opennms.oce.datasource.api.Situation;
 import org.opennms.oce.datasource.api.SituationDatasource;
 import org.opennms.oce.datasource.api.SituationHandler;
@@ -479,6 +480,6 @@ public class OpennmsDatasource implements SituationDatasource, AlarmDatasource, 
     public void waitUntilReady() throws InterruptedException {
         waitUntilInventoryStoreIsQueryable();
         waitUntilAlarmStoreIsQueryable();
-        waitUntilIncidentStoreIsQueryable();
+        waitUntilSituationStoreIsQueryable();
     }
 }

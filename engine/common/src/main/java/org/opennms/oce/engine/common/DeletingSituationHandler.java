@@ -26,40 +26,45 @@
  *     http://www.opennms.com/
  *******************************************************************************/
 
-package org.opennms.oce.engine.api;
+package org.opennms.oce.engine.common;
 
-import java.util.List;
+import java.util.Objects;
 
-import org.opennms.oce.datasource.api.Alarm;
-import org.opennms.oce.datasource.api.AlarmHandler;
-import org.opennms.oce.datasource.api.InventoryHandler;
-import org.opennms.oce.datasource.api.InventoryObject;
-import org.opennms.oce.datasource.api.Situation;
 import org.opennms.oce.datasource.api.SituationHandler;
 
-public interface Engine extends AlarmHandler, InventoryHandler {
+import org.opennms.oce.engine.api.Engine;
 
-    void init(List<Alarm> alarms, List<Situation> situations, List<InventoryObject> inventory);
-
-    long getTickResolutionMs();
-
-    void tick(long timestampInMillis);
-
-    void destroy();
+/**
+ * A {@link SituationHandler} that handles the {@link SituationHandler#onSituationDeleted} call and triggers a
+ * {@link Engine#deleteSituation} for the given Id.
+ */
+public class DeletingSituationHandler implements SituationHandler {
+    /**
+     * The engine being used.
+     */
+    private final Engine engine;
 
     /**
-     * Passes the reference to the SituationHandler.
-     * The SituationHandler exposes <code>onSituation()</code> callback for creating and updating Situations.
+     * Private constructor.
      *
-     * @param handler
+     * @param engine the engine
      */
-    void registerSituationHandler(SituationHandler handler);
+    private DeletingSituationHandler(Engine engine) {
+        this.engine = Objects.requireNonNull(engine);
+    }
 
     /**
-     * Delete the situation with the given situation Id.
+     * Default factory method.
      *
-     * @param situationId the situation Id
+     * @param engine the engine
+     * @return a new instance for the given engine
      */
-    default void deleteSituation(String situationId) {
+    public static DeletingSituationHandler newInstance(Engine engine) {
+        return new DeletingSituationHandler(engine);
+    }
+
+    @Override
+    public void onSituationDeleted(String situationId) {
+        engine.deleteSituation(situationId);
     }
 }

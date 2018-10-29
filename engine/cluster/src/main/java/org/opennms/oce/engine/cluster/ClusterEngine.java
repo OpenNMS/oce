@@ -203,6 +203,17 @@ public class ClusterEngine implements Engine, GraphProvider {
         // no-op
     }
 
+    @Override
+    public void deleteSituation(String situationId) {
+        LOG.trace("Deleting situation references for situation Id {}", situationId);
+        situationsById.remove(situationId);
+        Set<String> alarmIdsToDelete = alarmIdToSituationMap.entrySet().stream()
+                .filter(entry -> entry.getValue().getId().equals(situationId))
+                .map(Map.Entry::getKey)
+                .collect(Collectors.toSet());
+        alarmIdsToDelete.forEach(alarmIdToSituationMap::remove);
+    }
+
     public void onTick(long timestampInMillis) {
         if (!alarmsChangedSinceLastTick) {
             LOG.debug("{}: No alarm changes since last tick. Nothing to do.", timestampInMillis);
@@ -607,5 +618,10 @@ public class ClusterEngine implements Engine, GraphProvider {
     @VisibleForTesting
     Graph<CEVertex, CEEdge> getGraph() {
         return graphManager.getGraph();
+    }
+
+    @VisibleForTesting
+    Map<String, SituationBean> getSituationsById() {
+        return situationsById;
     }
 }

@@ -16,6 +16,7 @@
         <module>itest</module>
         <module>temporal</module>
         <module>topology</module>
+        <module>common</module>
     </modules>
 </project>
 

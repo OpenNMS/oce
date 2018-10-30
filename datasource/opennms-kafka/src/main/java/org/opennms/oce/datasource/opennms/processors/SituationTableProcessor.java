@@ -29,6 +29,7 @@
 package org.opennms.oce.datasource.opennms.processors;
 
 import java.util.Objects;
+import java.util.Optional;
 
 import org.apache.kafka.streams.processor.Processor;
 import org.apache.kafka.streams.processor.ProcessorContext;
@@ -76,19 +77,23 @@ public class SituationTableProcessor implements Processor<String, OpennmsModelPr
 
             if (deletedSituation == null) {
                 LOG.warn("No situation was found in the kv store for reduction key {}", reductionKey);
-                
+
                 return;
             }
 
             situationHandlers.forEach(h -> {
                 try {
-                    //noinspection OptionalGetWithoutIsPresent, ConstantConditions
-                    String deletedSituationId = deletedSituation.getLastEvent().getParameterList().stream()
+                    //noinspection ConstantConditions
+                    Optional<String> deletedSituationId = deletedSituation.getLastEvent().getParameterList().stream()
                             .filter(parm -> parm.getName().equals(SituationToEvent.SITUATION_ID_PARM_NAME))
                             .map(OpennmsModelProtos.EventParameter::getValue)
-                            .findFirst()
-                            .get();
-                    h.onSituationDeleted(deletedSituationId);
+                            .findFirst();
+
+                    if (deletedSituationId.isPresent()) {
+                        h.onSituationDeleted(deletedSituationId.get());
+                    } else {
+                        LOG.warn("Could not find situation Id for situation {}", deletedSituation);
+                    }
                 } catch (Exception e) {
                     LOG.error("onSituationDeleted() call failed with situation: {} on handler: {}", deletedSituation,
                             h, e);

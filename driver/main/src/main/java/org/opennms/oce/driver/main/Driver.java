@@ -46,7 +46,6 @@ import org.opennms.oce.datasource.api.SituationDatasource;
 import org.opennms.oce.datasource.api.SituationHandler;
 import org.opennms.oce.engine.api.Engine;
 import org.opennms.oce.engine.api.EngineFactory;
-import org.opennms.oce.engine.common.DeletingSituationHandler;
 import org.opennms.oce.features.graph.api.GraphProvider;
 import org.opennms.oce.processor.api.SituationConfirmer;
 import org.opennms.oce.processor.api.SituationProcessor;

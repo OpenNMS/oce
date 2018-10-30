@@ -206,12 +206,17 @@ public class ClusterEngine implements Engine, GraphProvider {
     @Override
     public void deleteSituation(String situationId) {
         LOG.trace("Deleting situation references for situation Id {}", situationId);
-        situationsById.remove(situationId);
-        Set<String> alarmIdsToDelete = alarmIdToSituationMap.entrySet().stream()
-                .filter(entry -> entry.getValue().getId().equals(situationId))
-                .map(Map.Entry::getKey)
-                .collect(Collectors.toSet());
-        alarmIdsToDelete.forEach(alarmIdToSituationMap::remove);
+        Situation situationBeingRemoved = situationsById.remove(situationId);
+
+        if (situationBeingRemoved == null) {
+            LOG.warn("Situation Id {} was not found when attempting to delete", situationId);
+
+            return;
+        }
+
+        situationBeingRemoved.getAlarms().stream()
+                .map(Alarm::getId)
+                .forEach(alarmIdToSituationMap::remove);
     }
 
     public void onTick(long timestampInMillis) {

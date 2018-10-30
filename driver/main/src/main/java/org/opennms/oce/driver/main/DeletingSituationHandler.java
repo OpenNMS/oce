@@ -26,7 +26,7 @@
  *     http://www.opennms.com/
  *******************************************************************************/
 
-package org.opennms.oce.engine.common;
+package org.opennms.oce.driver.main;
 
 import java.util.Objects;
 

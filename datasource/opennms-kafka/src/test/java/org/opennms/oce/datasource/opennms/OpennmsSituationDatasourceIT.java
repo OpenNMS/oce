@@ -57,8 +57,8 @@ import org.opennms.oce.datasource.common.SituationBean;
 import org.opennms.oce.datasource.opennms.events.JaxbUtils;
 import org.opennms.oce.datasource.opennms.events.Log;
 import org.opennms.oce.datasource.opennms.proto.OpennmsModelProtos;
+import org.opennms.oce.driver.main.DeletingSituationHandler;
 import org.opennms.oce.engine.api.Engine;
-import org.opennms.oce.engine.common.DeletingSituationHandler;
 import org.springframework.kafka.test.utils.KafkaTestUtils;
 
 /**
@@ -108,7 +108,7 @@ public class OpennmsSituationDatasourceIT extends OpennmsDatasourceIT {
     }
 
     @Test
-    public void testDeleteIsCalled() throws IOException, InterruptedException {
+    public void testDeleteIsCalled() throws IOException {
         datasource.init();
         Engine mockEngine = mock(Engine.class);
         datasource.registerHandler(DeletingSituationHandler.newInstance(mockEngine));

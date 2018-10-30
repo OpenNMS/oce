@@ -60,6 +60,5 @@ public interface Engine extends AlarmHandler, InventoryHandler {
      *
      * @param situationId the situation Id
      */
-    default void deleteSituation(String situationId) {
-    }
+    void deleteSituation(String situationId);
 }

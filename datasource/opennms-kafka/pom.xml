@@ -142,19 +142,8 @@
             <scope>test</scope>
         </dependency>
         <dependency>
-            <groupId>org.opennms.oce</groupId>
-            <artifactId>common</artifactId>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.opennms.oce.engine</groupId>
-            <artifactId>org.opennms.oce.engine.api</artifactId>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.opennms.oce</groupId>
-            <artifactId>common</artifactId>
-            <version>1.0.0-SNAPSHOT</version>
+            <groupId>org.opennms.oce.driver</groupId>
+            <artifactId>org.opennms.oce.driver.main</artifactId>
             <scope>test</scope>
         </dependency>
     </dependencies>

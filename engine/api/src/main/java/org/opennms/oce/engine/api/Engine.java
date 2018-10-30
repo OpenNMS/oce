@@ -59,6 +59,7 @@ public interface Engine extends AlarmHandler, InventoryHandler {
      * Delete the situation with the given situation Id.
      *
      * @param situationId the situation Id
+     * @throws InterruptedException if the thread is interrupted while waiting for the engine to init
      */
-    void deleteSituation(String situationId);
+    void deleteSituation(String situationId) throws InterruptedException;
 }

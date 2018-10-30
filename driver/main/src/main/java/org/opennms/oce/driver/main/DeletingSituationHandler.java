@@ -31,14 +31,17 @@ package org.opennms.oce.driver.main;
 import java.util.Objects;
 
 import org.opennms.oce.datasource.api.SituationHandler;
-
 import org.opennms.oce.engine.api.Engine;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * A {@link SituationHandler} that handles the {@link SituationHandler#onSituationDeleted} call and triggers a
  * {@link Engine#deleteSituation} for the given Id.
  */
 public class DeletingSituationHandler implements SituationHandler {
+    private static final Logger LOG = LoggerFactory.getLogger(DeletingSituationHandler.class);
+
     /**
      * The engine being used.
      */
@@ -65,6 +68,11 @@ public class DeletingSituationHandler implements SituationHandler {
 
     @Override
     public void onSituationDeleted(String situationId) {
-        engine.deleteSituation(situationId);
+        try {
+            engine.deleteSituation(situationId);
+        } catch (InterruptedException e) {
+            LOG.debug("Interrupted while trying to delete situation with Id {}", situationId);
+            Thread.currentThread().interrupt();
+        }
     }
 }

@@ -191,7 +191,12 @@ public class ClusterEngineTest implements SituationHandler {
         
         // Verify that situations can be deleted
         Set<String> situations = situationsById.keySet();
-        situations.forEach(situationId -> engine.deleteSituation(situationId));
+        situations.forEach(situationId -> {
+            try {
+                engine.deleteSituation(situationId);
+            } catch (InterruptedException ignore) {
+            }
+        });
         assertThat(engine.getSituationsById().size(), equalTo(0));
     }
 

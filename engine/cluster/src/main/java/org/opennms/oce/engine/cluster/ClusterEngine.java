@@ -204,7 +204,10 @@ public class ClusterEngine implements Engine, GraphProvider {
     }
 
     @Override
-    public void deleteSituation(String situationId) {
+    public synchronized void deleteSituation(String situationId) throws InterruptedException {
+        // Make sure the engine has init'd before we attempt to delete anything since situations can be provided on init
+        initLock.await();
+
         LOG.trace("Deleting situation references for situation Id {}", situationId);
         Situation situationBeingRemoved = situationsById.remove(situationId);
 
@@ -219,7 +222,7 @@ public class ClusterEngine implements Engine, GraphProvider {
                 .forEach(alarmIdToSituationMap::remove);
     }
 
-    public void onTick(long timestampInMillis) {
+    public synchronized void onTick(long timestampInMillis) {
         if (!alarmsChangedSinceLastTick) {
             LOG.debug("{}: No alarm changes since last tick. Nothing to do.", timestampInMillis);
             return;

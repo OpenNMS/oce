@@ -12,6 +12,8 @@ We'll focus on getting OCE deployed in a Sentinel container using the OpenNMS Ka
 * Java 8
 * An instance OpenNMS Horizon 24.0.0
 * A Kafka broker (or cluster) running Kafka 0.11.x or greater
+* A copy of the latest OCE plugin RPMs
+ * Download these artifacts from the latest build on https://circleci.com/gh/OpenNMS/oce/tree/master
 
 ## OpenNMS Configuration
 
@@ -229,6 +231,3 @@ This needs to be kept in mind, since the data directory is wiped when upgrading 
 
 When using older Kafka versions that do not support automatic topic creation, it may take a while for the `oce-inventory` topic to be created, and for the engine to initialize.
 
-## TODO
-
-* Where to get the packages for OCE?

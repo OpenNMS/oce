@@ -4,7 +4,7 @@
 
 This guide walks through the steps necessary to get OCE up and running with OpenNMS Horizon.
 
-We'll focus on getting OCE deployed in a Sentinel container using the OpenNMS Kafka datasource.
+We'll focus on getting OCE deployed in a Sentinel container using the OpenNMS Kafka datasource for interacting with OpenNMS.
 
 ## Prequisites
 

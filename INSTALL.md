@@ -1,4 +1,4 @@
-# Installation Guide
+# OCE Installation Guide
 
 ## Overview
 
@@ -13,7 +13,7 @@ We'll focus on getting OCE deployed in a Sentinel container using the OpenNMS Ka
 * An instance OpenNMS Horizon 24.0.0
 * A Kafka broker (or cluster) running Kafka 0.11.x or greater
 * A copy of the latest OCE plugin RPMs
- * Download these artifacts from the latest build on https://circleci.com/gh/OpenNMS/oce/tree/master
+   * Download these artifacts from the latest build on https://circleci.com/gh/OpenNMS/oce/tree/master
 
 ## OpenNMS Configuration
 

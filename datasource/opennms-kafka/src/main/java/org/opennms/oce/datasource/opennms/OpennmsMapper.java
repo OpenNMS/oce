@@ -50,7 +50,7 @@ public class OpennmsMapper {
     }
 
     public static SituationBean toSituation(OpennmsModelProtos.Alarm alarm) {
-        final SituationBean bean = new SituationBean();
+        final SituationBean bean = new SituationBean(alarm.getReductionKey());
         bean.setCreationTime(alarm.getFirstEventTime());
         final OpennmsModelProtos.Event lastEvent = alarm.getLastEvent();
         if (lastEvent != null) {

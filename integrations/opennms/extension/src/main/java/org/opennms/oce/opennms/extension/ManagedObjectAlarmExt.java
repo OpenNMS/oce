@@ -59,6 +59,10 @@ public class ManagedObjectAlarmExt implements AlarmPersisterExtension {
     private static final String ENT_PHYSICAL_INDEX_PARM_NAME = "entPhysicalIndex";
     private static final String IFINDEX_PARM_NAME = "ifIndex";
     private static final String IFDESCR_PARM_NAME = "ifDescr";
+    private static final String SNMPIFINDEX_PARM_NAME = "snmpifindex";
+
+    private static final String SNMP_POLLER_SOURCE = "snmppoller";
+    private static final String THRESHOLD_SOURCE = "threshd";
 
     protected static final String A_IFDESCR_PARM_NAME = "aIfDescr";
     protected static final String Z_IFDESCR_PARM_NAME = "zIfDescr";
@@ -104,6 +108,18 @@ public class ManagedObjectAlarmExt implements AlarmPersisterExtension {
             managedObjectType = ManagedObjectType.Node;
         }
 
+        if (managedObjectType == null && inMemoryEvent.getSource().toLowerCase().contains(THRESHOLD_SOURCE) &&
+                !inMemoryEvent.getParametersByName(IFINDEX_PARM_NAME).isEmpty()) {
+            // If this is an SNMP interface threshold alarm then we can tag it to the appropriate ifIndex
+            managedObjectType = ManagedObjectType.SnmpInterface;
+        }
+
+        if (managedObjectType == null && inMemoryEvent.getSource().toLowerCase().contains(SNMP_POLLER_SOURCE) &&
+                !inMemoryEvent.getParametersByName(SNMPIFINDEX_PARM_NAME).isEmpty()) {
+            // If this is an SNMP poller alarm then we can tag it to the appropriate ifIndex
+            managedObjectType = ManagedObjectType.SnmpInterface;
+        }
+
         final ManagedObject managedObject = getManagedObjectFor(managedObjectType, alarm, inMemoryEvent);
         if (managedObject != null) {
             LOG.info("Tagged alarm with reduction key: {} and MO type: {} and MO instance: {}",
@@ -139,6 +155,9 @@ public class ManagedObjectAlarmExt implements AlarmPersisterExtension {
                 break;
             case SnmpInterface:
                 Integer ifIndex = getIntValueForParamNamed(IFINDEX_PARM_NAME, event);
+                if (ifIndex == null) {
+                    ifIndex = getIntValueForParamNamed(SNMPIFINDEX_PARM_NAME, event);
+                }
                 if (ifIndex == null) {
                     final String ifDescr = getStringValueForParamNamed(IFDESCR_PARM_NAME, event);
                     ifIndex = getIfIndexFromIfDescr(alarm.getNode(), ifDescr);

@@ -36,11 +36,16 @@ import org.opennms.integration.api.v1.model.InMemoryEvent;
 import org.opennms.integration.api.v1.model.Node;
 import org.opennms.integration.api.v1.model.beans.InMemoryEventBean;
 import org.opennms.oce.datasource.api.Alarm;
+import org.opennms.oce.datasource.api.AlarmFeedback;
+import org.opennms.oce.datasource.api.FeedbackType;
 import org.opennms.oce.datasource.api.InventoryObject;
 import org.opennms.oce.datasource.api.Severity;
 import org.opennms.oce.datasource.api.Situation;
 import org.opennms.oce.datasource.common.ImmutableAlarm;
+import org.opennms.oce.datasource.common.ImmutableAlarmFeedback;
 import org.opennms.oce.datasource.common.ImmutableSituation;
+
+import com.google.common.base.Enums;
 
 public class Mappers {
     public static final String SITUATION_UEI = "uei.opennms.org/alarms/situation";
@@ -143,5 +148,17 @@ public class Mappers {
         // TODO: Derive the inventory
         return Collections.emptyList();
 
+    }
+
+    public static AlarmFeedback toAlarmFeedback(org.opennms.integration.api.v1.model.AlarmFeedback alarmFeedback) {
+        return ImmutableAlarmFeedback.newBuilder()
+                .setSituationKey(alarmFeedback.getSituationKey())
+                .setSituationFingerprint(alarmFeedback.getSituationFingerprint())
+                .setAlarmKey(alarmFeedback.getAlarmKey())
+                .setReason(alarmFeedback.getReason())
+                .setFeedbackType(Enums.getIfPresent(FeedbackType.class, alarmFeedback.getFeedbackType().toString()).get())
+                .setUser(alarmFeedback.getUser())
+                .setTimestamp(alarmFeedback.getTimestamp())
+                .build();
     }
 }

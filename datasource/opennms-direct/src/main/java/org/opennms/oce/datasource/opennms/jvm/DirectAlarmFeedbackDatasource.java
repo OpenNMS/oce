@@ -28,6 +28,7 @@
 
 package org.opennms.oce.datasource.opennms.jvm;
 
+import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Objects;
@@ -81,16 +82,6 @@ public class DirectAlarmFeedbackDatasource implements AlarmFeedbackListener, Ala
     private final Set<AlarmFeedback> feedback = new LinkedHashSet<>();
 
     /**
-     * A cached immutable copy of the feedback to return to clients (lazily initialized).
-     */
-    private ImmutableList<AlarmFeedback> feedbackCache;
-
-    /**
-     * Whether or not the cached view of feedback is current.
-     */
-    private boolean cacheCurrent = false;
-
-    /**
      * @param feedbackDao used to retrieve the current feedback
      */
     public DirectAlarmFeedbackDatasource(AlarmFeedbackDao feedbackDao) {
@@ -98,7 +89,7 @@ public class DirectAlarmFeedbackDatasource implements AlarmFeedbackListener, Ala
     }
 
     /**
-     * On init we will populate our feedback cache by retrieving all current feedback from the {@link AlarmFeedbackDao}.
+     * On init we will populate the feedback by retrieving all current feedback from the {@link AlarmFeedbackDao}.
      */
     public void init() {
         feedback.addAll(feedbackDao.getFeedback()
@@ -116,7 +107,6 @@ public class DirectAlarmFeedbackDatasource implements AlarmFeedbackListener, Ala
             AlarmFeedback newFeedback = Mappers.toAlarmFeedback(feedback);
             this.feedback.add(newFeedback);
             feedbackHandlers.forEach(handler -> handler.handleAlarmFeedback(newFeedback));
-            cacheCurrent = false;
         } catch (InterruptedException ignore) {
             LOG.debug("Interrupted while waiting for init lock.");
             Thread.currentThread().interrupt();
@@ -127,21 +117,17 @@ public class DirectAlarmFeedbackDatasource implements AlarmFeedbackListener, Ala
 
     @Override
     public List<AlarmFeedback> getAlarmFeedback() {
-        if (!cacheCurrent) {
-            rwLock.readLock().lock();
-            try {
-                initLock.await();
-                feedbackCache = ImmutableList.copyOf(feedback);
-                cacheCurrent = true;
-            } catch (InterruptedException ignore) {
-                LOG.debug("Interrupted while waiting for init lock.");
-                Thread.currentThread().interrupt();
-            } finally {
-                rwLock.readLock().unlock();
-            }
+        rwLock.readLock().lock();
+        try {
+            initLock.await();
+            return ImmutableList.copyOf(feedback);
+        } catch (InterruptedException ignore) {
+            LOG.debug("Interrupted while waiting for init lock.");
+            Thread.currentThread().interrupt();
+            return Collections.emptyList();
+        } finally {
+            rwLock.readLock().unlock();
         }
-
-        return feedbackCache;
     }
 
     @Override

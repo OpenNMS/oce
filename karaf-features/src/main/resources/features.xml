@@ -33,12 +33,14 @@
         <bundle dependency="true">mvn:org.apache.servicemix.bundles/org.apache.servicemix.bundles.okhttp/${okhttp.bundle.version}</bundle>
         <bundle dependency="true">wrap:mvn:com.squareup.okhttp3/logging-interceptor/${okhttp.version}</bundle>
         <bundle dependency="true">wrap:mvn:com.google.code.gson/gson/${gson.version}</bundle>
+        <bundle dependency="true">mvn:org.opennms.oce.datasource/org.opennms.oce.datasource.opennms-common/${project.version}</bundle>
     </feature>
 
     <feature name="oce-datasource-opennms-direct" description="OCE :: Datasource :: OpenNMS Direct" version="${project.version}">
         <feature dependency="true">aries-blueprint</feature>
         <feature version="${opennms.api.version}" dependency="true">opennms-integration-api</feature>
         <bundle dependency="true">mvn:com.google.guava/guava/${guava.version}</bundle>
+        <bundle dependency="true">mvn:org.opennms.oce.datasource/org.opennms.oce.datasource.opennms-common/${project.version}</bundle>
         <!-- Automatically install the standalone processor when using the direct datasource -->
         <feature version="${project.version}">oce-processor-standalone</feature>
 

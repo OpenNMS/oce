@@ -99,17 +99,27 @@ public class DirectAlarmFeedbackDatasource implements AlarmFeedbackListener, Ala
         initLock.countDown();
     }
 
-    @Override
-    public void onFeedback(org.opennms.integration.api.v1.model.AlarmFeedback feedback) {
-        rwLock.writeLock().lock();
+    /**
+     * Wait for {@link #init the init} to finish to delay callbacks from being processed and clients from polling for
+     * feedback.
+     */
+    private void waitForInit() {
         try {
             initLock.await();
-            AlarmFeedback newFeedback = Mappers.toAlarmFeedback(feedback);
-            this.feedback.add(newFeedback);
-            feedbackHandlers.forEach(handler -> handler.handleAlarmFeedback(newFeedback));
         } catch (InterruptedException ignore) {
             LOG.debug("Interrupted while waiting for init lock.");
             Thread.currentThread().interrupt();
+        }
+    }
+
+    @Override
+    public void onFeedback(org.opennms.integration.api.v1.model.AlarmFeedback feedback) {
+        waitForInit();
+        rwLock.writeLock().lock();
+        try {
+            AlarmFeedback newFeedback = Mappers.toAlarmFeedback(feedback);
+            this.feedback.add(newFeedback);
+            feedbackHandlers.forEach(handler -> handler.handleAlarmFeedback(newFeedback));
         } finally {
             rwLock.writeLock().unlock();
         }
@@ -117,14 +127,10 @@ public class DirectAlarmFeedbackDatasource implements AlarmFeedbackListener, Ala
 
     @Override
     public List<AlarmFeedback> getAlarmFeedback() {
+        waitForInit();
         rwLock.readLock().lock();
         try {
-            initLock.await();
             return ImmutableList.copyOf(feedback);
-        } catch (InterruptedException ignore) {
-            LOG.debug("Interrupted while waiting for init lock.");
-            Thread.currentThread().interrupt();
-            return Collections.emptyList();
         } finally {
             rwLock.readLock().unlock();
         }

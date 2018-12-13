@@ -17,6 +17,7 @@
         <argument ref="alarmFeedbackDao"/>
     </bean>
     <service ref="directAlarmFeedbackDatasource" interface="org.opennms.integration.api.v1.feedback.AlarmFeedbackListener"/>
+    <service ref="directAlarmFeedbackDatasource" interface="org.opennms.oce.datasource.api.AlarmFeedbackDatasource"/>
 
     <bean id="directInventoryDatasource" class="org.opennms.oce.datasource.opennms.jvm.DirectInventoryDatasource" init-method="init" >
         <argument ref="nodeDao"/>

@@ -28,7 +28,6 @@
 
 package org.opennms.oce.datasource.opennms.jvm;
 
-import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Objects;

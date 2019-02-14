@@ -34,6 +34,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import org.opennms.oce.datasource.api.Alarm;
 import org.opennms.oce.datasource.api.InventoryObject;
@@ -77,6 +78,10 @@ public class CEVertex implements Vertex {
     @Override
     public Collection<Alarm> getAlarms() {
         return alarmsById.values();
+    }
+
+    public Collection<CEAlarm> getCEAlarms() {
+       return getAlarms().stream().map(a -> new CEAlarm(this, a)).collect(Collectors.toList());
     }
 
     @Override
@@ -134,4 +139,7 @@ public class CEVertex implements Vertex {
         return String.format("CEVertex[id=%s, resourceKey=%s]", id, resourceKey);
     }
 
+    public void gc(CEAlarm ceAlarm) {
+        this.alarmsById.remove(ceAlarm.getAlarm().getId());
+    }
 }

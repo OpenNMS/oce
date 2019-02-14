@@ -90,6 +90,10 @@ public final class ImmutableSituation implements Situation {
             return this;
         }
 
+        public String getId() {
+            return id;
+        }
+
         public Builder setCreationTime(long creationTime) {
             this.creationTime = creationTime;
             return this;

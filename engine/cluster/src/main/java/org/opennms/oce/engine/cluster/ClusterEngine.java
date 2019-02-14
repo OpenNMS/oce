@@ -97,7 +97,7 @@ import edu.uci.ics.jung.graph.Graph;
  * edges, based on edge relationship type, composing the shortest path)
  * where A and B are some constants (need to be tweaked based on how important we want to make space vs time)
  */
-public class ClusterEngine implements Engine, GraphProvider {
+public class ClusterEngine implements Engine, GraphProvider, SpatialDistanceCalculator {
 
     private static final Logger LOG = LoggerFactory.getLogger(ClusterEngine.class);
 
@@ -713,7 +713,8 @@ public class ClusterEngine implements Engine, GraphProvider {
                 .orElseThrow(() -> new IllegalStateException("Should not happen!")).alarm;
     }
 
-    protected double getSpatialDistanceBetween(long vertexIdA, long vertexIdB) {
+    @Override
+    public double getSpatialDistanceBetween(long vertexIdA, long vertexIdB) {
         final EdgeKey key = new EdgeKey(vertexIdA, vertexIdB);
         try {
             return spatialDistances.get(key);

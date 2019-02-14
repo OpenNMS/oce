@@ -75,6 +75,8 @@
     <feature name="oce-engine-cluster" description="OCE :: Engine :: Cluster" version="${project.version}">
         <feature dependency="true" version="${project.version}">oce-engine-api</feature>
         <feature dependency="true" version="${project.version}">oce-features-graph-api</feature>
+        <feature version="${drools.version}">kie</feature>
+        <feature version="${drools.version}">drools-module</feature>
         <bundle dependency="true">mvn:org.apache.commons/commons-math3/${commons.math.version}</bundle>
         <bundle>mvn:org.opennms.oce.engine/org.opennms.oce.engine.cluster/${project.version}</bundle>
     </feature>

@@ -1,0 +1,121 @@
+/*******************************************************************************
+ * This file is part of OpenNMS(R).
+ *
+ * Copyright (C) 2019 The OpenNMS Group, Inc.
+ * OpenNMS(R) is Copyright (C) 1999-2019 The OpenNMS Group, Inc.
+ *
+ * OpenNMS(R) is a registered trademark of The OpenNMS Group, Inc.
+ *
+ * OpenNMS(R) is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as published
+ * by the Free Software Foundation, either version 3 of the License,
+ * or (at your option) any later version.
+ *
+ * OpenNMS(R) is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Affero General Public License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License
+ * along with OpenNMS(R).  If not, see:
+ *      http://www.gnu.org/licenses/
+ *
+ * For more information contact:
+ *     OpenNMS(R) Licensing <license@opennms.org>
+ *     http://www.opennms.org/
+ *     http://www.opennms.com/
+ *******************************************************************************/
+
+package org.opennms.oce.engine.cluster;
+
+import java.util.Date;
+import org.kie.api.time.SessionClock;
+import java.util.LinkedList
+import org.apache.commons.math3.ml.clustering.Cluster
+import java.util.List
+import org.opennms.oce.datasource.common.ImmutableSituation;
+
+global org.opennms.oce.engine.cluster.RuleService svc;
+
+
+declare org.opennms.oce.engine.cluster.CEVertex
+    @role(fact)
+end
+
+declare org.opennms.oce.engine.cluster.CEAlarm
+    @role(event)
+    @timestamp(time)
+end
+
+rule "gc cleared alarms" salience 10
+  when
+    $alarm : CEAlarm(alarm.isClear() == true)
+    not( CEAlarm( this == $alarm ) over window:time( 5m ) )
+  then
+    svc.debug("GCing cleared alarm: {}", $alarm);
+    $alarm.gc();
+    update($alarm.getVertex());
+    delete($alarm);
+end
+
+rule "gc problem alarms" salience 10
+  when
+    $alarm : CEAlarm(alarm.isClear() == false)
+    not( CEAlarm( this == $alarm ) over window:time( 2h ) )
+  then
+    svc.debug("GCing problem alarm: {}", $alarm);
+    $alarm.gc();
+    update($alarm.getVertex());
+    delete($alarm);
+end
+
+rule "trigger dbscan"
+  when
+    $alarms : LinkedList( size > 0 ) from collect ( CEAlarm() )
+  then
+    svc.debug("Triggering DB-Scan for {} alarms.", $alarms.size());
+    List<CECluster> clustersOfAlarms = svc.cluster($alarms);
+    for (CECluster cluster : clustersOfAlarms) {
+        insert(cluster);
+    }
+    svc.debug("DB-Scan found {} clusters.", clustersOfAlarms.size());
+end
+
+rule "create new situation for cluster"
+ when
+   $cluster : CECluster()
+   // Gather the list of alarms that are in the cluster and select those that are not currently in a situation
+   $alarmsInCluster : LinkedList( size >= 2 ) from collect( CEAlarm(situationId == null) from $cluster.alarms )
+   // Only process the cluster when none if it's alarms are in a situation
+   CECluster( this == $cluster, alarms.size() == $alarmsInCluster.size() )
+ then
+   svc.debug("Creating situation for {} alarms.", $alarmsInCluster.size());
+   long now = drools.getWorkingMemory().getSessionClock().getCurrentTime();
+   ImmutableSituation.Builder situationBuilder = svc.createSituationFor(now, $alarmsInCluster);
+   insert(situationBuilder);
+   for (Object alarmAsObj : $alarmsInCluster) {
+       CEAlarm alarm = (CEAlarm) alarmAsObj;
+       modify(alarm){
+         setSituationId(situationBuilder.getId());
+       }
+   }
+end
+
+rule "commit builders" salience -10
+  when
+    $situationBuilder : ImmutableSituation.Builder()
+  then
+    svc.debug("Committing situation builder...");
+    svc.createSituation($situationBuilder);
+    delete($situationBuilder);
+end
+
+rule "cleanup dbscan" salience -10
+  when
+    $clusters : LinkedList( size > 0 ) from collect ( Cluster() )
+  then
+    svc.debug("Cleaning up DB-Scan clusters.");
+    for (Object cluster : $clusters) {
+        delete(cluster);
+    }
+end

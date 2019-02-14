@@ -39,12 +39,12 @@ import org.slf4j.LoggerFactory;
 
 public class AlarmInSpaceTimeDistanceMeasure implements DistanceMeasure {
     private static final Logger LOG = LoggerFactory.getLogger(AlarmInSpaceTimeDistanceMeasure.class);
-    private final ClusterEngine clusterEngine;
+    private final SpatialDistanceCalculator spatialDistanceCalculator;
     private final double alpha;
     private final double beta;
 
-    public AlarmInSpaceTimeDistanceMeasure(ClusterEngine clusterEngine, double alpha, double beta) {
-        this.clusterEngine = Objects.requireNonNull(clusterEngine);
+    public AlarmInSpaceTimeDistanceMeasure(SpatialDistanceCalculator spatialDistanceCalculator, double alpha, double beta) {
+        this.spatialDistanceCalculator = Objects.requireNonNull(spatialDistanceCalculator);
         this.alpha = alpha;
         this.beta = beta;
     }
@@ -59,7 +59,7 @@ public class AlarmInSpaceTimeDistanceMeasure implements DistanceMeasure {
 
         double spatialDistance = 0;
         if (vertexIdA != vertexIdB) {
-            spatialDistance = clusterEngine.getSpatialDistanceBetween(vertexIdA, vertexIdB);
+            spatialDistance = spatialDistanceCalculator.getSpatialDistanceBetween(vertexIdA, vertexIdB);
             if (spatialDistance == 0) {
                 // No path
                 spatialDistance = Integer.MAX_VALUE;

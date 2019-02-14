@@ -32,6 +32,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.hasItem;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.not;
 import static org.mockito.Mockito.mock;
@@ -260,7 +261,6 @@ public class ClusterEngineTest implements SituationHandler {
         engine.handleAlarmFeedback(alarmFeedback);
 
         // Now add a 3rd (unrelated) alarm on another resource (just so an alarm is seen as being changed)
-        ResourceKey otherKey = new ResourceKey("w", "x", "y", "z");
         Alarm alarm3 = mock(Alarm.class);
         when(alarm3.getId()).thenReturn("3");
         when(alarm3.getInventoryObjectType()).thenReturn(MockInventoryType.COMPONENT.getType());
@@ -271,9 +271,13 @@ public class ClusterEngineTest implements SituationHandler {
         // Tick again
         now = now + engine.getTickResolutionMs()*2;
         engine.tick(now);
+
+        // We should still have a single situation
+        assertThat(situationsById.keySet(), hasSize(1));
         situation = situationsById.values().iterator().next();
+
         // The alarm should have been removed from the situation
-        assertThat(situation.getAlarms(), not(contains(alarm1)));
+        assertThat(situation.getAlarms(), not(hasItem(alarm1)));
     }
 
     @Test

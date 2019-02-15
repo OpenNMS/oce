@@ -75,6 +75,12 @@ public class CEVertex implements Vertex {
         updatedTimestamp = System.currentTimeMillis();
     }
 
+    public void removeAlarm(Alarm alarm) {
+        if (alarmsById.remove(alarm.getId()) != null) {
+            updatedTimestamp = System.currentTimeMillis();
+        }
+    }
+
     @Override
     public Collection<Alarm> getAlarms() {
         return alarmsById.values();
@@ -108,6 +114,7 @@ public class CEVertex implements Vertex {
         return id;
     }
 
+    @Deprecated
     public int garbageCollectAlarms(long timestampInMillis, long problemTimeoutMs, long clearTimeoutMs) {
         final long problemCutoffMs = timestampInMillis - problemTimeoutMs;
         final long clearCutoffMs = timestampInMillis - clearTimeoutMs;
@@ -139,7 +146,4 @@ public class CEVertex implements Vertex {
         return String.format("CEVertex[id=%s, resourceKey=%s]", id, resourceKey);
     }
 
-    public void gc(CEAlarm ceAlarm) {
-        this.alarmsById.remove(ceAlarm.getAlarm().getId());
-    }
 }

@@ -193,7 +193,7 @@ public class ClusterEngineTest implements SituationHandler {
 
         // And a 4th alarm near the last one in time, but on another resource
         Alarm alarm5 = mock(Alarm.class);
-        when(alarm5.getId()).thenReturn("3");
+        when(alarm5.getId()).thenReturn("5");
         when(alarm5.getInventoryObjectType()).thenReturn(MockInventoryType.COMPONENT.getType());
         when(alarm5.getInventoryObjectId()).thenReturn("b");
         when(alarm5.getTime()).thenReturn(now+1);

@@ -30,21 +30,16 @@ package org.opennms.oce.engine.cluster;
 
 import java.io.File;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Set;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 
 import org.drools.core.time.SessionPseudoClock;
-import org.kie.api.runtime.KieSession;
-import org.kie.api.runtime.rule.FactHandle;
 import org.opennms.oce.datasource.api.Alarm;
 import org.opennms.oce.datasource.api.AlarmFeedback;
 import org.opennms.oce.datasource.api.InventoryObject;
@@ -58,37 +53,20 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
-import com.google.common.collect.Sets;
+import com.google.common.collect.ImmutableMap;
 
 import edu.uci.ics.jung.algorithms.shortestpath.DijkstraShortestPath;
 import edu.uci.ics.jung.graph.Graph;
 
 public class DroolsClusterEngine implements Engine, SpatialDistanceCalculator {
     private static Logger LOG = LoggerFactory.getLogger(DroolsClusterEngine.class);
-
-    private final double epsilon = ClusterEngine.DEFAULT_EPSILON;
-    private final double alpha = ClusterEngine.DEFAULT_ALPHA;
-    private final double beta = ClusterEngine.DEFAULT_BETA;
     private DijkstraShortestPath<CEVertex, CEEdge> shortestPath;
 
-    private final AlarmInSpaceTimeDistanceMeasure distanceMeasure;
-
     private final ManagedDroolsContext managedDroolsContext;
-
-    private KieSession kieSession;
     private SessionPseudoClock pseudoClock;
-
-    private final RuleService ruleService;
 
     private final GraphManager graphManager = new GraphManager();
     private final Map<String, Situation> situationsById = new HashMap<>();
-    private final Map<String, Situation> alarmIdToSituationMap = new HashMap<>();
-
-    private final Map<CEVertex, FactHandle> vertexToFactMap = new HashMap<>();
-    private final Map<CEAlarm, FactHandle> alarmToFactMap = new HashMap<>();
-    private final Map<String, FactHandle> situationIdToFactMap = new HashMap<>();
-
-    private boolean alarmsChangedSinceLastTick = false;
 
     private long tickResolutionMs = TimeUnit.SECONDS.toMillis(30);
 
@@ -97,10 +75,10 @@ public class DroolsClusterEngine implements Engine, SpatialDistanceCalculator {
 
     private SituationHandler situationHandler;
 
-    public DroolsClusterEngine() {
-        distanceMeasure = new AlarmInSpaceTimeDistanceMeasure(this, alpha, beta);
-        ruleService = new RuleService(this, distanceMeasure);
+    private DroolsFactManager droolsFactManager;
+    private DroolsService droolsService;
 
+    public DroolsClusterEngine() {
         managedDroolsContext = new ManagedDroolsContext(
                 new File("/home/jesse/git/oce/engine/cluster/src/main/resources/org/opennms/oce/engine/cluster"),
                 "clusterEngineKB",
@@ -108,7 +86,10 @@ public class DroolsClusterEngine implements Engine, SpatialDistanceCalculator {
         managedDroolsContext.setUseManualTick(true);
         managedDroolsContext.setUsePseudoClock(true);
         managedDroolsContext.setOnNewKiewSessionCallback(kieSession -> {
-            kieSession.setGlobal("svc", ruleService);
+            droolsFactManager = new DroolsFactManager(kieSession);
+            AlarmInSpaceTimeDistanceMeasure distanceMeasure = new AlarmInSpaceTimeDistanceMeasure(this, ClusterEngine.DEFAULT_ALPHA, ClusterEngine.DEFAULT_BETA);
+            droolsService = new DroolsServiceImpl(this, droolsFactManager, distanceMeasure);
+            kieSession.setGlobal("svc", droolsService);
         });
     }
 
@@ -116,7 +97,6 @@ public class DroolsClusterEngine implements Engine, SpatialDistanceCalculator {
     public void init(List<Alarm> alarms, List<AlarmFeedback> alarmFeedback, List<Situation> situations, List<InventoryObject> inventory) {
         try {
             managedDroolsContext.start();
-            kieSession = managedDroolsContext.getKieSession();
             pseudoClock = managedDroolsContext.getClock();
 
             LOG.debug("Initialized with {} alarms, {} alarm feedback, {} situations and {} inventory objects.",
@@ -127,23 +107,22 @@ public class DroolsClusterEngine implements Engine, SpatialDistanceCalculator {
             graphManager.addInventory(inventory);
             graphManager.addOrUpdateAlarms(alarms);
 
+            // Add the vertices to the graph
+            graphManager.withGraph(g -> {
+                for (CEVertex v : g.getVertices()) {
+                    droolsFactManager.upsertVertex(v);
+                }
+            });
+
             // Index the given situations and the alarms they contain, so that we can cluster alarms in existing
             // situations when applicable
             situations.forEach(situation -> {
                 situationsById.put(situation.getId(), situation);
-                if (situation.getAlarms() != null) {
-                    for (Alarm alarmInSituation : situation.getAlarms()) {
-                        alarmIdToSituationMap.put(alarmInSituation.getId(), situation);
-                    }
-                }
+                droolsFactManager.upsertSituation(situation);
             });
 
             // Process all the alarm feedback provided on init
             alarmFeedback.forEach(this::handleAlarmFeedback);
-
-            if (alarms.size() > 0) {
-                alarmsChangedSinceLastTick = true;
-            }
         } finally {
             initLock.countDown();
         }
@@ -159,47 +138,13 @@ public class DroolsClusterEngine implements Engine, SpatialDistanceCalculator {
             throw new IllegalStateException("" + delta);
         }
         pseudoClock.advanceTime(delta, TimeUnit.MILLISECONDS);
-
-        // Synchronize facts
-        // TODO: We should be smarter here and make this more efficient
-        graphManager.withGraph(g -> {
-            final Set<CEVertex> verticesThatShouldBeInDrools = new HashSet<>();
-            for (CEVertex vertex : g.getVertices()) {
-                if (!vertex.getAlarms().isEmpty()) {
-                    verticesThatShouldBeInDrools.add(vertex);
-                }
-            }
-            final Set<CEVertex> verticesThatAreInDrools = new HashSet<>(vertexToFactMap.keySet());
-
-            // Remove vertices that shouldn't be there
-            for (CEVertex vertex : Sets.difference(verticesThatAreInDrools, verticesThatShouldBeInDrools)) {
-                final FactHandle fact = vertexToFactMap.get(vertex);
-                kieSession.delete(fact);
-            }
-
-            // Add missing vertices
-            for (CEVertex vertex : Sets.difference(verticesThatShouldBeInDrools, verticesThatAreInDrools)) {
-                vertexToFactMap.put(vertex, kieSession.insert(vertex));
-
-                for (CEAlarm alarm : vertex.getCEAlarms()) {
-                    alarmToFactMap.put(alarm, kieSession.insert(alarm));
-                }
-            }
-
-            // Update existing vertices
-            for (CEVertex vertex : verticesThatAreInDrools) {
-                kieSession.update(vertexToFactMap.get(vertex), vertex);
-            }
-        });
-
         managedDroolsContext.tick();
     }
 
     @Override
     public void destroy() {
-        if (kieSession != null) {
-            kieSession.dispose();
-            LOG.info("KieSession disposed.");
+        if (managedDroolsContext != null) {
+            managedDroolsContext.stop();
         }
     }
 
@@ -209,13 +154,7 @@ public class DroolsClusterEngine implements Engine, SpatialDistanceCalculator {
     }
 
     public void submitSituation(Situation situation) {
-        // Insert/update the fact
-        FactHandle fact = situationIdToFactMap.get(situation.getId());
-        if (fact != null) {
-            kieSession.update(fact, situation);
-        } else {
-            situationIdToFactMap.put(situation.getId(), kieSession.insert(situation));
-        }
+        droolsFactManager.upsertSituation(situation);
 
         // Notify the handler
         if (situationHandler != null) {
@@ -227,24 +166,22 @@ public class DroolsClusterEngine implements Engine, SpatialDistanceCalculator {
 
     @Override
     public void deleteSituation(String situationId) {
-
+        droolsFactManager.deleteSituation(situationId);
     }
 
     @Override
     public void handleAlarmFeedback(AlarmFeedback alarmFeedback) {
-        kieSession.insert(alarmFeedback);
-    }
-
-    public KieSession getKieSession() {
-        return kieSession;
+        droolsFactManager.insertFeedback(alarmFeedback);
     }
 
     @Override
     public void onAlarmCreatedOrUpdated(Alarm alarm) {
         try {
             initLock.await();
-            graphManager.addOrUpdateAlarm(alarm);
-            alarmsChangedSinceLastTick = true;
+            final CEVertex vertex = graphManager.addOrUpdateAlarm(alarm);
+            if (vertex != null) {
+                droolsFactManager.upsertVertex(vertex);
+            }
         } catch (InterruptedException ignore) {
             LOG.debug("Interrupted while handling callback, skipping processing onAlarmCreatedOrUpdated.");
             Thread.currentThread().interrupt();
@@ -253,17 +190,38 @@ public class DroolsClusterEngine implements Engine, SpatialDistanceCalculator {
 
     @Override
     public void onAlarmCleared(Alarm alarm) {
-
+        try {
+            initLock.await();
+            final CEVertex vertex = graphManager.addOrUpdateAlarm(alarm);
+            if (vertex != null) {
+                droolsFactManager.upsertVertex(vertex);
+            }
+        } catch (InterruptedException ignore) {
+            LOG.debug("Interrupted while handling callback, skipping processing onAlarmCleared.");
+            Thread.currentThread().interrupt();
+        }
     }
 
     @Override
-    public void onInventoryAdded(Collection<InventoryObject> inventoryObjects) {
-
+    public void onInventoryAdded(Collection<InventoryObject> inventory) {
+        try {
+            initLock.await();
+            graphManager.addInventory(inventory);
+        } catch (InterruptedException ignore) {
+            LOG.debug("Interrupted while handling callback, skipping processing onInventoryAdded.");
+            Thread.currentThread().interrupt();
+        }
     }
 
     @Override
-    public void onInventoryRemoved(Collection<InventoryObject> inventoryObjects) {
-
+    public void onInventoryRemoved(Collection<InventoryObject> inventory) {
+        try {
+            initLock.await();
+            graphManager.removeInventory(inventory);
+        } catch (InterruptedException ignore) {
+            LOG.debug("Interrupted while handling callback, skipping processing onInventoryRemoved.");
+            Thread.currentThread().interrupt();
+        }
     }
 
     /**
@@ -273,7 +231,7 @@ public class DroolsClusterEngine implements Engine, SpatialDistanceCalculator {
      * @return immutable map
      */
     Map<String, Situation> getSituationsById() {
-        return Collections.emptyMap();
+        return ImmutableMap.copyOf(situationsById);
     }
 
     @Override
@@ -285,12 +243,10 @@ public class DroolsClusterEngine implements Engine, SpatialDistanceCalculator {
         this.tickResolutionMs = tickResolutionMs;
     }
 
-
     @VisibleForTesting
     Graph<CEVertex, CEEdge> getGraph() {
         return graphManager.getGraph();
     }
-
 
     @Override
     public double getSpatialDistanceBetween(long vertexIdA, long vertexIdB) {

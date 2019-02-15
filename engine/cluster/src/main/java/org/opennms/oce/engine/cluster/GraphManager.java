@@ -191,10 +191,10 @@ public class GraphManager {
         }
     }
 
-    public synchronized void addOrUpdateAlarm(Alarm alarm) {
+    public synchronized CEVertex addOrUpdateAlarm(Alarm alarm) {
         if (alarm.getInventoryObjectType() == null || alarm.getInventoryObjectId() == null) {
             LOG.info("Alarm with id: {} is not associated with any resource. It will not be added to the graph.", alarm.getId());
-            return;
+            return null;
         }
         final ResourceKey resourceKey = getResourceKeyFor(alarm);
         final CEVertex vertex = resourceKeyVertexMap.computeIfAbsent(resourceKey, (key) -> {
@@ -208,6 +208,7 @@ public class GraphManager {
         });
         LOG.trace("Updating vertex: {} with alarm: {}", vertex, alarm);
         vertex.addOrUpdateAlarm(alarm);
+        return vertex;
     }
 
     public <V> V withReadOnlyGraph(Function<Graph<? extends Vertex, ? extends Edge>, V> consumer) {

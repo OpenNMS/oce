@@ -29,7 +29,6 @@
 package org.opennms.oce.engine.cluster;
 
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasItem;
@@ -47,12 +46,10 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.opennms.oce.datasource.api.Alarm;
 import org.opennms.oce.datasource.api.AlarmFeedback;
 import org.opennms.oce.datasource.api.FeedbackType;
-import org.opennms.oce.datasource.api.ResourceKey;
 import org.opennms.oce.datasource.api.Situation;
 import org.opennms.oce.datasource.api.SituationHandler;
 import org.opennms.oce.datasource.common.ImmutableAlarm;
@@ -61,13 +58,7 @@ import org.opennms.oce.driver.test.MockInventoryType;
 
 import com.google.common.collect.Iterables;
 
-/**
- *         // 1. "Garbage collection" should be performed by the rules - these rules should run first
- *         // 2. Clustering should be triggered by the rules, and the facts should be added to the working memory
- *         //    The rules can then drive how the situations are mapped and retract the facts from working memory
- *         //    once complete.
- *         // 3. The rules should be used to decide how the feedback is handled
- */
+
 public class DroolsClusterEngineTest implements SituationHandler {
 
     private DroolsClusterEngine engine = new DroolsClusterEngine();
@@ -175,7 +166,7 @@ public class DroolsClusterEngineTest implements SituationHandler {
 
         // And a 4th alarm near the last one in time, but on another resource
         Alarm alarm5 = mock(Alarm.class);
-        when(alarm5.getId()).thenReturn("3");
+        when(alarm5.getId()).thenReturn("5");
         when(alarm5.getInventoryObjectType()).thenReturn(MockInventoryType.COMPONENT.getType());
         when(alarm5.getInventoryObjectId()).thenReturn("b");
         when(alarm5.getTime()).thenReturn(now+1);

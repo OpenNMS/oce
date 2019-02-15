@@ -41,8 +41,7 @@ import org.opennms.oce.datasource.api.Situation;
 import java.util.Set
 import java.util.HashSet;
 
-global org.opennms.oce.engine.cluster.RuleService svc;
-
+global org.opennms.oce.engine.cluster.DroolsService svc;
 
 declare org.opennms.oce.engine.cluster.CEVertex
     @role(fact)
@@ -59,9 +58,7 @@ rule "gc cleared alarms" salience 10
     not( CEAlarm( this == $alarm ) over window:time( 5m ) )
   then
     svc.debug("GCing cleared alarm: {}", $alarm);
-    $alarm.gc();
-    update($alarm.getVertex());
-    delete($alarm);
+    svc.garbageCollectAlarm($alarm);
 end
 
 rule "gc problem alarms" salience 10
@@ -70,9 +67,7 @@ rule "gc problem alarms" salience 10
     not( CEAlarm( this == $alarm ) over window:time( 2h ) )
   then
     svc.debug("GCing problem alarm: {}", $alarm);
-    $alarm.gc();
-    update($alarm.getVertex());
-    delete($alarm);
+    svc.garbageCollectAlarm($alarm);
 end
 
 rule "trigger dbscan"
@@ -87,24 +82,20 @@ rule "trigger dbscan"
     svc.debug("DB-Scan found {} clusters.", clustersOfAlarms.size());
 end
 
-rule "create new situation for cluster"
+rule "create a new situation for cluster"
  when
    $cluster : CECluster()
+   $alarmToSituationMap : AlarmToSituationMap()
    // Gather the list of alarms that are in the cluster and select those that are not currently in a situation
-   $alarmsInCluster : LinkedList( size >= 2 ) from collect( CEAlarm(situationId == null) from $cluster.alarms )
-   // Only process the cluster when none if it's alarms are in a situation
+   $alarmsInCluster : LinkedList( size >= 2 ) from collect( CEAlarm(id not memberOf $alarmToSituationMap.alarmIdsInSituations ) from $cluster.alarms )
+   // Only process the cluster when none of it's alarms are in a situation
    CECluster( this == $cluster, alarms.size() == $alarmsInCluster.size() )
  then
    svc.debug("Creating situation for {} alarms.", $alarmsInCluster.size());
    long now = drools.getWorkingMemory().getSessionClock().getCurrentTime();
    ImmutableSituation.Builder situationBuilder = svc.createSituationFor(now, $alarmsInCluster);
+   svc.associateAlarmsWithSituation($alarmsInCluster, situationBuilder.getId());
    insert(situationBuilder);
-   for (Object alarmAsObj : $alarmsInCluster) {
-       CEAlarm alarm = (CEAlarm) alarmAsObj;
-       modify(alarm){
-         setSituationId(situationBuilder.getId());
-       }
-   }
 end
 
 rule "handle false positive feedback"
@@ -122,6 +113,9 @@ rule "handle false positive feedback"
    Set<Alarm> newAlarms = new HashSet<>(prevAlarms);
    newAlarms.removeIf(alarm -> alarm.getId().equals($feedback.getAlarmKey()));
    situationBuilder.setAlarms(newAlarms);
+
+   // Remove the association
+   svc.disassociateAlarmFromSituation($feedback.getAlarmKey(), $existingSituationWithFeedback.getId());
 
    insert(situationBuilder);
 end

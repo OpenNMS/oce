@@ -45,20 +45,30 @@ import org.opennms.oce.datasource.common.ImmutableSituation;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class RuleService {
-    private static final Logger LOG = LoggerFactory.getLogger(RuleService.class);
+public class DroolsServiceImpl implements DroolsService {
+    private static final Logger LOG = LoggerFactory.getLogger(DroolsServiceImpl.class);
 
     private final DroolsClusterEngine engine;
+    private final DroolsFactManager droolsFactManager;
     private final AlarmInSpaceTimeDistanceMeasure distanceMeasure;
 
-    public RuleService(DroolsClusterEngine engine, AlarmInSpaceTimeDistanceMeasure distanceMeasure) {
+    public DroolsServiceImpl(DroolsClusterEngine engine, DroolsFactManager droolsFactManager, AlarmInSpaceTimeDistanceMeasure distanceMeasure) {
         this.engine = Objects.requireNonNull(engine);
+        this.droolsFactManager = Objects.requireNonNull(droolsFactManager);
         this.distanceMeasure = Objects.requireNonNull(distanceMeasure);
     }
 
+    @Override
+    public void garbageCollectAlarm(CEAlarm alarm) {
+        final CEVertex vertex = alarm.getVertex();
+        vertex.removeAlarm(alarm);
+        droolsFactManager.upsertVertex(vertex);
+        droolsFactManager.deleteAlarm(alarm);
+    }
+
+    @Override
     public List<CECluster> cluster(Collection<CEAlarm> alarms) {
         // Ensure the points are sorted in order to make sure that the output of the clusterer is deterministic
-        // OPTIMIZATION: Can we avoid doing this every tick?
         final List<AlarmInSpaceTime> alarmsInSpaceTime = alarms.stream()
                 .map(a -> new AlarmInSpaceTime(a.getVertex(), a.getAlarm()))
                 .sorted(Comparator.comparing(AlarmInSpaceTime::getAlarmTime).thenComparing(AlarmInSpaceTime::getAlarmId))
@@ -87,6 +97,7 @@ public class RuleService {
         return clusters;
     }
 
+    @Override
     public ImmutableSituation.Builder createSituationFor(long now, Collection<CEAlarm> alarms) {
         final String situationId = UUID.randomUUID().toString();
         final ImmutableSituation.Builder situationBuilder = ImmutableSituation.newBuilder()
@@ -98,20 +109,34 @@ public class RuleService {
         return situationBuilder;
     }
 
+    @Override
+    public void associateAlarmsWithSituation(Collection<CEAlarm> alarms, String situationId) {
+        droolsFactManager.associateAlarmsWithSituation(alarms, situationId);
+    }
+
+    @Override
+    public void disassociateAlarmFromSituation(String alarmId, String situationId) {
+        droolsFactManager.disassociateAlarmFromSituation(alarmId, situationId);
+    }
+
+    @Override
+    public void createSituation(ImmutableSituation.Builder situationBuilder) {
+        final Situation situation = situationBuilder.build();
+        engine.submitSituation(situation);
+    }
+
+    @Override
     public void debug(String message, Object... objects) {
         LOG.debug(message, objects);
     }
 
+    @Override
     public void info(String message, Object... objects) {
         LOG.info(message, objects);
     }
 
+    @Override
     public void warn(String message, Object... objects) {
         LOG.warn(message, objects);
-    }
-
-    public void createSituation(ImmutableSituation.Builder situationBuilder) {
-        final Situation situation = situationBuilder.build();
-        engine.submitSituation(situation);
     }
 }

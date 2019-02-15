@@ -37,7 +37,6 @@ public class CEAlarm implements Alarm {
 
     private final CEVertex vertex;
     private final Alarm alarm;
-    private String situationId;
 
     public CEAlarm(CEVertex vertex, Alarm alarm) {
         this.vertex = Objects.requireNonNull(vertex);
@@ -97,16 +96,4 @@ public class CEAlarm implements Alarm {
         return alarm.getNodeId();
     }
 
-    public void gc() {
-        vertex.gc(this);
-    }
-
-
-    public void setSituationId(String situationId) {
-        this.situationId = situationId;
-    }
-
-    public String getSituationId() {
-        return situationId;
-    }
 }

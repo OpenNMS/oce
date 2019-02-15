@@ -30,10 +30,16 @@ package org.opennms.oce.engine.cluster;
 
 import java.util.Date;
 import org.kie.api.time.SessionClock;
-import java.util.LinkedList
-import org.apache.commons.math3.ml.clustering.Cluster
-import java.util.List
+import java.util.LinkedList;
+import org.apache.commons.math3.ml.clustering.Cluster;
+import java.util.List;
+import org.opennms.oce.datasource.api.AlarmFeedback;
 import org.opennms.oce.datasource.common.ImmutableSituation;
+import org.opennms.oce.datasource.api.FeedbackType;
+import org.opennms.oce.datasource.api.Alarm;
+import org.opennms.oce.datasource.api.Situation;
+import java.util.Set
+import java.util.HashSet;
 
 global org.opennms.oce.engine.cluster.RuleService svc;
 
@@ -99,6 +105,25 @@ rule "create new situation for cluster"
          setSituationId(situationBuilder.getId());
        }
    }
+end
+
+rule "handle false positive feedback"
+  when
+   $feedback: AlarmFeedback(feedbackType == FeedbackType.FALSE_POSITIVE)
+   $existingSituationWithFeedback: Situation(id == $feedback.situationId, alarmIds contains $feedback.alarmKey)
+   // Only create a new build if there isn't already one
+   not( ImmutableSituation.Builder(id == $existingSituationWithFeedback.id) )
+  then
+   svc.debug("Got feedback: {}", $feedback);
+   ImmutableSituation.Builder situationBuilder = ImmutableSituation.newBuilderFrom($existingSituationWithFeedback);
+
+   // Remove the alarm in question
+   Set<Alarm> prevAlarms = $existingSituationWithFeedback.getAlarms();
+   Set<Alarm> newAlarms = new HashSet<>(prevAlarms);
+   newAlarms.removeIf(alarm -> alarm.getId().equals($feedback.getAlarmKey()));
+   situationBuilder.setAlarms(newAlarms);
+
+   insert(situationBuilder);
 end
 
 rule "commit builders" salience -10

@@ -40,6 +40,7 @@ import java.util.stream.Collectors;
 
 import org.apache.commons.math3.ml.clustering.Cluster;
 import org.apache.commons.math3.ml.clustering.DBSCANClusterer;
+import org.opennms.oce.datasource.api.Situation;
 import org.opennms.oce.datasource.common.ImmutableSituation;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -110,6 +111,7 @@ public class RuleService {
     }
 
     public void createSituation(ImmutableSituation.Builder situationBuilder) {
-        engine.submitSituation(situationBuilder.build());
+        final Situation situation = situationBuilder.build();
+        engine.submitSituation(situation);
     }
 }

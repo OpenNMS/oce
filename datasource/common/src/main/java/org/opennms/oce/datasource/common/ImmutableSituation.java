@@ -208,6 +208,11 @@ public final class ImmutableSituation implements Situation {
     }
 
     @Override
+    public Set<String> getAlarmIds() {
+        return alarms == null ? Collections.emptySet() : Collections.unmodifiableSet(alarms.keySet());
+    }
+
+    @Override
     public Severity getSeverity() {
         return severity;
     }

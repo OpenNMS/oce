@@ -45,6 +45,8 @@ public interface Situation {
 
     Set<Alarm> getAlarms();
 
+    Set<String> getAlarmIds();
+
     Severity getSeverity();
 
     /**

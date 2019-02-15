@@ -86,6 +86,7 @@ public class DroolsClusterEngine implements Engine, SpatialDistanceCalculator {
 
     private final Map<CEVertex, FactHandle> vertexToFactMap = new HashMap<>();
     private final Map<CEAlarm, FactHandle> alarmToFactMap = new HashMap<>();
+    private final Map<String, FactHandle> situationIdToFactMap = new HashMap<>();
 
     private boolean alarmsChangedSinceLastTick = false;
 
@@ -208,11 +209,20 @@ public class DroolsClusterEngine implements Engine, SpatialDistanceCalculator {
     }
 
     public void submitSituation(Situation situation) {
-        if (situationHandler == null) {
-            LOG.warn("Ooops.");
-            return;
+        // Insert/update the fact
+        FactHandle fact = situationIdToFactMap.get(situation.getId());
+        if (fact != null) {
+            kieSession.update(fact, situation);
+        } else {
+            situationIdToFactMap.put(situation.getId(), kieSession.insert(situation));
         }
-        situationHandler.onSituation(situation);
+
+        // Notify the handler
+        if (situationHandler != null) {
+            situationHandler.onSituation(situation);
+        } else {
+            LOG.warn("Oops.");
+        }
     }
 
     @Override
@@ -222,7 +232,11 @@ public class DroolsClusterEngine implements Engine, SpatialDistanceCalculator {
 
     @Override
     public void handleAlarmFeedback(AlarmFeedback alarmFeedback) {
+        kieSession.insert(alarmFeedback);
+    }
 
+    public KieSession getKieSession() {
+        return kieSession;
     }
 
     @Override

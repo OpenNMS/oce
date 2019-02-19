@@ -41,11 +41,13 @@ import static org.mockito.Mockito.when;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.opennms.oce.datasource.api.Alarm;
 import org.opennms.oce.datasource.api.AlarmFeedback;
@@ -54,11 +56,15 @@ import org.opennms.oce.datasource.api.Situation;
 import org.opennms.oce.datasource.api.SituationHandler;
 import org.opennms.oce.datasource.common.ImmutableAlarm;
 import org.opennms.oce.datasource.common.ImmutableAlarmFeedback;
+import org.opennms.oce.driver.test.MockInventoryBuilder;
 import org.opennms.oce.driver.test.MockInventoryType;
 
 import com.google.common.collect.Iterables;
 
+import edu.uci.ics.jung.graph.Graph;
 
+
+@Ignore
 public class DroolsClusterEngineTest implements SituationHandler {
 
     private DroolsClusterEngine engine = new DroolsClusterEngine();
@@ -71,6 +77,51 @@ public class DroolsClusterEngineTest implements SituationHandler {
     public void setUp() {
         engine.init(Collections.emptyList(), Collections.emptyList(), Collections.emptyList(), Collections.emptyList());
         engine.registerSituationHandler(this);
+    }
+
+    @Test
+    public void canCreateGraph() {
+        // Initial graph should be empty
+        Graph<CEVertex, CEEdge> graph = engine.getGraph();
+        assertThat(graph.getVertexCount(), equalTo(0));
+        assertThat(graph.getEdgeCount(), equalTo(0));
+
+        engine.onInventoryAdded(new MockInventoryBuilder()
+                .withInventoryObject(MockInventoryType.COMPONENT, "a")
+                .withInventoryObject(MockInventoryType.COMPONENT, "b", MockInventoryType.COMPONENT, "a")
+                .withInventoryObject(MockInventoryType.COMPONENT, "c", MockInventoryType.COMPONENT, "b")
+                .withInventoryObject(MockInventoryType.COMPONENT, "d", MockInventoryType.COMPONENT, "c")
+                .getInventory());
+
+        // Trigger some alarm
+        Alarm alarm = mock(Alarm.class);
+        when(alarm.getInventoryObjectType()).thenReturn(MockInventoryType.COMPONENT.getType());
+        when(alarm.getInventoryObjectId()).thenReturn("d");
+        engine.onAlarmCreatedOrUpdated(alarm);
+
+        // The graph should be updated
+        assertThat(graph.getVertexCount(), equalTo(4));
+        assertThat(graph.getEdgeCount(), equalTo(3));
+
+        // Now trigger the same alarm again
+        engine.onAlarmCreatedOrUpdated(alarm);
+
+        // The graph should not have changed
+        assertThat(graph.getVertexCount(), equalTo(4));
+        assertThat(graph.getEdgeCount(), equalTo(3));
+
+        // Let's link another vertex on the existing graph
+        engine.onInventoryAdded(new MockInventoryBuilder()
+                .withInventoryObject(MockInventoryType.COMPONENT, "e", MockInventoryType.COMPONENT, "d")
+                .getInventory());
+        alarm = mock(Alarm.class);
+        when(alarm.getInventoryObjectType()).thenReturn(MockInventoryType.COMPONENT.getType());
+        when(alarm.getInventoryObjectId()).thenReturn("e");
+        engine.onAlarmCreatedOrUpdated(alarm);
+
+        // The graph should be updated
+        assertThat(graph.getVertexCount(), equalTo(5));
+        assertThat(graph.getEdgeCount(), equalTo(4));
     }
 
     @Test
@@ -248,6 +299,52 @@ public class DroolsClusterEngineTest implements SituationHandler {
 
         // The alarm should have been removed from the situation
         assertThat(situation.getAlarms(), not(hasItem(alarm1)));
+    }
+
+    @Test
+    public void testWeights() {
+        // Initial graph should be empty
+        Graph<CEVertex, CEEdge> graph = engine.getGraph();
+        assertThat(graph.getVertexCount(), equalTo(0));
+        assertThat(graph.getEdgeCount(), equalTo(0));
+
+        // Add vertices and edges to the graph
+        engine.onInventoryAdded(new MockInventoryBuilder()
+                .withInventoryObject(MockInventoryType.COMPONENT, "a")
+                .withInventoryObject(MockInventoryType.COMPONENT, "b", MockInventoryType.COMPONENT, "a")
+                .withInventoryObject(MockInventoryType.COMPONENT, "c")
+                .withInventoryObject(MockInventoryType.COMPONENT, "d")
+                .withInventoryObject(MockInventoryType.COMPONENT, "e")
+                .withPeerRelation(MockInventoryType.COMPONENT, "c", MockInventoryType.COMPONENT, "b",
+                        MockInventoryType.COMPONENT, "d")
+                .withRelativeRelation(MockInventoryType.COMPONENT, "e", MockInventoryType.COMPONENT, "d")
+                .getInventory());
+
+        // A-B is a parent relationship
+        assertThat(engine.getSpatialDistanceBetween(getVertexIdForComponentId("a"), getVertexIdForComponentId("b")),
+                equalTo((double) MockInventoryBuilder.PARENT_WEIGHT));
+
+        // B-C-D is a peer relationship
+        assertThat(engine.getSpatialDistanceBetween(getVertexIdForComponentId("b"), getVertexIdForComponentId("c")),
+                equalTo((double) MockInventoryBuilder.PEER_WEIGHT));
+        assertThat(engine.getSpatialDistanceBetween(getVertexIdForComponentId("b"), getVertexIdForComponentId("d")),
+                equalTo(2 * (double) MockInventoryBuilder.PEER_WEIGHT));
+
+        // D-E is a relative relationship
+        assertThat(engine.getSpatialDistanceBetween(getVertexIdForComponentId("d"), getVertexIdForComponentId("e")),
+                equalTo((double) MockInventoryBuilder.RELATIVE_WEIGHT));
+    }
+
+    private int getVertexIdForComponentId(String componentId) {
+        Optional<CEVertex> vertex = engine.getGraph().getVertices().stream()
+                .filter(vert -> vert.getResourceKey().getTokens().contains(componentId))
+                .findFirst();
+
+        if (vertex.isPresent()) {
+            return Integer.parseInt(vertex.get().getId());
+        }
+
+        throw new RuntimeException("Vertex could not be found for component id: " + componentId);
     }
 
     @Override

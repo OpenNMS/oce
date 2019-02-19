@@ -31,6 +31,7 @@ package org.opennms.oce.engine.cluster;
 import java.util.Collection;
 import java.util.List;
 
+import org.opennms.oce.datasource.api.Situation;
 import org.opennms.oce.datasource.common.ImmutableSituation;
 
 public interface DroolsService {
@@ -53,6 +54,13 @@ public interface DroolsService {
      */
     List<CECluster> cluster(Collection<CEAlarm> alarms);
 
+    void mapClusterToNewSituation(List<CEAlarm> alarmsInClusterWithoutSituation, TickContext context);
+
+    void mapClusterToExistingSituations(List<CEAlarm> alarmsInClusterWithoutSituation,
+                                        List<CEAlarm> alarmsInClusterWithSituation,
+                                        AlarmToSituationMap alarmToSituationMap,
+                                        TickContext context);
+
     /**
      * Create a new situation for the given set of alarms.
      *
@@ -63,6 +71,8 @@ public interface DroolsService {
     ImmutableSituation.Builder createSituationFor(long now, Collection<CEAlarm> alarms);
 
     void createSituation(ImmutableSituation.Builder situationBuilder);
+
+    void createOrUpdateSituation(Situation situation);
 
     void associateAlarmsWithSituation(Collection<CEAlarm> alarms, String situationId);
 

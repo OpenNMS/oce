@@ -46,7 +46,6 @@ public class DroolsFactManager {
     private final Map<CEVertex, FactHandle> vertexToFactMap = new HashMap<>();
     private final Map<String, FactHandle> situationIdToFactMap = new HashMap<>();
 
-
     private final Map<String, FactHandle> alarmIdToFactMap = new HashMap<>();
     private final AlarmToSituationMap alarmToSituationMap = new AlarmToSituationMap();
     private final FactHandle alarmToSituationMapHandle;
@@ -112,6 +111,11 @@ public class DroolsFactManager {
         }
     }
 
+    public void associateAlarmWithSituation(CEAlarm alarm, String situationId) {
+        alarmToSituationMap.associateAlarmWithSituation(alarm, situationId);
+        kieSession.update(alarmToSituationMapHandle, alarmToSituationMap);
+    }
+
     public void associateAlarmsWithSituation(Collection<CEAlarm> alarms, String situationId) {
         alarmToSituationMap.associateAlarmsWithSituation(alarms, situationId);
         kieSession.update(alarmToSituationMapHandle, alarmToSituationMap);
@@ -126,4 +130,6 @@ public class DroolsFactManager {
     public void insertFeedback(AlarmFeedback alarmFeedback) {
         kieSession.insert(alarmFeedback);
     }
+
+
 }

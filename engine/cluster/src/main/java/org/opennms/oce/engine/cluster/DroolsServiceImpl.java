@@ -32,18 +32,23 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
 import org.apache.commons.math3.ml.clustering.Cluster;
 import org.apache.commons.math3.ml.clustering.DBSCANClusterer;
+import org.opennms.oce.datasource.api.Alarm;
 import org.opennms.oce.datasource.api.Situation;
 import org.opennms.oce.datasource.common.ImmutableSituation;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import com.google.common.collect.Iterables;
 
 public class DroolsServiceImpl implements DroolsService {
     private static final Logger LOG = LoggerFactory.getLogger(DroolsServiceImpl.class);
@@ -97,6 +102,111 @@ public class DroolsServiceImpl implements DroolsService {
     }
 
     @Override
+    public void mapClusterToNewSituation(List<CEAlarm> alarmsInClusterWithoutSituation, TickContext context) {
+        final String situationId = UUID.randomUUID().toString();
+        final ImmutableSituation.Builder situationBuilder = context.getBuilderForNewSituationWithId(situationId);
+        for (CEAlarm alarm : alarmsInClusterWithoutSituation) {
+            situationBuilder.addAlarm(alarm.getAlarm());
+        }
+        associateAlarmsWithSituation(alarmsInClusterWithoutSituation, situationId);
+    }
+
+    public void mapClusterToExistingSituations(List<CEAlarm> alarmsInClusterWithoutSituation,
+                     List<CEAlarm> alarmsInClusterWithSituation,
+                     AlarmToSituationMap alarmToSituationMap,
+                     TickContext context) {
+        final Map<String, List<CEAlarm>> alarmsBySituationId = alarmsInClusterWithSituation.stream()
+                .collect(Collectors.groupingBy(a -> alarmToSituationMap.getSituationIdForAlarmId(a.getId())));
+
+        if (alarmsBySituationId.size() == 1) {
+            // Some of the alarms in the cluster already belong to a situation whereas other don't
+            // Add them all to the same situation
+            final String situationId = Iterables.getFirst(alarmsBySituationId.keySet(), null);
+            LOG.debug("Some of the alarms in the cluster are not part of a situation yet. Adding alarms to existing situation with id: {}",
+                    situationId);
+            // Create a copy of the existing situation
+            final ImmutableSituation.Builder situationBuilder = context.getBuilderForExistingSituationWithId(situationId);
+            // Add all the alarms to the Situation, replacing any older references...
+            for (CEAlarm alarm : alarmsInClusterWithoutSituation) {
+                situationBuilder.addAlarm(alarm.getAlarm());
+            }
+            for (CEAlarm alarm : alarmsInClusterWithSituation) {
+                situationBuilder.addAlarm(alarm.getAlarm());
+            }
+
+            associateAlarmsWithSituation(alarmsInClusterWithoutSituation, situationId);
+        } else {
+            // The alarms in this cluster already belong to different situations
+            LOG.debug("Found {} unclassified alarms in a cluster with existing alarms associated to {} situations.",
+                    alarmsInClusterWithoutSituation.size(), alarmsBySituationId.size());
+
+            // Gather the list of candidates from all the existing situations referenced by this cluster
+            final List<CEAlarm> candidateAlarms = alarmsBySituationId.values().stream()
+                    .flatMap(Collection::stream)
+                    .collect(Collectors.toList());
+
+            final Set<String> situationsUpdated = new HashSet<>();
+            // For each alarm without a situation, we want to associate the alarm with the other alarm that is the "closest"
+            for (CEAlarm alarm : alarmsInClusterWithoutSituation) {
+                final Alarm closestNeighbor = getClosestNeighborInSituation(alarm, candidateAlarms);
+                final String existingSituationId = alarmToSituationMap.getSituationIdForAlarmId(closestNeighbor.getId());
+                // Use the situation builder from a previous pass, or create a new copy of the existing situation if there is none
+                final ImmutableSituation.Builder situationBuilder = context.getBuilderForExistingSituationWithId(existingSituationId);
+                situationBuilder.addAlarm(alarm);
+                // Keep track of the situations we actually updated, so we can refresh all of the alarms in them
+                situationsUpdated.add(existingSituationId);
+
+                associateAlarmWithSituation(alarm, existingSituationId);
+            }
+
+            // Refresh the situations with the existing alarms
+            for (String situationId : situationsUpdated) {
+                final ImmutableSituation.Builder situationBuilder = context.getBuilderForExistingSituationWithId(situationId);
+                for (Alarm alarm : alarmsBySituationId.getOrDefault(situationId, Collections.emptyList())) {
+                    situationBuilder.addAlarm(alarm);
+                }
+            }
+        }
+    }
+
+    private Alarm getClosestNeighborInSituation(CEAlarm alarm, List<CEAlarm> candidates) {
+        final double timeA = alarm.getTime();
+        final long vertexIdA = alarm.getVertex().getNumericId();
+
+        return candidates.stream()
+                .map(candidate -> {
+                    final double timeB = candidate.getTime();
+                    final long vertexIdB = candidate.getVertex().getNumericId();
+                    final double spatialDistance = vertexIdA == vertexIdB ? 0 : engine.getSpatialDistanceBetween(vertexIdA,
+                            vertexIdB);
+                    final double distance = distanceMeasure.compute(timeA, timeB, spatialDistance);
+                    return new CandidateAlarmWithDistance(candidate, distance);
+                })
+                .min(Comparator.comparingDouble(CandidateAlarmWithDistance::getDistance)
+                        .thenComparing(c -> c.getAlarm().getId()))
+                .orElseThrow(() -> new IllegalStateException("Should not happen!")).alarm;
+    }
+
+    private static class CandidateAlarmWithDistance {
+
+        private final Alarm alarm;
+        private final double distance;
+
+        private CandidateAlarmWithDistance(Alarm alarm, double distance) {
+            this.alarm = alarm;
+            this.distance = distance;
+        }
+
+        public Alarm getAlarm() {
+            return alarm;
+        }
+
+        public double getDistance() {
+            return distance;
+        }
+    }
+
+    @Override
     public ImmutableSituation.Builder createSituationFor(long now, Collection<CEAlarm> alarms) {
         final String situationId = UUID.randomUUID().toString();
         final ImmutableSituation.Builder situationBuilder = ImmutableSituation.newBuilder()
@@ -106,6 +216,10 @@ public class DroolsServiceImpl implements DroolsService {
             situationBuilder.addAlarm(alarm.getAlarm());
         }
         return situationBuilder;
+    }
+
+    public void associateAlarmWithSituation(CEAlarm alarm, String situationId) {
+        droolsFactManager.associateAlarmWithSituation(alarm, situationId);
     }
 
     @Override
@@ -121,6 +235,11 @@ public class DroolsServiceImpl implements DroolsService {
     @Override
     public void createSituation(ImmutableSituation.Builder situationBuilder) {
         final Situation situation = situationBuilder.build();
+        engine.submitSituation(situation);
+    }
+
+    @Override
+    public void createOrUpdateSituation(Situation situation) {
         engine.submitSituation(situation);
     }
 

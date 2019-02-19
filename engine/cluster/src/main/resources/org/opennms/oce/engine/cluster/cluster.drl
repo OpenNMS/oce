@@ -102,7 +102,7 @@ rule "handle false positive feedback"
   when
    $feedback: AlarmFeedback(feedbackType == FeedbackType.FALSE_POSITIVE)
    $existingSituationWithFeedback: Situation(id == $feedback.situationId, alarmIds contains $feedback.alarmKey)
-   // Only create a new build if there isn't already one
+   // Only create a new builder if there isn't already one
    not( ImmutableSituation.Builder(id == $existingSituationWithFeedback.id) )
   then
    svc.debug("Got feedback: {}", $feedback);

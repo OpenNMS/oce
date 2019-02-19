@@ -83,7 +83,6 @@ public class DroolsServiceImpl implements DroolsService {
         final List<Cluster<AlarmInSpaceTime>> clustersOfAlarms = clusterer.cluster(alarmsInSpaceTime);
         LOG.debug("Found {} clusters of alarms.", clustersOfAlarms.size());
 
-
         final List<CECluster> clusters = new ArrayList<>(clustersOfAlarms.size());
         final Map<String, CEAlarm> alarmsById = alarms.stream()
                 .collect(Collectors.toMap(CEAlarm::getId, a -> a));

@@ -95,7 +95,9 @@ public class DroolsFactManager {
             final CEAlarm ceAlarm = new CEAlarm(vertex, alarm);
             final FactHandle alarmFact = alarmIdToFactMap.get(alarm.getId());
             if (alarmFact != null) {
-                kieSession.update(alarmFact, ceAlarm);
+                // Alarms are marked as @events, so we must delete and re-insert them as opposed to using update()
+                kieSession.delete(alarmFact);
+                alarmIdToFactMap.put(alarm.getId(), kieSession.insert(ceAlarm));
             } else {
                 alarmIdToFactMap.put(alarm.getId(), kieSession.insert(ceAlarm));
             }

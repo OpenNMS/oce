@@ -96,4 +96,11 @@ public class CEAlarm implements Alarm {
         return alarm.getNodeId();
     }
 
+    @Override
+    public String toString() {
+        return "CEAlarm{" +
+                "vertex=" + vertex +
+                ", alarm=" + alarm +
+                '}';
+    }
 }

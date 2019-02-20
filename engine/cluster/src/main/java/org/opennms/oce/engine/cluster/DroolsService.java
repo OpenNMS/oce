@@ -56,11 +56,11 @@ public interface DroolsService {
 
     void mapClusterToNewSituation(List<CEAlarm> alarmsInClusterWithoutSituation, TickContext context);
 
-    void mapClusterToExistingSituations(List<CEAlarm> alarmsInClusterWithoutSituation,
+    List<ImmutableSituation.Builder> mapClusterToExistingSituations(List<CEAlarm> alarmsInClusterWithoutSituation,
                                         List<CEAlarm> alarmsInClusterWithSituation,
                                         List<Situation> situations,
                                         AlarmToSituationMap alarmToSituationMap,
-                                        TickContext context);
+                                        List<ImmutableSituation.Builder> existingBuilders);
 
     /**
      * Create a new situation for the given set of alarms.
@@ -71,7 +71,7 @@ public interface DroolsService {
      */
     ImmutableSituation.Builder createSituationFor(long now, Collection<CEAlarm> alarms);
 
-    void createSituation(ImmutableSituation.Builder situationBuilder);
+    void createOrUpdateSituation(ImmutableSituation.Builder situationBuilder);
 
     void createOrUpdateSituation(Situation situation);
 

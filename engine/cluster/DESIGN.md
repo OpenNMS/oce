@@ -2,11 +2,13 @@ We maintain an in memory graph using the GraphManager.
 When IOs are modified, the graph is updated.
 When alarms are updated, the graph is updated.
 
+The following facts are maintained in the working memory by the engine:
 Drools:
- * Vertices that have 1+ alarms are maintained in the working memory
- * All of the alarms are maintained in the working memory
- * All of the situations are maintained in the working memory
- * All of the feedback is maintained in working memory
+ * Vertices that have 1+ alarms
+ * All of the alarms
+ * All of the situations
+   * As received by the datasource (not those that have been submitted)
+ * All of the feedback
 
 Rules:
  1. "Garbage collection" should be performed by the rules - these rules should run first

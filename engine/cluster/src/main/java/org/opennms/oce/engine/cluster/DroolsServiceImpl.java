@@ -112,16 +112,19 @@ public class DroolsServiceImpl implements DroolsService {
     }
 
     @Override
-    public void mapClusterToExistingSituations(List<CEAlarm> alarmsInClusterWithoutSituation,
+    public List<ImmutableSituation.Builder> mapClusterToExistingSituations(List<CEAlarm> alarmsInClusterWithoutSituation,
                      List<CEAlarm> alarmsInClusterWithSituation,
                      List<Situation> situations,
                      AlarmToSituationMap alarmToSituationMap,
-                     TickContext context) {
+                     List<ImmutableSituation.Builder> existingBuilders) {
         final Map<String, List<CEAlarm>> alarmsBySituationId = alarmsInClusterWithSituation.stream()
                 .collect(Collectors.groupingBy(a -> alarmToSituationMap.getSituationIdForAlarmId(a.getId())));
 
         final Map<String, Situation> situationsById = situations.stream()
                 .collect(Collectors.toMap(Situation::getId, s -> s));
+
+        final Map<String, ImmutableSituation.Builder> buildersById = existingBuilders.stream()
+                .collect(Collectors.toMap(ImmutableSituation.Builder::getId, s -> s));
 
         if (alarmsBySituationId.size() == 1) {
             // Some of the alarms in the cluster already belong to a situation whereas other don't
@@ -130,7 +133,8 @@ public class DroolsServiceImpl implements DroolsService {
             LOG.debug("Some of the alarms in the cluster are not part of a situation yet. Adding alarms to existing situation with id: {}",
                     situationId);
             // Create a copy of the existing situation
-            final ImmutableSituation.Builder situationBuilder = context.getBuilderForExistingSituation(situationsById.get(situationId));
+            final ImmutableSituation.Builder situationBuilder = buildersById.computeIfAbsent(situationId, (sid) ->
+                    ImmutableSituation.newBuilderFrom(situationsById.get(sid)));
             // Add all the alarms to the Situation, replacing any older references...
             for (CEAlarm alarm : alarmsInClusterWithoutSituation) {
                 situationBuilder.addAlarm(alarm.getAlarm());
@@ -156,7 +160,8 @@ public class DroolsServiceImpl implements DroolsService {
                 final Alarm closestNeighbor = getClosestNeighborInSituation(alarm, candidateAlarms);
                 final String existingSituationId = alarmToSituationMap.getSituationIdForAlarmId(closestNeighbor.getId());
                 // Use the situation builder from a previous pass, or create a new copy of the existing situation if there is none
-                final ImmutableSituation.Builder situationBuilder = context.getBuilderForExistingSituation(situationsById.get(existingSituationId));
+                final ImmutableSituation.Builder situationBuilder = buildersById.computeIfAbsent(existingSituationId, (sid) ->
+                        ImmutableSituation.newBuilderFrom(situationsById.get(sid)));
                 situationBuilder.addAlarm(alarm);
                 // Keep track of the situations we actually updated, so we can refresh all of the alarms in them
                 situationsUpdated.add(existingSituationId);
@@ -166,12 +171,14 @@ public class DroolsServiceImpl implements DroolsService {
 
             // Refresh the situations with the existing alarms
             for (String situationId : situationsUpdated) {
-                final ImmutableSituation.Builder situationBuilder = context.getBuilderForExistingSituation(situationsById.get(situationId));
+                final ImmutableSituation.Builder situationBuilder = buildersById.get(situationId);
                 for (Alarm alarm : alarmsBySituationId.getOrDefault(situationId, Collections.emptyList())) {
                     situationBuilder.addAlarm(alarm);
                 }
             }
         }
+
+        return new ArrayList<>(buildersById.values());
     }
 
     private Alarm getClosestNeighborInSituation(CEAlarm alarm, List<CEAlarm> candidates) {
@@ -238,7 +245,7 @@ public class DroolsServiceImpl implements DroolsService {
     }
 
     @Override
-    public void createSituation(ImmutableSituation.Builder situationBuilder) {
+    public void createOrUpdateSituation(ImmutableSituation.Builder situationBuilder) {
         final Situation situation = situationBuilder.build();
         engine.submitSituation(situation);
     }

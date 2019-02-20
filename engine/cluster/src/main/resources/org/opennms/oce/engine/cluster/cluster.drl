@@ -53,18 +53,18 @@ declare org.opennms.oce.engine.cluster.CEAlarm
     @timestamp(time)
 end
 
-rule "gc cleared alarms" salience 10
+rule "gc cleared alarms" salience 100
   when
-    $alarm : CEAlarm(alarm.isClear() == true)
+    $alarm : CEAlarm( alarm.isClear() == true )
     not( CEAlarm( this == $alarm ) over window:time( 5m ) )
   then
     svc.debug("GCing cleared alarm: {}", $alarm);
     svc.garbageCollectAlarm($alarm);
 end
 
-rule "gc problem alarms" salience 10
+rule "gc problem alarms" salience 100
   when
-    $alarm : CEAlarm(alarm.isClear() == false)
+    $alarm : CEAlarm( alarm.isClear() == false )
     not( CEAlarm( this == $alarm ) over window:time( 2h ) )
   then
     svc.debug("GCing problem alarm: {}", $alarm);
@@ -87,15 +87,25 @@ rule "create a new situation for a cluster that contains alarms not previously a
  when
    $cluster : CECluster()
    $map : AlarmToSituationMap()
-   $context : TickContext()
    // Gather the list of alarms that are in the cluster and select those that are not currently in a situation
-   $alarmsInClusterWithoutSituation : LinkedList( size >= 2 ) from collect( CEAlarm(id not memberOf $map.alarmIdsInSituations ) from $cluster.alarms )
+   $alarmsInClusterWithoutSituation : LinkedList( size >= 2 ) from collect( CEAlarm( id not memberOf $map.alarmIdsInSituations ) from $cluster.alarms )
    // Only process the cluster when none of it's alarms are in a situation
    CECluster( this == $cluster, alarms.size() == $alarmsInClusterWithoutSituation.size() )
  then
    svc.debug("Creating new situation for {} alarms.", $alarmsInClusterWithoutSituation.size());
-   svc.mapClusterToNewSituation($alarmsInClusterWithoutSituation, $context);
-   update($context);
+
+   String situationId = UUID.randomUUID().toString();
+   ImmutableSituation.Builder builder = ImmutableSituation.newBuilder()
+         // Use the current clock time
+        .setCreationTime(drools.getWorkingMemory().getSessionClock().getCurrentTime())
+        .setId(situationId);
+   for (Object alarmObj : $alarmsInClusterWithoutSituation) {
+       CEAlarm alarm = (CEAlarm)alarmObj;
+       builder.addAlarm(alarm.getAlarm());
+   }
+
+   insert(builder);
+   svc.associateAlarmsWithSituation($alarmsInClusterWithoutSituation, situationId);
    // Don't process the cluster again
    delete($cluster);
 end
@@ -104,30 +114,44 @@ rule "update existing situations for cluster that contains alarms which were alr
  when
    $cluster : CECluster()
    $map : AlarmToSituationMap()
-   $context : TickContext()
    // Gather the list of alarms that are in the cluster and select those that are not currently in a situation
    $alarmsInClusterWithoutSituation : LinkedList( size >= 1 ) from collect( CEAlarm( id not memberOf $map.alarmIdsInSituations ) from $cluster.alarms )
    // Gather the list of alarms that are in the cluster and select those that are already in another situation
    $alarmsInClusterWithSituation : LinkedList( size >= 1 ) from collect( CEAlarm( id memberOf $map.alarmIdsInSituations ) from $cluster.alarms )
+   // Gather the existing situations referenced by the alarms
    $situationIds : Set() from accumulate( CEAlarm( id memberOf $map.alarmIdsInSituations, $id : id ), collectSet( $map.getSituationIdForAlarmId($id) ) )
    $situations : LinkedList( size >= 1 ) from collect( Situation( id memberOf $situationIds ) )
+   // And any existing builders that may be "in-flight"
+   $builders : LinkedList() from collect( ImmutableSituation.Builder( id memberOf $situationIds ) )
  then
    svc.debug("Updating {} situation(s) with {} alarms.", $situations.size(), $alarmsInClusterWithoutSituation.size());
-   svc.mapClusterToExistingSituations($alarmsInClusterWithoutSituation, $alarmsInClusterWithSituation, $situations, $map, $context);
-   update($context);
+   List<ImmutableSituation.Builder> newOrUpdatedBuilders = svc.mapClusterToExistingSituations(
+           $alarmsInClusterWithoutSituation,
+           $alarmsInClusterWithSituation,
+           $situations,
+           $map,
+           $builders);
+
+   for (ImmutableSituation.Builder newOrUpdatedBuilder : newOrUpdatedBuilders) {
+       if ($builders.contains(newOrUpdatedBuilder)) {
+           update(newOrUpdatedBuilder);
+       } else {
+           insert(newOrUpdatedBuilder);
+       }
+   }
+
    // Don't process the cluster again
    delete($cluster);
 end
 
 rule "handle false positive feedback for non-pending situations"
   when
-   $feedback: AlarmFeedback(feedbackType == FeedbackType.FALSE_POSITIVE)
-   $existingSituationWithFeedback: Situation(id == $feedback.situationId, alarmIds contains $feedback.alarmKey)
-   $context : TickContext()
-   not(ImmutableSituation.Builder(id == $feedback.situationId))
+   $feedback: AlarmFeedback( feedbackType == FeedbackType.FALSE_POSITIVE )
+   $existingSituationWithFeedback: Situation( id == $feedback.situationId, alarmIds contains $feedback.alarmKey )
+   not( ImmutableSituation.Builder( id == $feedback.situationId ) )
   then
    svc.debug("Got feedback for non-pending situation: {}", $feedback);
-   ImmutableSituation.Builder situationBuilder = $context.getBuilderForExistingSituation($existingSituationWithFeedback);
+   ImmutableSituation.Builder situationBuilder = ImmutableSituation.newBuilderFrom($existingSituationWithFeedback);
 
    // Remove the alarm in question
    Set<Alarm> prevAlarms = $existingSituationWithFeedback.getAlarms();
@@ -138,15 +162,14 @@ rule "handle false positive feedback for non-pending situations"
    // Remove the association
    svc.disassociateAlarmFromSituation($feedback.getAlarmKey(), $existingSituationWithFeedback.getId());
 
-   update($context);
    insert(situationBuilder);
 end
 
 rule "handle false positive feedback for pending situations"
   when
-   $feedback: AlarmFeedback(feedbackType == FeedbackType.FALSE_POSITIVE)
-   $existingSituationWithFeedback: Situation(id == $feedback.situationId, alarmIds contains $feedback.alarmKey)
-   $builder : ImmutableSituation.Builder(id == $feedback.situationId, alarmIds contains $feedback.alarmKey)
+   $feedback: AlarmFeedback( feedbackType == FeedbackType.FALSE_POSITIVE )
+   $existingSituationWithFeedback: Situation( id == $feedback.situationId, alarmIds contains $feedback.alarmKey )
+   $builder : ImmutableSituation.Builder( id == $feedback.situationId, alarmIds contains $feedback.alarmKey )
   then
    svc.debug("Got feedback for pending situation: {}", $feedback);
 
@@ -156,18 +179,16 @@ rule "handle false positive feedback for pending situations"
    update($builder);
 end
 
-rule "commit context" salience -10
+rule "commit builder" salience -100
   when
-    $context : TickContext()
+    $builder : ImmutableSituation.Builder()
   then
-    svc.debug("Committing new/updated situations in the context...");
-    for (Situation situation : $context.getNewOrUpdatedSituations()) {
-       svc.createOrUpdateSituation(situation);
-    }
-    delete($context);
+    svc.debug("Committing builder for situation id: {} with alarm ids: {}", $builder.getId(), $builder.getAlarmIds());
+    svc.createOrUpdateSituation($builder);
+    delete($builder);
 end
 
-rule "cleanup dbscan" salience -10
+rule "cleanup dbscan" salience -100
   when
     $clusters : LinkedList( size > 0 ) from collect ( Cluster() )
   then

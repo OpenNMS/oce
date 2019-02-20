@@ -33,8 +33,6 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
 
-import org.opennms.oce.datasource.api.Situation;
-
 public class AlarmToSituationMap {
 
     private final Map<String, String> alarmIdToSituationMap = new LinkedHashMap<>();
@@ -57,10 +55,6 @@ public class AlarmToSituationMap {
 
     public void disassociateAlarmFromSituation(String alarmId, String situationId) {
         alarmIdToSituationMap.remove(alarmId);
-    }
-
-    public Situation getSituationById(String situationId) {
-        throw new UnsupportedOperationException("TODO");
     }
 
 }

@@ -111,12 +111,17 @@ public class DroolsServiceImpl implements DroolsService {
         associateAlarmsWithSituation(alarmsInClusterWithoutSituation, situationId);
     }
 
+    @Override
     public void mapClusterToExistingSituations(List<CEAlarm> alarmsInClusterWithoutSituation,
                      List<CEAlarm> alarmsInClusterWithSituation,
+                     List<Situation> situations,
                      AlarmToSituationMap alarmToSituationMap,
                      TickContext context) {
         final Map<String, List<CEAlarm>> alarmsBySituationId = alarmsInClusterWithSituation.stream()
                 .collect(Collectors.groupingBy(a -> alarmToSituationMap.getSituationIdForAlarmId(a.getId())));
+
+        final Map<String, Situation> situationsById = situations.stream()
+                .collect(Collectors.toMap(Situation::getId, s -> s));
 
         if (alarmsBySituationId.size() == 1) {
             // Some of the alarms in the cluster already belong to a situation whereas other don't
@@ -125,7 +130,7 @@ public class DroolsServiceImpl implements DroolsService {
             LOG.debug("Some of the alarms in the cluster are not part of a situation yet. Adding alarms to existing situation with id: {}",
                     situationId);
             // Create a copy of the existing situation
-            final ImmutableSituation.Builder situationBuilder = context.getBuilderForExistingSituationWithId(situationId);
+            final ImmutableSituation.Builder situationBuilder = context.getBuilderForExistingSituation(situationsById.get(situationId));
             // Add all the alarms to the Situation, replacing any older references...
             for (CEAlarm alarm : alarmsInClusterWithoutSituation) {
                 situationBuilder.addAlarm(alarm.getAlarm());
@@ -151,7 +156,7 @@ public class DroolsServiceImpl implements DroolsService {
                 final Alarm closestNeighbor = getClosestNeighborInSituation(alarm, candidateAlarms);
                 final String existingSituationId = alarmToSituationMap.getSituationIdForAlarmId(closestNeighbor.getId());
                 // Use the situation builder from a previous pass, or create a new copy of the existing situation if there is none
-                final ImmutableSituation.Builder situationBuilder = context.getBuilderForExistingSituationWithId(existingSituationId);
+                final ImmutableSituation.Builder situationBuilder = context.getBuilderForExistingSituation(situationsById.get(existingSituationId));
                 situationBuilder.addAlarm(alarm);
                 // Keep track of the situations we actually updated, so we can refresh all of the alarms in them
                 situationsUpdated.add(existingSituationId);
@@ -161,7 +166,7 @@ public class DroolsServiceImpl implements DroolsService {
 
             // Refresh the situations with the existing alarms
             for (String situationId : situationsUpdated) {
-                final ImmutableSituation.Builder situationBuilder = context.getBuilderForExistingSituationWithId(situationId);
+                final ImmutableSituation.Builder situationBuilder = context.getBuilderForExistingSituation(situationsById.get(situationId));
                 for (Alarm alarm : alarmsBySituationId.getOrDefault(situationId, Collections.emptyList())) {
                     situationBuilder.addAlarm(alarm);
                 }

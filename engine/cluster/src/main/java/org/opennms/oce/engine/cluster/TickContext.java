@@ -29,10 +29,12 @@
 package org.opennms.oce.engine.cluster;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.opennms.oce.datasource.api.Situation;
@@ -63,11 +65,8 @@ public class TickContext {
         return newOrUpdatedSituationsById.values();
     }
 
-    public ImmutableSituation.Builder getBuilderForExistingSituationWithId(String situationId) {
-        final Situation existingSituation = alarmToSituationMap.getSituationById(situationId);
-        if (existingSituation == null) {
-            throw new IllegalArgumentException("Situation with id: " + situationId + " does not exist.");
-        }
+    public ImmutableSituation.Builder getBuilderForExistingSituation(Situation existingSituation) {
+        final String situationId = Objects.requireNonNull(existingSituation).getId();
         return newOrUpdatedSituationsById.computeIfAbsent(situationId,
                 (sid) -> ImmutableSituation.newBuilderFrom(existingSituation));
     }
@@ -84,5 +83,9 @@ public class TickContext {
         return newOrUpdatedSituationsById.values().stream()
                 .map(ImmutableSituation.Builder::build)
                 .collect(Collectors.toList());
+    }
+
+    public Set<String> getNewOrUpdatedSituationIds() {
+        return Collections.unmodifiableSet(newOrUpdatedSituationsById.keySet());
     }
 }

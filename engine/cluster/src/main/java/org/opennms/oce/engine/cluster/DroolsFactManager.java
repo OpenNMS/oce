@@ -131,5 +131,7 @@ public class DroolsFactManager {
         kieSession.insert(alarmFeedback);
     }
 
-
+    public AlarmToSituationMap getAlarmToSituationMap() {
+        return alarmToSituationMap;
+    }
 }

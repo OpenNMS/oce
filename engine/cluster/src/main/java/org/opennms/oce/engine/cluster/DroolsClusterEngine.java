@@ -138,6 +138,9 @@ public class DroolsClusterEngine implements Engine, SpatialDistanceCalculator {
             throw new IllegalStateException("" + delta);
         }
         pseudoClock.advanceTime(delta, TimeUnit.MILLISECONDS);
+
+        final TickContext tickContext = new TickContext(timestampInMillis, droolsFactManager.getAlarmToSituationMap());
+        managedDroolsContext.getKieSession().insert(tickContext);
         managedDroolsContext.tick();
     }
 

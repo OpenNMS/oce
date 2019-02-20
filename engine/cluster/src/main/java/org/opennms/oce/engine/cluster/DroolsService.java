@@ -58,6 +58,7 @@ public interface DroolsService {
 
     void mapClusterToExistingSituations(List<CEAlarm> alarmsInClusterWithoutSituation,
                                         List<CEAlarm> alarmsInClusterWithSituation,
+                                        List<Situation> situations,
                                         AlarmToSituationMap alarmToSituationMap,
                                         TickContext context);
 

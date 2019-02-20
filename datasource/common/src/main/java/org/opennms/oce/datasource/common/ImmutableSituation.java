@@ -138,6 +138,15 @@ public final class ImmutableSituation implements Situation {
             return this;
         }
 
+        public Set<String> getAlarmIds() {
+            return Collections.unmodifiableSet(this.alarms.keySet());
+        }
+
+        public Builder removeAlarm(String alarmId) {
+            this.alarms.remove(alarmId);
+            return this;
+        }
+
         public Builder setDiagnosticText(String diagnosticText) {
             this.diagnosticText = diagnosticText;
             return this;

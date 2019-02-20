@@ -71,15 +71,6 @@ rule "gc problem alarms" salience 10
     svc.garbageCollectAlarm($alarm);
 end
 
-rule "create tick context" salience 10
-  when
-    $alarmToSituationMap : AlarmToSituationMap()
-    not( TickContext() )
-  then
-    long now = drools.getWorkingMemory().getSessionClock().getCurrentTime();
-    insert( new TickContext(now, $alarmToSituationMap) );
-end
-
 rule "trigger dbscan"
   when
     $alarms : LinkedList( size > 0 ) from collect ( CEAlarm() )
@@ -92,7 +83,7 @@ rule "trigger dbscan"
     svc.debug("DB-Scan found {} clusters.", clustersOfAlarms.size());
 end
 
-rule "create a new situation for cluster"
+rule "create a new situation for a cluster that contains alarms not previously attached to a situation"
  when
    $cluster : CECluster()
    $map : AlarmToSituationMap()
@@ -109,7 +100,7 @@ rule "create a new situation for cluster"
    delete($cluster);
 end
 
-rule "update existing situations for cluster"
+rule "update existing situations for cluster that contains alarms which were already attached to one or more situations"
  when
    $cluster : CECluster()
    $map : AlarmToSituationMap()
@@ -118,22 +109,25 @@ rule "update existing situations for cluster"
    $alarmsInClusterWithoutSituation : LinkedList( size >= 1 ) from collect( CEAlarm( id not memberOf $map.alarmIdsInSituations ) from $cluster.alarms )
    // Gather the list of alarms that are in the cluster and select those that are already in another situation
    $alarmsInClusterWithSituation : LinkedList( size >= 1 ) from collect( CEAlarm( id memberOf $map.alarmIdsInSituations ) from $cluster.alarms )
+   $situationIds : Set() from accumulate( CEAlarm( id memberOf $map.alarmIdsInSituations, $id : id ), collectSet( $map.getSituationIdForAlarmId($id) ) )
+   $situations : LinkedList( size >= 1 ) from collect( Situation( id memberOf $situationIds ) )
  then
-   svc.debug("Updating situation(s) for {} alarms.", $alarmsInClusterWithoutSituation.size());
-   svc.mapClusterToExistingSituations($alarmsInClusterWithoutSituation, $alarmsInClusterWithSituation, $map, $context);
+   svc.debug("Updating {} situation(s) with {} alarms.", $situations.size(), $alarmsInClusterWithoutSituation.size());
+   svc.mapClusterToExistingSituations($alarmsInClusterWithoutSituation, $alarmsInClusterWithSituation, $situations, $map, $context);
    update($context);
    // Don't process the cluster again
    delete($cluster);
 end
 
-rule "handle false positive feedback"
+rule "handle false positive feedback for non-pending situations"
   when
    $feedback: AlarmFeedback(feedbackType == FeedbackType.FALSE_POSITIVE)
    $existingSituationWithFeedback: Situation(id == $feedback.situationId, alarmIds contains $feedback.alarmKey)
    $context : TickContext()
+   not(ImmutableSituation.Builder(id == $feedback.situationId))
   then
-   svc.debug("Got feedback: {}", $feedback);
-   ImmutableSituation.Builder situationBuilder = $context.getBuilderForExistingSituationWithId($existingSituationWithFeedback.getId());
+   svc.debug("Got feedback for non-pending situation: {}", $feedback);
+   ImmutableSituation.Builder situationBuilder = $context.getBuilderForExistingSituation($existingSituationWithFeedback);
 
    // Remove the alarm in question
    Set<Alarm> prevAlarms = $existingSituationWithFeedback.getAlarms();
@@ -145,8 +139,21 @@ rule "handle false positive feedback"
    svc.disassociateAlarmFromSituation($feedback.getAlarmKey(), $existingSituationWithFeedback.getId());
 
    update($context);
+   insert(situationBuilder);
+end
 
-   // TODO: Don't process the feedback again for X minutes
+rule "handle false positive feedback for pending situations"
+  when
+   $feedback: AlarmFeedback(feedbackType == FeedbackType.FALSE_POSITIVE)
+   $existingSituationWithFeedback: Situation(id == $feedback.situationId, alarmIds contains $feedback.alarmKey)
+   $builder : ImmutableSituation.Builder(id == $feedback.situationId, alarmIds contains $feedback.alarmKey)
+  then
+   svc.debug("Got feedback for pending situation: {}", $feedback);
+
+   // Remove the alarm in question
+   $builder.removeAlarm($feedback.getAlarmKey());
+
+   update($builder);
 end
 
 rule "commit context" salience -10

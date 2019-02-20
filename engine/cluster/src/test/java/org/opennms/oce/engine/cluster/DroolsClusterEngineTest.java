@@ -63,8 +63,6 @@ import com.google.common.collect.Iterables;
 
 import edu.uci.ics.jung.graph.Graph;
 
-
-@Ignore
 public class DroolsClusterEngineTest implements SituationHandler {
 
     private DroolsClusterEngine engine = new DroolsClusterEngine();
@@ -278,9 +276,11 @@ public class DroolsClusterEngineTest implements SituationHandler {
                 .setSituationKey("uei:" + situation.getId())
                 .setAlarmKey(alarm1.getId())
                 .setFeedbackType(FeedbackType.FALSE_POSITIVE)
+                .setTimestamp(now)
                 .build();
         engine.handleAlarmFeedback(alarmFeedback);
 
+        /*
         // Now add a 3rd (unrelated) alarm on another resource (just so an alarm is seen as being changed)
         Alarm alarm3 = mock(Alarm.class);
         when(alarm3.getId()).thenReturn("3");
@@ -288,6 +288,7 @@ public class DroolsClusterEngineTest implements SituationHandler {
         when(alarm3.getInventoryObjectId()).thenReturn("b");
         when(alarm3.getTime()).thenReturn(now+1);
         engine.onAlarmCreatedOrUpdated(alarm3);
+        */
 
         // Tick again
         now = now + engine.getTickResolutionMs()*2;

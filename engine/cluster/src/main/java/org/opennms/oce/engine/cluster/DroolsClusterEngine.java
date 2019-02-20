@@ -29,6 +29,7 @@
 package org.opennms.oce.engine.cluster;
 
 import java.io.File;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
@@ -40,11 +41,13 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 
 import org.drools.core.time.SessionPseudoClock;
+import org.kie.api.runtime.rule.FactHandle;
 import org.opennms.oce.datasource.api.Alarm;
 import org.opennms.oce.datasource.api.AlarmFeedback;
 import org.opennms.oce.datasource.api.InventoryObject;
 import org.opennms.oce.datasource.api.Situation;
 import org.opennms.oce.datasource.api.SituationHandler;
+import org.opennms.oce.datasource.common.ImmutableSituation;
 import org.opennms.oce.engine.api.Engine;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -139,9 +142,13 @@ public class DroolsClusterEngine implements Engine, SpatialDistanceCalculator {
         }
         pseudoClock.advanceTime(delta, TimeUnit.MILLISECONDS);
 
-        final TickContext tickContext = new TickContext(timestampInMillis, droolsFactManager.getAlarmToSituationMap());
-        managedDroolsContext.getKieSession().insert(tickContext);
         managedDroolsContext.tick();
+        /*
+        for (String agendaGroup : Arrays.asList("pre-correlation", "correlation", "post-correlation")) {
+            managedDroolsContext.getKieSession().getAgenda().getAgendaGroup(agendaGroup).setFocus();
+            managedDroolsContext.tick();
+        }
+        */
     }
 
     @Override

@@ -9,6 +9,7 @@ Drools:
  * All of the situations
    * As received by the datasource (not those that have been submitted)
  * All of the feedback
+   * Engine is expected to age out feedback as necessary, since it will not be deleted by the engine
 
 Rules:
  1. "Garbage collection" should be performed by the rules - these rules should run first

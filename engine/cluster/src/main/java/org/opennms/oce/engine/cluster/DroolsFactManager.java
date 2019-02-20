@@ -44,16 +44,11 @@ public class DroolsFactManager {
     private final KieSession kieSession;
 
     private final Map<CEVertex, FactHandle> vertexToFactMap = new HashMap<>();
-    private final Map<String, FactHandle> situationIdToFactMap = new HashMap<>();
-
     private final Map<String, FactHandle> alarmIdToFactMap = new HashMap<>();
-    private final AlarmToSituationMap alarmToSituationMap = new AlarmToSituationMap();
-    private final FactHandle alarmToSituationMapHandle;
+    private final Map<String, FactHandle> situationIdToFactMap = new HashMap<>();
 
     public DroolsFactManager(KieSession kieSession) {
         this.kieSession = Objects.requireNonNull(kieSession);
-        // Insert an empty alarm <-> situation map
-        alarmToSituationMapHandle = kieSession.insert(alarmToSituationMap);
     }
 
     public void upsertSituation(Situation situation) {
@@ -76,15 +71,21 @@ public class DroolsFactManager {
     public void upsertVertex(CEVertex vertex) {
         final boolean shouldVertexBeInWorkingMemory = !vertex.getAlarms().isEmpty();
         final FactHandle fact = vertexToFactMap.get(vertex);
-        if (fact != null) {
-            if (shouldVertexBeInWorkingMemory) {
-                // Update
-                kieSession.update(fact, vertex);
-            } else {
+
+        if (!shouldVertexBeInWorkingMemory) {
+            if (fact != null) {
                 // Delete
                 kieSession.delete(fact);
+                vertexToFactMap.remove(vertex);
+                return;
             }
-        } else if (shouldVertexBeInWorkingMemory) {
+            return;
+        }
+
+        if (fact != null) {
+            // Update
+            kieSession.update(fact, vertex);
+        } else {
             // Insert
             vertexToFactMap.put(vertex, kieSession.insert(vertex));
         }
@@ -111,27 +112,8 @@ public class DroolsFactManager {
         }
     }
 
-    public void associateAlarmWithSituation(CEAlarm alarm, String situationId) {
-        alarmToSituationMap.associateAlarmWithSituation(alarm, situationId);
-        kieSession.update(alarmToSituationMapHandle, alarmToSituationMap);
-    }
-
-    public void associateAlarmsWithSituation(Collection<CEAlarm> alarms, String situationId) {
-        alarmToSituationMap.associateAlarmsWithSituation(alarms, situationId);
-        kieSession.update(alarmToSituationMapHandle, alarmToSituationMap);
-    }
-
-    public void disassociateAlarmFromSituation(String alarmId, String situationId) {
-        alarmToSituationMap.disassociateAlarmFromSituation(alarmId, situationId);
-        kieSession.update(alarmToSituationMapHandle, alarmToSituationMap);
-
-    }
-
     public void insertFeedback(AlarmFeedback alarmFeedback) {
         kieSession.insert(alarmFeedback);
     }
 
-    public AlarmToSituationMap getAlarmToSituationMap() {
-        return alarmToSituationMap;
-    }
 }

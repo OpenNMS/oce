@@ -53,7 +53,14 @@ declare org.opennms.oce.engine.cluster.CEAlarm
     @timestamp(time)
 end
 
+declare org.opennms.oce.datasource.api.AlarmFeedback
+    @role(event)
+    @timestamp(timestamp)
+    @expires(7d)
+end
+
 rule "gc cleared alarms" salience 100
+ // agenda-group "pre-correlation"
   when
     $alarm : CEAlarm( alarm.isClear() == true )
     not( CEAlarm( this == $alarm ) over window:time( 5m ) )
@@ -63,6 +70,7 @@ rule "gc cleared alarms" salience 100
 end
 
 rule "gc problem alarms" salience 100
+ // agenda-group "pre-correlation"
   when
     $alarm : CEAlarm( alarm.isClear() == false )
     not( CEAlarm( this == $alarm ) over window:time( 2h ) )
@@ -72,6 +80,7 @@ rule "gc problem alarms" salience 100
 end
 
 rule "trigger dbscan"
+ // agenda-group "correlation"
   when
     $alarms : LinkedList( size > 0 ) from collect ( CEAlarm() )
   then
@@ -84,11 +93,15 @@ rule "trigger dbscan"
 end
 
 rule "create a new situation for a cluster that contains alarms not previously attached to a situation"
- when
+ // agenda-group "correlation"
+  when
    $cluster : CECluster()
-   $map : AlarmToSituationMap()
+   $alarmIdsInSituations : Set() from accumulate( Situation( $alarmIds : alarmIds ),
+                                      init( Set s = new HashSet(); ),
+                                      action( ((Set)s).addAll($alarmIds); )
+                                      result ( s ) ) // TODO: Custom accumulator
    // Gather the list of alarms that are in the cluster and select those that are not currently in a situation
-   $alarmsInClusterWithoutSituation : LinkedList( size >= 2 ) from collect( CEAlarm( id not memberOf $map.alarmIdsInSituations ) from $cluster.alarms )
+   $alarmsInClusterWithoutSituation : LinkedList( size >= 2 ) from collect( CEAlarm( id not memberOf $alarmIdsInSituations ) from $cluster.alarms )
    // Only process the cluster when none of it's alarms are in a situation
    CECluster( this == $cluster, alarms.size() == $alarmsInClusterWithoutSituation.size() )
  then
@@ -105,22 +118,39 @@ rule "create a new situation for a cluster that contains alarms not previously a
    }
 
    insert(builder);
-   svc.associateAlarmsWithSituation($alarmsInClusterWithoutSituation, situationId);
+   // svc.associateAlarmsWithSituation($alarmsInClusterWithoutSituation, situationId);
    // Don't process the cluster again
    delete($cluster);
 end
 
+function String getSituationIdForAlarmId(List situations, String alarmId) {
+    for (Object situationObj : situations) {
+      Situation situation = (Situation)situationObj;
+      if (situation.getAlarmIds().contains(alarmId)) {
+        return situation.getId();
+      }
+    }
+    return null;
+}
+
 rule "update existing situations for cluster that contains alarms which were already attached to one or more situations"
- when
+ // agenda-group "correlation"
+  when
    $cluster : CECluster()
-   $map : AlarmToSituationMap()
+   $alarmIdsInSituations : Set() from accumulate( Situation( $alarmIds : alarmIds ),
+                                     init( Set s = new HashSet(); ),
+                                     action( ((Set)s).addAll($alarmIds); )
+                                     result( s ) ) // TODO: Custom accumulator
    // Gather the list of alarms that are in the cluster and select those that are not currently in a situation
-   $alarmsInClusterWithoutSituation : LinkedList( size >= 1 ) from collect( CEAlarm( id not memberOf $map.alarmIdsInSituations ) from $cluster.alarms )
+   $alarmsInClusterWithoutSituation : LinkedList( size >= 1 ) from collect( CEAlarm( id not memberOf $alarmIdsInSituations ) from $cluster.alarms )
    // Gather the list of alarms that are in the cluster and select those that are already in another situation
-   $alarmsInClusterWithSituation : LinkedList( size >= 1 ) from collect( CEAlarm( id memberOf $map.alarmIdsInSituations ) from $cluster.alarms )
+   $alarmsInClusterWithSituation : LinkedList( size >= 1 ) from collect( CEAlarm( id memberOf $alarmIdsInSituations ) from $cluster.alarms )
    // Gather the existing situations referenced by the alarms
-   $situationIds : Set() from accumulate( CEAlarm( id memberOf $map.alarmIdsInSituations, $id : id ), collectSet( $map.getSituationIdForAlarmId($id) ) )
+   $allSituations : LinkedList() from collect( Situation() )
+   $situationIds : Set( size >= 1 ) from accumulate( CEAlarm( id memberOf $alarmIdsInSituations, $id : id ), collectSet( getSituationIdForAlarmId($allSituations, $id) ) )
    $situations : LinkedList( size >= 1 ) from collect( Situation( id memberOf $situationIds ) )
+   // Gather existing feedback relating to the situations
+   $feedback : LinkedList() from collect( AlarmFeedback( situationId memberOf $situationIds ) )
    // And any existing builders that may be "in-flight"
    $builders : LinkedList() from collect( ImmutableSituation.Builder( id memberOf $situationIds ) )
  then
@@ -129,7 +159,7 @@ rule "update existing situations for cluster that contains alarms which were alr
            $alarmsInClusterWithoutSituation,
            $alarmsInClusterWithSituation,
            $situations,
-           $map,
+           $feedback,
            $builders);
 
    for (ImmutableSituation.Builder newOrUpdatedBuilder : newOrUpdatedBuilders) {
@@ -145,27 +175,26 @@ rule "update existing situations for cluster that contains alarms which were alr
 end
 
 rule "handle false positive feedback for non-pending situations"
+ // agenda-group "correlation"
   when
    $feedback: AlarmFeedback( feedbackType == FeedbackType.FALSE_POSITIVE )
    $existingSituationWithFeedback: Situation( id == $feedback.situationId, alarmIds contains $feedback.alarmKey )
    not( ImmutableSituation.Builder( id == $feedback.situationId ) )
   then
    svc.debug("Got feedback for non-pending situation: {}", $feedback);
-   ImmutableSituation.Builder situationBuilder = ImmutableSituation.newBuilderFrom($existingSituationWithFeedback);
+   ImmutableSituation.Builder builder = ImmutableSituation.newBuilderFrom($existingSituationWithFeedback);
 
    // Remove the alarm in question
    Set<Alarm> prevAlarms = $existingSituationWithFeedback.getAlarms();
    Set<Alarm> newAlarms = new HashSet<>(prevAlarms);
    newAlarms.removeIf(alarm -> alarm.getId().equals($feedback.getAlarmKey()));
-   situationBuilder.setAlarms(newAlarms);
+   builder.setAlarms(newAlarms);
 
-   // Remove the association
-   svc.disassociateAlarmFromSituation($feedback.getAlarmKey(), $existingSituationWithFeedback.getId());
-
-   insert(situationBuilder);
+   insert(builder);
 end
 
 rule "handle false positive feedback for pending situations"
+ // agenda-group "correlation"
   when
    $feedback: AlarmFeedback( feedbackType == FeedbackType.FALSE_POSITIVE )
    $existingSituationWithFeedback: Situation( id == $feedback.situationId, alarmIds contains $feedback.alarmKey )
@@ -180,6 +209,7 @@ rule "handle false positive feedback for pending situations"
 end
 
 rule "commit builder" salience -100
+ // agenda-group "post-correlation"
   when
     $builder : ImmutableSituation.Builder()
   then
@@ -189,6 +219,7 @@ rule "commit builder" salience -100
 end
 
 rule "cleanup dbscan" salience -100
+ // agenda-group "post-correlation"
   when
     $clusters : LinkedList( size > 0 ) from collect ( Cluster() )
   then

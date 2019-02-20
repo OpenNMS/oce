@@ -31,6 +31,7 @@ package org.opennms.oce.engine.cluster;
 import java.util.Collection;
 import java.util.List;
 
+import org.opennms.oce.datasource.api.AlarmFeedback;
 import org.opennms.oce.datasource.api.Situation;
 import org.opennms.oce.datasource.common.ImmutableSituation;
 
@@ -54,30 +55,13 @@ public interface DroolsService {
      */
     List<CECluster> cluster(Collection<CEAlarm> alarms);
 
-    void mapClusterToNewSituation(List<CEAlarm> alarmsInClusterWithoutSituation, TickContext context);
-
     List<ImmutableSituation.Builder> mapClusterToExistingSituations(List<CEAlarm> alarmsInClusterWithoutSituation,
                                         List<CEAlarm> alarmsInClusterWithSituation,
-                                        List<Situation> situations,
-                                        AlarmToSituationMap alarmToSituationMap,
+                                        List<Situation> existingSituationsReferenced,
+                                        List<AlarmFeedback> feedback,
                                         List<ImmutableSituation.Builder> existingBuilders);
 
-    /**
-     * Create a new situation for the given set of alarms.
-     *
-     * @param now current timestamp
-     * @param alarms set of alarms
-     * @return situation builder
-     */
-    ImmutableSituation.Builder createSituationFor(long now, Collection<CEAlarm> alarms);
-
     void createOrUpdateSituation(ImmutableSituation.Builder situationBuilder);
-
-    void createOrUpdateSituation(Situation situation);
-
-    void associateAlarmsWithSituation(Collection<CEAlarm> alarms, String situationId);
-
-    void disassociateAlarmFromSituation(String alarmId, String situationId);
 
     void debug(String message, Object... objects);
 

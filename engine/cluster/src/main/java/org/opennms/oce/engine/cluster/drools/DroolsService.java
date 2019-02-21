@@ -26,14 +26,18 @@
  *     http://www.opennms.com/
  *******************************************************************************/
 
-package org.opennms.oce.engine.cluster;
+package org.opennms.oce.engine.cluster.drools;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.Optional;
 
+import org.opennms.oce.datasource.api.Alarm;
 import org.opennms.oce.datasource.api.AlarmFeedback;
 import org.opennms.oce.datasource.api.Situation;
 import org.opennms.oce.datasource.common.ImmutableSituation;
+import org.opennms.oce.engine.cluster.CEAlarm;
+import org.opennms.oce.engine.cluster.CECluster;
 
 public interface DroolsService {
 
@@ -55,6 +59,10 @@ public interface DroolsService {
      */
     List<CECluster> cluster(Collection<CEAlarm> alarms);
 
+    Optional<Long> getOptionalVertexIdForAlarm(Alarm alarm);
+
+    double getSpatialDistanceBetween(Long vertexIdA, Long vertexIdB);
+
     List<ImmutableSituation.Builder> mapClusterToExistingSituations(List<CEAlarm> alarmsInClusterWithoutSituation,
                                         List<CEAlarm> alarmsInClusterWithSituation,
                                         List<Situation> existingSituationsReferenced,
@@ -68,5 +76,7 @@ public interface DroolsService {
     void info(String message, Object... objects);
 
     void warn(String message, Object... objects);
+
+
 
 }

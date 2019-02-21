@@ -33,6 +33,8 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 
+import com.google.common.base.MoreObjects;
+
 public abstract class GraphMLElement {
 
     protected static final String ID = "id";
@@ -93,7 +95,7 @@ public abstract class GraphMLElement {
 
     @Override
     public String toString() {
-        return com.google.common.base.Objects.toStringHelper(getClass())
+        return MoreObjects.toStringHelper(getClass())
                 .add("id", getId()).toString();
     }
 }

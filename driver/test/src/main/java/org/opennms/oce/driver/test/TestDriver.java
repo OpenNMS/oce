@@ -139,9 +139,9 @@ public class TestDriver {
         return run(alarms, inventory, Collections.emptyList(), Collections.emptyList(), Collections.emptyList());
     }
 
-
     private long roundToTick(long time, long tickResolutionMs) {
-        return Math.floorDiv(time, tickResolutionMs) * tickResolutionMs;
+        final int k = time % tickResolutionMs == 0 ? 0 : 1;
+        return (Math.floorDiv(time, tickResolutionMs) + k) * tickResolutionMs;
     }
 
     private List<Situation> run(List<Alarm> alarms, List<InventoryObject> inventory, List<Alarm> previousAlarms,

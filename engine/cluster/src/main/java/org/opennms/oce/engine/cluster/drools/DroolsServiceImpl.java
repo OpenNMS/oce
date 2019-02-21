@@ -26,7 +26,7 @@
  *     http://www.opennms.com/
  *******************************************************************************/
 
-package org.opennms.oce.engine.cluster;
+package org.opennms.oce.engine.cluster.drools;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -37,6 +37,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -46,6 +47,12 @@ import org.opennms.oce.datasource.api.Alarm;
 import org.opennms.oce.datasource.api.AlarmFeedback;
 import org.opennms.oce.datasource.api.Situation;
 import org.opennms.oce.datasource.common.ImmutableSituation;
+import org.opennms.oce.engine.cluster.AlarmInSpaceTime;
+import org.opennms.oce.engine.cluster.AlarmInSpaceTimeDistanceMeasure;
+import org.opennms.oce.engine.cluster.CEAlarm;
+import org.opennms.oce.engine.cluster.CECluster;
+import org.opennms.oce.engine.cluster.CEVertex;
+import org.opennms.oce.engine.cluster.ClusterEngine;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -54,11 +61,11 @@ import com.google.common.collect.Iterables;
 public class DroolsServiceImpl implements DroolsService {
     private static final Logger LOG = LoggerFactory.getLogger(DroolsServiceImpl.class);
 
-    private final DroolsClusterEngine engine;
+    private final ClusterEngine engine;
     private final DroolsFactManager droolsFactManager;
     private final AlarmInSpaceTimeDistanceMeasure distanceMeasure;
 
-    public DroolsServiceImpl(DroolsClusterEngine engine, DroolsFactManager droolsFactManager, AlarmInSpaceTimeDistanceMeasure distanceMeasure) {
+    public DroolsServiceImpl(ClusterEngine engine, DroolsFactManager droolsFactManager, AlarmInSpaceTimeDistanceMeasure distanceMeasure) {
         this.engine = Objects.requireNonNull(engine);
         this.droolsFactManager = Objects.requireNonNull(droolsFactManager);
         this.distanceMeasure = Objects.requireNonNull(distanceMeasure);
@@ -85,7 +92,7 @@ public class DroolsServiceImpl implements DroolsService {
         }
 
         LOG.debug("Clustering {} alarms.", alarms.size());
-        final DBSCANClusterer<AlarmInSpaceTime> clusterer = new DBSCANClusterer<>(ClusterEngine.DEFAULT_EPSILON, 1, distanceMeasure);
+        final DBSCANClusterer<AlarmInSpaceTime> clusterer = new DBSCANClusterer<>(engine.getEpsilon(), 1, distanceMeasure);
         final List<Cluster<AlarmInSpaceTime>> clustersOfAlarms = clusterer.cluster(alarmsInSpaceTime);
         LOG.debug("Found {} clusters of alarms.", clustersOfAlarms.size());
 
@@ -100,6 +107,26 @@ public class DroolsServiceImpl implements DroolsService {
         }
 
         return clusters;
+    }
+
+    @Override
+    public Optional<Long> getOptionalVertexIdForAlarm(Alarm alarm) {
+        return engine.getGraphManager().withGraph(g -> {
+            for (CEVertex v : g.getVertices()) {
+                final Optional<Alarm> match = v.getAlarms().stream()
+                        .filter(a -> a.equals(alarm))
+                        .findFirst();
+                if (match.isPresent()) {
+                    return Optional.of(v.getNumericId());
+                }
+            }
+            return Optional.empty();
+        });
+    }
+
+    @Override
+    public double getSpatialDistanceBetween(Long vertexIdA, Long vertexIdB) {
+        return engine.getSpatialDistanceBetween(vertexIdA, vertexIdB);
     }
 
     @Override

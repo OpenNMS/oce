@@ -26,9 +26,8 @@
  *     http://www.opennms.com/
  *******************************************************************************/
 
-package org.opennms.oce.engine.cluster;
+package org.opennms.oce.engine.cluster.drools;
 
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
@@ -38,6 +37,8 @@ import org.kie.api.runtime.rule.FactHandle;
 import org.opennms.oce.datasource.api.Alarm;
 import org.opennms.oce.datasource.api.AlarmFeedback;
 import org.opennms.oce.datasource.api.Situation;
+import org.opennms.oce.engine.cluster.CEAlarm;
+import org.opennms.oce.engine.cluster.CEVertex;
 
 public class DroolsFactManager {
 

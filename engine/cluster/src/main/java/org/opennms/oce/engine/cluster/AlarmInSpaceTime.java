@@ -33,6 +33,10 @@ import java.util.Objects;
 import org.apache.commons.math3.ml.clustering.Clusterable;
 import org.opennms.oce.datasource.api.Alarm;
 
+/**
+ * Wrapper around an {@link Alarm} object that implements {@link Clusterable} so
+ * it can be used by the DB-Scan algorithm.
+ */
 public class AlarmInSpaceTime implements Clusterable {
     private final Alarm alarm;
     private final double[] point;

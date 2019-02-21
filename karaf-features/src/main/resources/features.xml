@@ -32,7 +32,7 @@
         <feature version="${project.version}">oce-datasource-api</feature>
         <bundle>mvn:org.opennms.oce.datasource/org.opennms.oce.datasource.opennms-kafka/${project.version}</bundle>
         <feature version="2.0.0">kafka-streams</feature>
-        <bundle dependency="true">mvn:com.google.guava/guava/${guava.version}</bundle>
+        <feature version="${guava.version}" dependency="true">guava</feature>
         <bundle dependency="true">mvn:com.google.protobuf/protobuf-java/${protobuf.version}</bundle>
         <bundle dependency='true'>mvn:org.apache.servicemix.bundles/org.apache.servicemix.bundles.okio/${okio.bundle.version}</bundle>
         <bundle dependency="true">mvn:org.apache.servicemix.bundles/org.apache.servicemix.bundles.okhttp/${okhttp.bundle.version}</bundle>
@@ -44,7 +44,7 @@
     <feature name="oce-datasource-opennms-direct" description="OCE :: Datasource :: OpenNMS Direct" version="${project.version}">
         <feature dependency="true">aries-blueprint</feature>
         <feature version="${opennms.api.version}" dependency="true">opennms-integration-api</feature>
-        <bundle dependency="true">mvn:com.google.guava/guava/${guava.version}</bundle>
+        <feature version="${guava.version}" dependency="true">guava</feature>
         <feature dependency="true" version="${project.version}">oce-datasource-opennms-common</feature>
         <!-- Automatically install the standalone processor when using the direct datasource -->
         <feature version="${project.version}">oce-processor-standalone</feature>
@@ -75,8 +75,7 @@
     <feature name="oce-engine-cluster" description="OCE :: Engine :: Cluster" version="${project.version}">
         <feature dependency="true" version="${project.version}">oce-engine-api</feature>
         <feature dependency="true" version="${project.version}">oce-features-graph-api</feature>
-        <feature version="${drools.version}">kie</feature>
-        <feature version="${drools.version}">drools-module</feature>
+        <feature dependency="true" version="${project.version}">oce-features-drools</feature>
         <bundle dependency="true">mvn:org.apache.commons/commons-math3/${commons.math.version}</bundle>
         <bundle>mvn:org.opennms.oce.engine/org.opennms.oce.engine.cluster/${project.version}</bundle>
     </feature>
@@ -87,13 +86,12 @@
     </feature>
 
     <feature name="oce-engine-topology" description="OCE :: Engine :: Topology" version="${project.version}">
-        <feature version="${project.version}">oce-engine-api</feature>
-        <feature version="${drools.version}">kie</feature>
-        <feature version="${drools.version}">drools-module</feature>
-        <feature version="${commons.text.version}">commons-text</feature>
+        <feature dependency="true" version="${project.version}">oce-engine-api</feature>
+        <feature dependency="true" version="${project.version}">oce-features-drools</feature>
+        <feature dependency="true" version="${commons.text.version}">commons-text</feature>
         <feature dependency="true">shell</feature>
+        <feature version="${guava.version}" dependency="true">guava</feature>
         <bundle>mvn:org.opennms.oce.engine/org.opennms.oce.engine.topology/${project.version}</bundle>
-        <bundle dependency="true">mvn:com.google.guava/guava/${guava.version}</bundle>
     </feature>
 
     <!-- Drivers -->
@@ -108,14 +106,14 @@
 
     <feature name="oce-features-graph-api" description="OCE :: Features :: Graph :: API" version="${project.version}">
         <feature version="${project.version}">oce-datasource-api</feature>
+        <feature version="${guava.version}" dependency="true">guava</feature>
         <bundle>mvn:org.opennms.oce.wrap/org.opennms.oce.wrap.jung/${project.version}</bundle>
         <bundle>mvn:org.opennms.oce.features.graph/org.opennms.oce.features.graph.api/${project.version}</bundle>
-        <bundle dependency="true">mvn:com.google.guava/guava/${guava.version}</bundle>
     </feature>
 
     <feature name="oce-features-graph-graphml" description="OCE :: Features :: Graph :: GraphML" version="${project.version}">
         <feature version="${moxy.version}" dependency="true">moxy</feature>
-        <bundle dependency="true">mvn:com.google.guava/guava/${guava.version}</bundle>
+        <feature version="${guava.version}" dependency="true">guava</feature>
         <bundle>mvn:org.opennms.oce.features.graph/org.opennms.oce.features.graph.graphml/${project.version}</bundle>
     </feature>
 
@@ -164,7 +162,7 @@
         <feature version="${project.version}">oce-datasource-api</feature>
         <bundle>mvn:org.opennms.oce.features/org.opennms.oce.features.score/${project.version}</bundle>
         <bundle dependency="true">mvn:org.apache.commons/commons-math3/${commons.math.version}</bundle>
-        <bundle dependency="true">mvn:com.google.guava/guava/${guava.version}</bundle>
+        <feature version="${guava.version}" dependency="true">guava</feature>
     </feature>
 
     <feature name="oce-features-shell" description="OCE :: Features :: Shell" version="${project.version}">
@@ -177,13 +175,19 @@
         <bundle>mvn:org.opennms.oce.features/org.opennms.oce.features.shell/${project.version}</bundle>
     </feature>
 
+    <feature name="oce-features-drools" description="OCE :: Features :: Drools" version="${project.version}">
+        <feature version="${drools.version}">kie</feature>
+        <feature version="${drools.version}">drools-module</feature>
+        <bundle>mvn:org.opennms.oce.features/org.opennms.oce.features.drools/${project.version}</bundle>
+    </feature>
+
     <!-- OpenNMS Integration -->
 
     <feature name="opennms-oce-plugin" description="OpenNMS :: OCE :: Plugin" version="${project.version}">
         <feature dependency="true">aries-blueprint</feature>
         <feature version="${opennms.api.version}" dependency="true">opennms-integration-api</feature>
         <bundle dependency="true">wrap:mvn:com.google.code.gson/gson/${gson.version}</bundle>
-        <bundle dependency="true">mvn:com.google.guava/guava/${guava.version}</bundle>
+        <feature version="${guava.version}" dependency="true">guava</feature>
         <bundle dependency="true">mvn:org.apache.servicemix.bundles/org.apache.servicemix.bundles.snmp4j/${snmp4j.bundle.version}</bundle>
         <bundle>mvn:org.opennms.oce.integrations.opennms/model/${project.version}</bundle>
         <bundle>mvn:org.opennms.oce.integrations.opennms/extension/${project.version}</bundle>
@@ -233,6 +237,11 @@
         <bundle>mvn:com.fasterxml.jackson.core/jackson-core/${jackson.version}</bundle>
         <bundle>mvn:com.fasterxml.jackson.jaxrs/jackson-jaxrs-base/${jackson.version}</bundle>
         <bundle>mvn:com.fasterxml.jackson.jaxrs/jackson-jaxrs-json-provider/${jackson.version}</bundle>
+    </feature>
+
+    <feature name="guava" description="Google :: Guava" version="${guava.version}">
+        <bundle dependency="true">mvn:com.google.guava/failureaccess/1.0.1</bundle>
+        <bundle>mvn:com.google.guava/guava/${guava.version}</bundle>
     </feature>
 
 </features>

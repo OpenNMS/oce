@@ -151,16 +151,13 @@ public class Level1EngineComplianceTest {
         assertThat(initialSituations, hasSize(greaterThanOrEqualTo(1)));
 
         // Now rerun the driver several times in series, and expect the same results
-        final int K = 20;
+        final int K = 5;
         for (int k = 0; k < K; k++) {
             final List<Situation> subsequentSituations = driver.run(alarms);
             compareSituations(initialSituations, subsequentSituations);
-
-            Set<Situation> initialSituationsInSet = Sets.newHashSet(initialSituations);
-            Set<Situation> generatedSituationsInSet = Sets.newHashSet(subsequentSituations);
         }
 
-        // Rerun the driver again over serveral threads and expect the same results
+        // Rerun the driver again over several threads and expect the same results
         final ExecutorService executor = Executors.newFixedThreadPool(10);
         final List<CompletableFuture<List<Situation>>> situationFutures = new ArrayList<>();
         for (int k = 0; k < K; k++) {

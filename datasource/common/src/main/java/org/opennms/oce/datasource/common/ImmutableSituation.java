@@ -152,6 +152,10 @@ public final class ImmutableSituation implements Situation {
             return this;
         }
 
+        public String getDiagnosticText() {
+            return diagnosticText;
+        }
+
         public ImmutableSituation build() {
             Objects.requireNonNull(id, "Id cannot be null");
             Objects.requireNonNull(creationTime, "creation time cannot be null");

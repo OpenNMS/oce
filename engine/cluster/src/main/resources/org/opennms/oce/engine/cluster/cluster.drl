@@ -38,11 +38,12 @@ import org.opennms.oce.datasource.common.ImmutableSituation;
 import org.opennms.oce.datasource.api.FeedbackType;
 import org.opennms.oce.datasource.api.Alarm;
 import org.opennms.oce.datasource.api.Situation;
+import org.opennms.oce.engine.cluster.drools.DroolsService;
 import java.util.Set
 import java.util.HashSet
 import java.util.UUID;
 
-global org.opennms.oce.engine.cluster.DroolsService svc;
+global org.opennms.oce.engine.cluster.drools.DroolsService svc;
 
 declare org.opennms.oce.engine.cluster.CEVertex
     @role(fact)
@@ -122,16 +123,6 @@ rule "create a new situation for a cluster that contains alarms not previously a
    // Don't process the cluster again
    delete($cluster);
 end
-
-function String getSituationIdForAlarmId(List situations, String alarmId) {
-    for (Object situationObj : situations) {
-      Situation situation = (Situation)situationObj;
-      if (situation.getAlarmIds().contains(alarmId)) {
-        return situation.getId();
-      }
-    }
-    return null;
-}
 
 rule "update existing situations for cluster that contains alarms which were already attached to one or more situations"
  // agenda-group "correlation"
@@ -214,6 +205,8 @@ rule "commit builder" salience -100
     $builder : ImmutableSituation.Builder()
   then
     svc.debug("Committing builder for situation id: {} with alarm ids: {}", $builder.getId(), $builder.getAlarmIds());
+    // Update the diagnostic text
+    $builder.setDiagnosticText(getDiagnosticTextForSituation(svc, $builder.build()));
     svc.createOrUpdateSituation($builder);
     delete($builder);
 end
@@ -228,3 +221,48 @@ rule "cleanup dbscan" salience -100
         delete(cluster);
     }
 end
+
+// Helper functions
+
+function String getSituationIdForAlarmId(List situations, String alarmId) {
+    for (Object situationObj : situations) {
+      Situation situation = (Situation)situationObj;
+      if (situation.getAlarmIds().contains(alarmId)) {
+        return situation.getId();
+      }
+    }
+    return null;
+}
+
+function String getDiagnosticTextForSituation(DroolsService svc, Situation situation) {
+    long minTime = Long.MAX_VALUE;
+    long maxTime = Long.MIN_VALUE;
+    Double maxSpatialDistance = null;
+
+    final Set<Long> vertexIds = new HashSet<>();
+    for (Alarm alarm : situation.getAlarms()) {
+        minTime = Math.min(minTime, alarm.getTime());
+        maxTime = Math.max(maxTime, alarm.getTime());
+        // The alarm may no longer be on the graph
+        svc.getOptionalVertexIdForAlarm(alarm).ifPresent(vertexIds::add);
+    }
+
+    if (vertexIds.size() < 10) {
+        maxSpatialDistance = 0d;
+        for (Long vertexIdA : vertexIds) {
+            for (Long vertexIdB : vertexIds) {
+                if (!vertexIdA.equals(vertexIdB)) {
+                    maxSpatialDistance = Math.max(maxSpatialDistance, svc.getSpatialDistanceBetween(vertexIdA, vertexIdB));
+                }
+            }
+        }
+    }
+
+    String diagText = String.format("The %d alarms happened within %.2f seconds across %d vertices",
+            situation.getAlarms().size(), Math.abs(maxTime - minTime) / 1000d, vertexIds.size());
+    if (maxSpatialDistance != null && maxSpatialDistance > 0) {
+        diagText += String.format(" %.2f distance apart", maxSpatialDistance);
+    }
+    diagText += ".";
+    return diagText;
+}

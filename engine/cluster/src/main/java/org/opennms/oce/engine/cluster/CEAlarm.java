@@ -33,6 +33,9 @@ import java.util.Objects;
 import org.opennms.oce.datasource.api.Alarm;
 import org.opennms.oce.datasource.api.Severity;
 
+/**
+ * An alarm paired with a vertex.
+ */
 public class CEAlarm implements Alarm {
 
     private final CEVertex vertex;

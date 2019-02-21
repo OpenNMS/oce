@@ -28,10 +28,15 @@
 
 package org.opennms.oce.datasource.opennms.jvm;
 
+import java.io.File;
+import java.io.IOException;
+import java.net.URISyntaxException;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.NoSuchElementException;
+
+import javax.script.ScriptException;
 
 import org.opennms.integration.api.v1.model.Alarm;
 import org.opennms.integration.api.v1.model.Node;
@@ -39,7 +44,6 @@ import org.opennms.integration.api.v1.model.SnmpInterface;
 import org.opennms.oce.datasource.api.InventoryObject;
 import org.opennms.oce.datasource.common.ImmutableInventoryObject;
 import org.opennms.oce.datasource.common.inventory.ManagedObjectType;
-import org.opennms.oce.datasource.common.inventory.TypeToInventory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -50,6 +54,16 @@ import com.google.common.base.Strings;
  */
 public class InventoryFactory {
     private static final Logger LOG = LoggerFactory.getLogger(InventoryFactory.class);
+
+    private static ScriptedInventoryFactory getScriptedInventoryFactory() {
+        URL scriptUri = ClassLoader.getSystemResource("inventory.groovy");
+        try {
+            File script = new File(scriptUri.toURI());
+            return new ScriptedInventoryFactory(script);
+        } catch (URISyntaxException | IOException | ScriptException e) {
+            throw new RuntimeException(e);
+        }
+    }
 
     /**
      * Derives inventory from a {@link Node node}.
@@ -82,37 +96,12 @@ public class InventoryFactory {
      * @return the list of derived inventory
      */
     public static List<InventoryObject> createInventoryObjects(Alarm alarm) {
-        // Only derive inventory if the alarm has an MO type and instance
-        if (Strings.isNullOrEmpty(alarm.getManagedObjectType()) ||
-                Strings.isNullOrEmpty(alarm.getManagedObjectInstance())) {
-            return Collections.emptyList();
-        }
-
-        ManagedObjectType type;
-
         try {
-            type = ManagedObjectType.fromName(alarm.getManagedObjectType());
-        } catch (NoSuchElementException nse) {
-            LOG.warn("Found unsupported type: {} with id: {}. Skipping.", alarm.getManagedObjectType(),
-                    alarm.getManagedObjectInstance());
+            return getScriptedInventoryFactory().createInventoryObjects(alarm);
+        } catch (NoSuchMethodException | ScriptException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
             return Collections.emptyList();
-        }
-
-        switch (type) {
-            case SnmpInterfaceLink:
-                return Collections.singletonList(TypeToInventory.getSnmpInterfaceLink(
-                        alarm.getManagedObjectInstance()));
-            case EntPhysicalEntity:
-                return Collections.singletonList(TypeToInventory.getEntPhysicalEntity(
-                        alarm.getManagedObjectInstance(), toNodeCriteria(alarm)));
-            case BgpPeer:
-                return Collections.singletonList(TypeToInventory.getBgpPeer(alarm.getManagedObjectInstance(),
-                        toNodeCriteria(alarm)));
-            case VpnTunnel:
-                return Collections.singletonList(TypeToInventory.getVpnTunnel(alarm.getManagedObjectInstance(),
-                        toNodeCriteria(alarm)));
-            default:
-                return Collections.emptyList();
         }
     }
 

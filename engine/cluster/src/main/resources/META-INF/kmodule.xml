@@ -1,8 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<kmodule xmlns="http://www.drools.org/xsd/kmodule">
-
-    <kbase name="clusterKBase" packages="org.opennms.oce.engine.cluster" default="true">
-        <ksession name="clusterKSession" default="true" />
-    </kbase>
-
-</kmodule>

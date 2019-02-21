@@ -97,10 +97,7 @@ rule "create a new situation for a cluster that contains alarms not previously a
  // agenda-group "correlation"
   when
    $cluster : CECluster()
-   $alarmIdsInSituations : Set() from accumulate( Situation( $alarmIds : alarmIds ),
-                                      init( Set s = new HashSet(); ),
-                                      action( ((Set)s).addAll($alarmIds); )
-                                      result ( s ) ) // TODO: Custom accumulator
+   $alarmIdsInSituations : Set() from accumulate( Situation( $alarmIds : alarmIds ), collectFlatSet($alarmIds) )
    // Gather the list of alarms that are in the cluster and select those that are not currently in a situation
    $alarmsInClusterWithoutSituation : LinkedList( size >= 2 ) from collect( CEAlarm( id not memberOf $alarmIdsInSituations ) from $cluster.alarms )
    // Only process the cluster when none of it's alarms are in a situation
@@ -128,10 +125,7 @@ rule "update existing situations for cluster that contains alarms which were alr
  // agenda-group "correlation"
   when
    $cluster : CECluster()
-   $alarmIdsInSituations : Set() from accumulate( Situation( $alarmIds : alarmIds ),
-                                     init( Set s = new HashSet(); ),
-                                     action( ((Set)s).addAll($alarmIds); )
-                                     result( s ) ) // TODO: Custom accumulator
+   $alarmIdsInSituations : Set() from accumulate( Situation( $alarmIds : alarmIds ), collectFlatSet($alarmIds) )
    // Gather the list of alarms that are in the cluster and select those that are not currently in a situation
    $alarmsInClusterWithoutSituation : LinkedList( size >= 1 ) from collect( CEAlarm( id not memberOf $alarmIdsInSituations ) from $cluster.alarms )
    // Gather the list of alarms that are in the cluster and select those that are already in another situation

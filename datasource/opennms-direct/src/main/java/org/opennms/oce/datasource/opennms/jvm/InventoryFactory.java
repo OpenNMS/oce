@@ -32,7 +32,6 @@ import java.io.File;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.net.URL;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
@@ -40,10 +39,7 @@ import javax.script.ScriptException;
 
 import org.opennms.integration.api.v1.model.Alarm;
 import org.opennms.integration.api.v1.model.Node;
-import org.opennms.integration.api.v1.model.SnmpInterface;
 import org.opennms.oce.datasource.api.InventoryObject;
-import org.opennms.oce.datasource.common.ImmutableInventoryObject;
-import org.opennms.oce.datasource.common.inventory.ManagedObjectType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -72,21 +68,13 @@ public class InventoryFactory {
      * @return the list of derived inventory
      */
     public static List<InventoryObject> createInventoryObjects(Node node) {
-        List<InventoryObject> inventoryObjects = new ArrayList<>();
-
-        InventoryObject inventoryObject = ImmutableInventoryObject.newBuilder()
-                .setType(ManagedObjectType.Node.getName())
-                .setId(toNodeCriteria(node))
-                .setFriendlyName(node.getLabel())
-                .build();
-        inventoryObjects.add(inventoryObject);
-
-        // Attach the SNMP interfaces directly to the node
-        node.getSnmpInterfaces().stream()
-                .map(snmpInterface -> toInventoryObject(snmpInterface, inventoryObject))
-                .forEach(inventoryObjects::add);
-
-        return inventoryObjects;
+        try {
+            return getScriptedInventoryFactory().createInventoryObjects(node);
+        } catch (NoSuchMethodException | ScriptException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+            return Collections.emptyList();
+        }
     }
 
     /**
@@ -103,40 +91,6 @@ public class InventoryFactory {
             e.printStackTrace();
             return Collections.emptyList();
         }
-    }
-
-    /**
-     * Derives an {@link InventoryObject inventory object} from an {@link SnmpInterface SNMP interface}.
-     *  
-     *
-     * @param snmpInterface the interface to derive inventory from
-     * @param parent        the parent inventory object
-     * @return the derived inventory object
-     */
-    private static InventoryObject toInventoryObject(SnmpInterface snmpInterface, InventoryObject parent) {
-        return ImmutableInventoryObject.newBuilder()
-                .setType(ManagedObjectType.SnmpInterface.getName())
-                .setId(parent.getId() + ":" + snmpInterface.getIfIndex())
-                .setFriendlyName(snmpInterface.getIfDescr())
-                .setParentType(parent.getType())
-                .setParentId(parent.getId())
-                .build();
-    }
-
-    /**
-     * Gets the node criteria string for the given alarm.
-     *
-     * @param alarm the alarm
-     * @return the node criteria string
-     */
-    private static String toNodeCriteria(Alarm alarm) {
-        Node node = alarm.getNode();
-
-        if (node != null) {
-            return toNodeCriteria(node);
-        }
-
-        return toNodeCriteria(null, null, alarm.getId());
     }
 
     /**

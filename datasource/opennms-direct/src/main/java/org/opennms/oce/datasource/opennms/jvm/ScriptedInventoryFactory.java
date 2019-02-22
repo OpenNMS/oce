@@ -39,6 +39,7 @@ import javax.script.ScriptEngineManager;
 import javax.script.ScriptException;
 
 import org.opennms.integration.api.v1.model.Alarm;
+import org.opennms.integration.api.v1.model.Node;
 import org.opennms.oce.datasource.api.InventoryObject;
 
 import com.google.common.io.Files;
@@ -83,6 +84,11 @@ public class ScriptedInventoryFactory {
     @SuppressWarnings("unchecked")
     public List<InventoryObject> createInventoryObjects(Alarm alarm) throws ScriptException, NoSuchMethodException {
         return (List<InventoryObject>) invocable.invokeFunction("alarmToInventory", alarm);
+    }
+
+    @SuppressWarnings("unchecked")
+    public List<InventoryObject> createInventoryObjects(Node node) throws ScriptException, NoSuchMethodException {
+        return (List<InventoryObject>) invocable.invokeFunction("nodeToInventory", node);
     }
 
 }

@@ -36,6 +36,7 @@ import static org.mockito.Mockito.when;
 import java.util.Collections;
 import java.util.List;
 
+import org.junit.Before;
 import org.junit.Test;
 import org.opennms.integration.api.v1.model.Alarm;
 import org.opennms.integration.api.v1.model.Node;
@@ -44,6 +45,12 @@ import org.opennms.oce.datasource.api.InventoryObject;
 import org.opennms.oce.datasource.common.inventory.ManagedObjectType;
 
 public class InventoryFactoryTest {
+
+    @Before
+    public void before() {
+        System.setProperty("log4j.skipJansi", "true");
+    }
+
     @Test
     public void testCreateFromNode() {
         SnmpInterface snmpInterface = mock(SnmpInterface.class);

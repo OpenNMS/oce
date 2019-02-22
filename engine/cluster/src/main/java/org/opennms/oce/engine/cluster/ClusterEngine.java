@@ -39,14 +39,17 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 
 import org.drools.core.time.SessionPseudoClock;
 import org.opennms.oce.datasource.api.Alarm;
@@ -71,6 +74,7 @@ import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Sets;
 import com.google.common.io.MoreFiles;
 import com.google.common.io.Resources;
 
@@ -104,26 +108,35 @@ public class ClusterEngine implements Engine, GraphProvider, SpatialDistanceCalc
     private DroolsFactManager droolsFactManager;
     private DroolsService droolsService;
 
-    private final Path rulesFolder;
+    private final Path pathToRulesFolder;
+    private final boolean cleanupRulesFolderOnDestroy;
 
     public ClusterEngine() {
-        this(DEFAULT_EPSILON, DEFAULT_ALPHA, DEFAULT_BETA);
+        this(DEFAULT_EPSILON, DEFAULT_ALPHA, DEFAULT_BETA, null);
     }
 
-    public ClusterEngine(double epsilon, double alpha, double beta)  {
-        try {
-            rulesFolder = Files.createTempDirectory("oce-drools");
-            rulesFolder.toFile().deleteOnExit();
-            URL url = Resources.getResource(ClusterEngine.class,"cluster.drl");
-            try (InputStream is = url.openStream()) {
-                Files.copy(is, rulesFolder.resolve("cluster.drl"));
+    public ClusterEngine(double epsilon, double alpha, double beta, String rulesFolder)  {
+        if (rulesFolder != null) {
+            // Use the given path
+            pathToRulesFolder = Paths.get(rulesFolder);
+            cleanupRulesFolderOnDestroy = false;
+        } else {
+            // Copy the rules from the class-path to a temporary directory
+            try {
+                pathToRulesFolder = Files.createTempDirectory("oce-drools");
+                pathToRulesFolder.toFile().deleteOnExit();
+                URL url = Resources.getResource(ClusterEngine.class,"cluster.drl");
+                try (InputStream is = url.openStream()) {
+                    Files.copy(is, pathToRulesFolder.resolve("cluster.drl"));
+                }
+            } catch (IOException e) {
+                throw new RuntimeException(e);
             }
-        } catch (IOException e) {
-            throw new RuntimeException(e);
+            cleanupRulesFolderOnDestroy = true;
         }
 
         managedDroolsContext = new ManagedDroolsContext(
-                rulesFolder.toFile(),
+                pathToRulesFolder.toFile(),
                 "clusterEngineKB",
                 "clusterEngineSession");
         managedDroolsContext.setUseManualTick(true);
@@ -162,7 +175,7 @@ public class ClusterEngine implements Engine, GraphProvider, SpatialDistanceCalc
             // situations when applicable
             situations.forEach(situation -> {
                 situationsById.put(situation.getId(), situation);
-                droolsFactManager.upsertSituation(situation);
+                droolsFactManager.upsertSituation(toCESituation(situation));
             });
 
             // Process all the alarm feedback provided on init
@@ -198,10 +211,12 @@ public class ClusterEngine implements Engine, GraphProvider, SpatialDistanceCalc
             managedDroolsContext.stop();
         }
 
-        try {
-            MoreFiles.deleteRecursively(rulesFolder);
-        } catch (IOException e) {
-            LOG.warn("Error occurred while cleaning up temporary folder '{}'.", rulesFolder, e);
+        if (cleanupRulesFolderOnDestroy) {
+            try {
+                MoreFiles.deleteRecursively(pathToRulesFolder);
+            } catch (IOException e) {
+                LOG.warn("Error occurred while cleaning up temporary folder '{}'.", pathToRulesFolder, e);
+            }
         }
     }
 
@@ -211,7 +226,7 @@ public class ClusterEngine implements Engine, GraphProvider, SpatialDistanceCalc
     }
 
     public void submitSituation(Situation situation) {
-        droolsFactManager.upsertSituation(situation);
+        droolsFactManager.upsertSituation(toCESituation(situation));
 
         // Notify the handler
         if (situationHandler != null) {
@@ -219,6 +234,23 @@ public class ClusterEngine implements Engine, GraphProvider, SpatialDistanceCalc
         } else {
             LOG.warn("No situation handler is currently registered. Situation will not be forwarded: {}", situation);
         }
+    }
+
+    private CESituation toCESituation(Situation situation) {
+        final Set<String> alarmIdsInSituation = situation.getAlarmIds();
+        final List<CEVertex> verticesInSituation = new LinkedList<>();
+
+        // FIXME: Should be more efficient - we shouldn't have to iterate over the entire graph
+        graphManager.withGraph(g -> {
+            for (CEVertex v : g.getVertices()) {
+                final Set<String> alarmIdsOnVertex = v.getAlarms().stream().map(Alarm::getId).collect(Collectors.toSet());
+                if (!Sets.intersection(alarmIdsInSituation, alarmIdsOnVertex).isEmpty()) {
+                    verticesInSituation.add(v);
+                }
+            }
+        });
+
+        return new CESituation(situation, verticesInSituation);
     }
 
     @Override

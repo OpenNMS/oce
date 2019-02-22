@@ -47,6 +47,15 @@ public interface Situation {
 
     Set<String> getAlarmIds();
 
+    /**
+     * Helper function used to quickly check whether or not a given alarm id is currently
+     * part of this situation.
+     *
+     * @param alarmId id of the alarm
+     * @return true if the alarm is currently part of the situation, false otherwise
+     */
+    boolean containsAlarm(String alarmId);
+
     Severity getSeverity();
 
     /**

@@ -329,8 +329,8 @@ public class OldClusterEngine implements Engine, GraphProvider, SpatialDistanceC
                 // GC alarms from vertices
                 int numGarbageCollectedAlarms = 0;
                 for (CEVertex v : g.getVertices()) {
-                    numGarbageCollectedAlarms += v.garbageCollectAlarms(timestampInMillis, problemTimeoutMs,
-                            clearTimeoutMs);
+//                    numGarbageCollectedAlarms += v.garbageCollectAlarms(timestampInMillis, problemTimeoutMs,
+//                            clearTimeoutMs);
                 }
                 LOG.debug("{}: Garbage collected {} alarms.", timestampInMillis, numGarbageCollectedAlarms);
 

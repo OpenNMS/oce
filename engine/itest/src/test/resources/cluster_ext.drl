@@ -1,0 +1,84 @@
+/*******************************************************************************
+ * This file is part of OpenNMS(R).
+ *
+ * Copyright (C) 2019 The OpenNMS Group, Inc.
+ * OpenNMS(R) is Copyright (C) 1999-2019 The OpenNMS Group, Inc.
+ *
+ * OpenNMS(R) is a registered trademark of The OpenNMS Group, Inc.
+ *
+ * OpenNMS(R) is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as published
+ * by the Free Software Foundation, either version 3 of the License,
+ * or (at your option) any later version.
+ *
+ * OpenNMS(R) is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Affero General Public License for more details.
+ *
+ * You should have received a copy of the GNU Affero General Public License
+ * along with OpenNMS(R).  If not, see:
+ *      http://www.gnu.org/licenses/
+ *
+ * For more information contact:
+ *     OpenNMS(R) Licensing <license@opennms.org>
+ *     http://www.opennms.org/
+ *     http://www.opennms.com/
+ *******************************************************************************/
+
+package org.opennms.oce.engine.cluster;
+
+import java.util.Date;
+import org.kie.api.time.SessionClock;
+import java.util.LinkedList;
+import org.apache.commons.math3.ml.clustering.Cluster;
+import java.util.List;
+import org.opennms.oce.datasource.api.AlarmFeedback;
+import org.opennms.oce.datasource.common.ImmutableSituation;
+import org.opennms.oce.datasource.api.FeedbackType;
+import org.opennms.oce.datasource.api.Alarm;
+import org.opennms.oce.datasource.api.Situation;
+import org.opennms.oce.engine.cluster.drools.DroolsService;
+import java.util.Set
+import java.util.HashSet
+import java.util.UUID;
+
+import org.opennms.oce.engine.cluster.CEVertex;
+import org.opennms.oce.engine.cluster.CESituation;
+
+global org.opennms.oce.engine.cluster.drools.DroolsService svc;
+
+rule "correlate additional alarms of a specific type"
+  when
+   $vertex : CEVertex(inventoryObjectType == "Port")
+   $situationsOnVertex : LinkedList( size == 1 ) from collect( CESituation( vertices contains $vertex ) )
+   // We know that there is only one, so we can select it directly
+   $situation : CESituation( vertices contains $vertex )
+   // Gather the alarm ids for alarms presently in situations
+   $alarmIdsInSituations : Set() from accumulate( Situation( $alarmIds : alarmIds ), collectFlatSet( $alarmIds ) )
+   // Now find alarms of the type were interested in
+   // TODO: Reference some type field instead of the ID
+   $alarmOfSpecificType : CEAlarm( id == "a4", vertex == $vertex, id not memberOf $alarmIdsInSituations )
+   // Ensure it's not already part of a builder
+   not( ImmutableSituation.Builder( alarmIds contains $alarmOfSpecificType.id ) )
+   // Ensure there's no existing builder for this situation, since we'll be creating one
+   not( ImmutableSituation.Builder( id == $situation.id ) )
+  then
+   ImmutableSituation.Builder builder = ImmutableSituation.newBuilderFrom($situation);
+   builder.addAlarm($alarmOfSpecificType);
+   insert(builder);
+end
+
+rule "exclude alarms of a specific type from being correlated"
+  when
+   $vertex : CEVertex(inventoryObjectType == "Port")
+   // TODO: Reference some type field instead of the ID
+   $alarmOfSpecificType : CEAlarm( id == "a3", vertex == $vertex )
+   $builder : ImmutableSituation.Builder( alarmIds contains $alarmOfSpecificType.id )
+  then
+
+   // Remove the alarm in question
+   $builder.removeAlarm($alarmOfSpecificType.getId());
+
+   update($builder);
+end

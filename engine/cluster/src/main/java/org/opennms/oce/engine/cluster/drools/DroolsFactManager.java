@@ -38,9 +38,12 @@ import org.opennms.oce.datasource.api.Alarm;
 import org.opennms.oce.datasource.api.AlarmFeedback;
 import org.opennms.oce.datasource.api.Situation;
 import org.opennms.oce.engine.cluster.CEAlarm;
+import org.opennms.oce.engine.cluster.CESituation;
 import org.opennms.oce.engine.cluster.CEVertex;
 
 public class DroolsFactManager {
+
+    //TODO: Concurrency handling
 
     private final KieSession kieSession;
 
@@ -52,8 +55,7 @@ public class DroolsFactManager {
         this.kieSession = Objects.requireNonNull(kieSession);
     }
 
-    public void upsertSituation(Situation situation) {
-        // Insert/update the fact
+    public void upsertSituation(CESituation situation) {
         final FactHandle fact = situationIdToFactMap.get(situation.getId());
         if (fact != null) {
             kieSession.update(fact, situation);

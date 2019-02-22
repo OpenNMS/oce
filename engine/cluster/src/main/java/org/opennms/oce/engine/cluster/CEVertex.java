@@ -95,6 +95,10 @@ public class CEVertex implements Vertex {
         return Optional.ofNullable(inventoryObject);
     }
 
+    public String getInventoryObjectType() {
+        return inventoryObject != null ? inventoryObject.getType() : null;
+    }
+
     @Override
     public String getId() {
         return Long.toString(id);
@@ -112,33 +116,6 @@ public class CEVertex implements Vertex {
 
     public long getNumericId() {
         return id;
-    }
-
-    @Deprecated
-    public int garbageCollectAlarms(long timestampInMillis, long problemTimeoutMs, long clearTimeoutMs) {
-        final long problemCutoffMs = timestampInMillis - problemTimeoutMs;
-        final long clearCutoffMs = timestampInMillis - clearTimeoutMs;
-
-        int numAlarmsBefore = alarmsById.size();
-        alarmsById.entrySet().removeIf(entry -> {
-            final Alarm alarm = entry.getValue();
-            if (alarm.isClear() && alarm.getTime() < clearCutoffMs) {
-                if (LOG.isDebugEnabled()) {
-                    LOG.debug("GCing cleared alarm with id: {}, alarm time is: {} which is before the cutoff time of: {}",
-                            alarm.getId(), new Date(alarm.getTime()), new Date(clearCutoffMs));
-                }
-                return true;
-            } else if (!alarm.isClear() && alarm.getTime() < problemCutoffMs) {
-                if (LOG.isDebugEnabled()) {
-                    LOG.debug("GCing problem alarm with id: {}, alarm time is: {} which is before the cutoff time of: {}",
-                            alarm.getId(), new Date(alarm.getTime()), new Date(problemCutoffMs));
-                }
-                return true;
-            } else {
-                return false;
-            }
-        });
-        return numAlarmsBefore - alarmsById.size();
     }
 
     @Override

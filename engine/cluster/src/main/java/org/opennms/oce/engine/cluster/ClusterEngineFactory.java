@@ -35,6 +35,7 @@ public class ClusterEngineFactory implements EngineFactory {
     private double epsilon = ClusterEngine.DEFAULT_EPSILON;
     private double alpha = ClusterEngine.DEFAULT_ALPHA;
     private double beta = ClusterEngine.DEFAULT_BETA;
+    private String rulesFolder;
 
     @Override
     public String getName() {
@@ -48,30 +49,22 @@ public class ClusterEngineFactory implements EngineFactory {
 
     @Override
     public ClusterEngine createEngine() {
-        return new ClusterEngine(epsilon, alpha, beta);
-    }
-
-    public double getEpsilon() {
-        return epsilon;
+        return new ClusterEngine(epsilon, alpha, beta, rulesFolder);
     }
 
     public void setEpsilon(double epsilon) {
         this.epsilon = epsilon;
     }
 
-    public double getAlpha() {
-        return alpha;
-    }
-
     public void setAlpha(double alpha) {
         this.alpha = alpha;
     }
 
-    public double getBeta() {
-        return beta;
-    }
-
     public void setBeta(double beta) {
         this.beta = beta;
+    }
+
+    public void setRulesFolder(String rulesFolder) {
+        this.rulesFolder = rulesFolder;
     }
 }

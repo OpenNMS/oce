@@ -50,18 +50,19 @@ declare org.opennms.oce.engine.cluster.CEVertex
 end
 
 declare org.opennms.oce.engine.cluster.CEAlarm
+    // Treat alarms as "events" so we can use them in time windows
     @role(event)
     @timestamp(time)
 end
 
 declare org.opennms.oce.datasource.api.AlarmFeedback
+    // Treat feedback as "events" so we can have them expire automatically
     @role(event)
     @timestamp(timestamp)
     @expires(7d)
 end
 
 rule "gc cleared alarms" salience 100
- // agenda-group "pre-correlation"
   when
     $alarm : CEAlarm( alarm.isClear() == true )
     not( CEAlarm( this == $alarm ) over window:time( 5m ) )
@@ -71,7 +72,6 @@ rule "gc cleared alarms" salience 100
 end
 
 rule "gc problem alarms" salience 100
- // agenda-group "pre-correlation"
   when
     $alarm : CEAlarm( alarm.isClear() == false )
     not( CEAlarm( this == $alarm ) over window:time( 2h ) )
@@ -81,9 +81,9 @@ rule "gc problem alarms" salience 100
 end
 
 rule "trigger dbscan"
- // agenda-group "correlation"
   when
-    $alarms : LinkedList( size > 0 ) from collect ( CEAlarm() )
+    // TODO: Avoid re-triggering DB-Scan if the set of alarms have not changed since the last tick
+    $alarms : LinkedList( isEmpty == false ) from collect ( CEAlarm() )
   then
     svc.debug("Triggering DB-Scan for {} alarms.", $alarms.size());
     List<CECluster> clustersOfAlarms = svc.cluster($alarms);
@@ -94,10 +94,10 @@ rule "trigger dbscan"
 end
 
 rule "create a new situation for a cluster that contains alarms not previously attached to a situation"
- // agenda-group "correlation"
   when
    $cluster : CECluster()
    $alarmIdsInSituations : Set() from accumulate( Situation( $alarmIds : alarmIds ), collectFlatSet($alarmIds) )
+   // TODO: What happens if we decide to create a situation from other rules, and it is not yet commited?
    // Gather the list of alarms that are in the cluster and select those that are not currently in a situation
    $alarmsInClusterWithoutSituation : LinkedList( size >= 2 ) from collect( CEAlarm( id not memberOf $alarmIdsInSituations ) from $cluster.alarms )
    // Only process the cluster when none of it's alarms are in a situation
@@ -114,37 +114,33 @@ rule "create a new situation for a cluster that contains alarms not previously a
        CEAlarm alarm = (CEAlarm)alarmObj;
        builder.addAlarm(alarm.getAlarm());
    }
-
    insert(builder);
-   // svc.associateAlarmsWithSituation($alarmsInClusterWithoutSituation, situationId);
+
    // Don't process the cluster again
    delete($cluster);
 end
 
+// TODO: Add test coverage for this block, nothing hits this right now
 rule "update existing situations for cluster that contains alarms which were already attached to one or more situations"
- // agenda-group "correlation"
   when
    $cluster : CECluster()
    $alarmIdsInSituations : Set() from accumulate( Situation( $alarmIds : alarmIds ), collectFlatSet($alarmIds) )
    // Gather the list of alarms that are in the cluster and select those that are not currently in a situation
-   $alarmsInClusterWithoutSituation : LinkedList( size >= 1 ) from collect( CEAlarm( id not memberOf $alarmIdsInSituations ) from $cluster.alarms )
+   $alarmsInClusterWithoutSituation : LinkedList( isEmpty == false ) from collect( CEAlarm( id not memberOf $alarmIdsInSituations ) from $cluster.alarms )
    // Gather the list of alarms that are in the cluster and select those that are already in another situation
-   $alarmsInClusterWithSituation : LinkedList( size >= 1 ) from collect( CEAlarm( id memberOf $alarmIdsInSituations ) from $cluster.alarms )
+   $alarmsInClusterWithSituation : LinkedList( isEmpty == false ) from collect( CEAlarm( id memberOf $alarmIdsInSituations ) from $cluster.alarms )
    // Gather the existing situations referenced by the alarms
    $allSituations : LinkedList() from collect( Situation() )
-   $situationIds : Set( size >= 1 ) from accumulate( CEAlarm( id memberOf $alarmIdsInSituations, $id : id ), collectSet( getSituationIdForAlarmId($allSituations, $id) ) )
-   $situations : LinkedList( size >= 1 ) from collect( Situation( id memberOf $situationIds ) )
-   // Gather existing feedback relating to the situations
-   $feedback : LinkedList() from collect( AlarmFeedback( situationId memberOf $situationIds ) )
+   $situationIdsReferenced : Set( isEmpty == false ) from accumulate( CEAlarm( id memberOf $alarmIdsInSituations, $id : id ), collectSet( getSituationIdForAlarmId($allSituations, $id) ) )
+   $situations : LinkedList( isEmpty == false ) from collect( Situation( id memberOf $situationIdsReferenced ) )
    // And any existing builders that may be "in-flight"
-   $builders : LinkedList() from collect( ImmutableSituation.Builder( id memberOf $situationIds ) )
+   $builders : LinkedList() from collect( ImmutableSituation.Builder( id memberOf $situationIdsReferenced ) )
  then
    svc.debug("Updating {} situation(s) with {} alarms.", $situations.size(), $alarmsInClusterWithoutSituation.size());
    List<ImmutableSituation.Builder> newOrUpdatedBuilders = svc.mapClusterToExistingSituations(
            $alarmsInClusterWithoutSituation,
            $alarmsInClusterWithSituation,
            $situations,
-           $feedback,
            $builders);
 
    for (ImmutableSituation.Builder newOrUpdatedBuilder : newOrUpdatedBuilders) {
@@ -160,7 +156,6 @@ rule "update existing situations for cluster that contains alarms which were alr
 end
 
 rule "handle false positive feedback for non-pending situations"
- // agenda-group "correlation"
   when
    $feedback: AlarmFeedback( feedbackType == FeedbackType.FALSE_POSITIVE )
    $existingSituationWithFeedback: Situation( id == $feedback.situationId, alarmIds contains $feedback.alarmKey )
@@ -179,7 +174,6 @@ rule "handle false positive feedback for non-pending situations"
 end
 
 rule "handle false positive feedback for pending situations"
- // agenda-group "correlation"
   when
    $feedback: AlarmFeedback( feedbackType == FeedbackType.FALSE_POSITIVE )
    $existingSituationWithFeedback: Situation( id == $feedback.situationId, alarmIds contains $feedback.alarmKey )
@@ -194,7 +188,6 @@ rule "handle false positive feedback for pending situations"
 end
 
 rule "commit builder" salience -100
- // agenda-group "post-correlation"
   when
     $builder : ImmutableSituation.Builder()
   then
@@ -206,9 +199,8 @@ rule "commit builder" salience -100
 end
 
 rule "cleanup dbscan" salience -100
- // agenda-group "post-correlation"
   when
-    $clusters : LinkedList( size > 0 ) from collect ( Cluster() )
+    $clusters : LinkedList( isEmpty == false ) from collect ( Cluster() )
   then
     svc.debug("Cleaning up DB-Scan clusters.");
     for (Object cluster : $clusters) {
@@ -221,7 +213,7 @@ end
 function String getSituationIdForAlarmId(List situations, String alarmId) {
     for (Object situationObj : situations) {
       Situation situation = (Situation)situationObj;
-      if (situation.getAlarmIds().contains(alarmId)) {
+      if (situation.containsAlarm(alarmId)) {
         return situation.getId();
       }
     }

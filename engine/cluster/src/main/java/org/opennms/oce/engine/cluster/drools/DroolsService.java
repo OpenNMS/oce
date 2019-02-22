@@ -66,7 +66,6 @@ public interface DroolsService {
     List<ImmutableSituation.Builder> mapClusterToExistingSituations(List<CEAlarm> alarmsInClusterWithoutSituation,
                                         List<CEAlarm> alarmsInClusterWithSituation,
                                         List<Situation> existingSituationsReferenced,
-                                        List<AlarmFeedback> feedback,
                                         List<ImmutableSituation.Builder> existingBuilders);
 
     void createOrUpdateSituation(ImmutableSituation.Builder situationBuilder);

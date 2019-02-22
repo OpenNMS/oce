@@ -133,7 +133,6 @@ public class DroolsServiceImpl implements DroolsService {
     public List<ImmutableSituation.Builder> mapClusterToExistingSituations(List<CEAlarm> alarmsInClusterWithoutSituation,
                      List<CEAlarm> alarmsInClusterWithSituation,
                      List<Situation> situations,
-                                                                           List<AlarmFeedback> feedback,
                      List<ImmutableSituation.Builder> existingBuilders) {
 
         final Map<String, String> alarmIdToSituationId = new LinkedHashMap<>();

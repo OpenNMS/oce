@@ -226,6 +226,11 @@ public final class ImmutableSituation implements Situation {
     }
 
     @Override
+    public boolean containsAlarm(String alarmId) {
+        return alarms != null && alarms.containsKey(alarmId);
+    }
+
+    @Override
     public Severity getSeverity() {
         return severity;
     }

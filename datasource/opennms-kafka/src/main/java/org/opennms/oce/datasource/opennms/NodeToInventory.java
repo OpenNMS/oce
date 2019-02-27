@@ -28,44 +28,45 @@
 
 package org.opennms.oce.datasource.opennms;
 
-import java.util.ArrayList;
+import java.io.File;
+import java.io.IOException;
+import java.net.URISyntaxException;
+import java.net.URL;
 import java.util.Collection;
-import java.util.List;
+import java.util.Collections;
 
-import org.opennms.oce.datasource.common.inventory.ManagedObjectType;
+import javax.script.ScriptException;
+
 import org.opennms.oce.datasource.opennms.proto.InventoryModelProtos;
 import org.opennms.oce.datasource.opennms.proto.OpennmsModelProtos;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class NodeToInventory {
 
+    private static final Logger LOG = LoggerFactory.getLogger(NodeToInventory.class);
+
     public static Collection<InventoryModelProtos.InventoryObject> toInventoryObjects(OpennmsModelProtos.Node node) {
-        final List<InventoryModelProtos.InventoryObject> inventory = new ArrayList<>();
-
-        InventoryModelProtos.InventoryObject nodeObj = InventoryModelProtos.InventoryObject.newBuilder()
-                .setType(ManagedObjectType.Node.getName())
-                .setId(OpennmsMapper.toNodeCriteria(node))
-                .setFriendlyName(node.getLabel())
-                .build();
-        inventory.add(nodeObj);
-
-        // Attach the SNMP interfaces directly to the node
-        node.getSnmpInterfaceList().stream()
-                .map(iff -> toInventoryObject(iff, nodeObj))
-                .forEach(inventory::add);
-
-        // TODO: Use the hardware inventory data if available
-
-        return inventory;
+        try {
+            return getScriptedInventoryFactory().toInventoryObjects(node);
+        } catch (NoSuchMethodException | ScriptException e) {
+            LOG.warn("Failed to create inventory for node {} : {}", node, e.getMessage());
+            return Collections.emptyList();
+        }
     }
 
-    public static InventoryModelProtos.InventoryObject toInventoryObject(OpennmsModelProtos.SnmpInterface snmpInterface, InventoryModelProtos.InventoryObject parent) {
-        return InventoryModelProtos.InventoryObject.newBuilder()
-                .setType(ManagedObjectType.SnmpInterface.getName())
-                .setId(parent.getId() + ":" + snmpInterface.getIfIndex())
-                .setFriendlyName(snmpInterface.getIfDescr())
-                .setParentType(parent.getType())
-                .setParentId(parent.getId())
-                .build();
+    public static InventoryModelProtos.InventoryObject toInventoryObject(OpennmsModelProtos.SnmpInterface snmpInterface,
+            InventoryModelProtos.InventoryObject parent) throws NoSuchMethodException, ScriptException {
+        return getScriptedInventoryFactory().toInventoryObject(snmpInterface, parent);
     }
 
+    private static ScriptedInventoryFactory getScriptedInventoryFactory() {
+        URL scriptUri = ClassLoader.getSystemResource("inventory.groovy");
+        try {
+            File script = new File(scriptUri.toURI());
+            return new ScriptedInventoryFactory(script);
+        } catch (URISyntaxException | IOException | ScriptException e) {
+            throw new RuntimeException(e);
+        }
+    }
 }

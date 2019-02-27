@@ -40,16 +40,11 @@ import javax.script.ScriptException;
 import org.opennms.integration.api.v1.model.Alarm;
 import org.opennms.integration.api.v1.model.Node;
 import org.opennms.oce.datasource.api.InventoryObject;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import com.google.common.base.Strings;
 
 /**
  * A utility class used by the OpenNMS direct data source to derive inventory from nodes and alarms.
  */
 public class InventoryFactory {
-    private static final Logger LOG = LoggerFactory.getLogger(InventoryFactory.class);
 
     private static ScriptedInventoryFactory getScriptedInventoryFactory() {
         URL scriptUri = ClassLoader.getSystemResource("inventory.groovy");

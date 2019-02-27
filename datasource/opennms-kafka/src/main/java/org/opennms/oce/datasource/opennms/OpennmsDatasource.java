@@ -305,8 +305,7 @@ public class OpennmsDatasource implements SituationDatasource, AlarmDatasource, 
             if (node == null) {
                 return KeyValue.pair(key, null);
             }
-            final InventoryModelProtos.InventoryObjects.Builder iosBuilder = InventoryModelProtos.InventoryObjects
-                    .newBuilder();
+            final InventoryModelProtos.InventoryObjects.Builder iosBuilder = InventoryModelProtos.InventoryObjects.newBuilder();
             for (InventoryModelProtos.InventoryObject io : NodeToInventory.toInventoryObjects(node)) {
                 iosBuilder.addInventoryObject(io);
             }

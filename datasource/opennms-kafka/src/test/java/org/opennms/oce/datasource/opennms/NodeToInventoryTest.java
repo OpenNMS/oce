@@ -30,7 +30,6 @@ package org.opennms.oce.datasource.opennms;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasSize;
-import static org.hamcrest.Matchers.nullValue;
 import static org.hamcrest.core.IsEqual.equalTo;
 
 import java.util.Collection;
@@ -45,8 +44,7 @@ public class NodeToInventoryTest {
     @Test
     public void canMapNodesToInventory() {
         // Map an empty alarm and make sure no exceptions are thrown
-        OpennmsModelProtos.Node node = OpennmsModelProtos.Node.newBuilder()
-                .build();
+        OpennmsModelProtos.Node node = OpennmsModelProtos.Node.newBuilder().build();
         Collection<InventoryModelProtos.InventoryObject> inventory = NodeToInventory.toInventoryObjects(node);
         assertThat(inventory, hasSize(1));
         // Now map a complete node and verify all of the properties

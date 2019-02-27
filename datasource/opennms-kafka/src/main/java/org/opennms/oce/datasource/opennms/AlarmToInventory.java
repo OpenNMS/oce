@@ -28,130 +28,47 @@
 
 package org.opennms.oce.datasource.opennms;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.NoSuchElementException;
-import java.util.Objects;
+import java.io.File;
+import java.io.IOException;
+import java.net.URISyntaxException;
+import java.net.URL;
 
-import org.opennms.oce.datasource.common.inventory.ManagedObjectType;
-import org.opennms.oce.datasource.common.inventory.TypeToInventory;
-import org.opennms.oce.datasource.opennms.proto.InventoryModelProtos;
+import javax.script.ScriptException;
+
 import org.opennms.oce.datasource.opennms.proto.OpennmsModelProtos;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import com.google.common.base.Strings;
 
 public class AlarmToInventory {
 
     private static final Logger LOG = LoggerFactory.getLogger(AlarmToInventory.class);
 
     public static EnrichedAlarm enrichAlarm(OpennmsModelProtos.Alarm alarm) {
-        if (alarm == null) {
-            return null;
-        }
-
-        String managedObjectInstance = null;
-        String managedObjectType = null;
-
-        final InventoryModelProtos.InventoryObjects.Builder iosBuilder = InventoryModelProtos.InventoryObjects
-                .newBuilder();
-        final InventoryModelProtos.InventoryObjects ios;
-        if (!Strings.isNullOrEmpty(alarm.getManagedObjectType()) &&
-                !Strings.isNullOrEmpty(alarm.getManagedObjectInstance())) {
-            final InventoryFromAlarm inventoryFromAlarm = getInventoryFromAlarm(alarm);
-            for (InventoryModelProtos.InventoryObject io : inventoryFromAlarm.getInventory()) {
-                iosBuilder.addInventoryObject(io);
-            }
-            ios = iosBuilder.build();
-            if (inventoryFromAlarm.getManagedObjectInstance() != null && inventoryFromAlarm.getManagedObjectType() != null) {
-                managedObjectInstance = inventoryFromAlarm.getManagedObjectInstance();
-                managedObjectType = inventoryFromAlarm.getManagedObjectType();
-            } else if (ios.getInventoryObjectCount() > 0) {
-                final InventoryModelProtos.InventoryObject io = ios.getInventoryObject(0);
-                managedObjectInstance = io.getId();
-                managedObjectType = io.getType();
-            }
-        } else {
-            ios = iosBuilder.build();
-        }
-
-        if ((managedObjectInstance == null  || managedObjectType == null) && alarm.hasNodeCriteria()) {
-            final String nodeCriteria = OpennmsMapper.toNodeCriteria(alarm.getNodeCriteria());
-            managedObjectType = ManagedObjectType.Node.getName();
-            managedObjectInstance = nodeCriteria;
-        }
-
-        return new EnrichedAlarm(alarm, ios, managedObjectType, managedObjectInstance);
-    }
-
-    private static final class InventoryFromAlarm {
-
-        private final List<InventoryModelProtos.InventoryObject> inventory;
-        private final String managedObjectInstance;
-        private final String managedObjectType;
-
-        public InventoryFromAlarm(List<InventoryModelProtos.InventoryObject> inventory) {
-            this(inventory, null, null);
-        }
-
-        public InventoryFromAlarm(List<InventoryModelProtos.InventoryObject> inventory, String managedObjectInstance, String managedObjectType) {
-            this.inventory = Objects.requireNonNull(inventory);
-            this.managedObjectInstance = managedObjectInstance;
-            this.managedObjectType = managedObjectType;
-        }
-
-        public List<InventoryModelProtos.InventoryObject> getInventory() {
-            return inventory;
-        }
-
-        public String getManagedObjectInstance() {
-            return managedObjectInstance;
-        }
-
-        public String getManagedObjectType() {
-            return managedObjectType;
+        try {
+            return getScriptedInventoryFactory().enrichAlarm(alarm);
+        } catch (NoSuchMethodException | ScriptException e) {
+            LOG.error("Failed to enrich Alarm: {} : {}", alarm, e.getLocalizedMessage());
+            throw new RuntimeException(e);
         }
     }
 
     public static InventoryFromAlarm getInventoryFromAlarm(OpennmsModelProtos.Alarm alarm) {
-        final List<InventoryModelProtos.InventoryObject> ios = new ArrayList<>();
-        final ManagedObjectType type;
-        try  {
-            type = ManagedObjectType.fromName(alarm.getManagedObjectType());
-        } catch (NoSuchElementException nse) {
-            LOG.warn("Found unsupported type: {} with id: {}. Skipping.", alarm.getManagedObjectType(), alarm.getManagedObjectInstance());
-            return new InventoryFromAlarm(ios);
+        try {
+            return getScriptedInventoryFactory().getInventoryFromAlarm(alarm);
+        } catch (NoSuchMethodException | ScriptException e) {
+            LOG.error("Failed to get Inventory for Alarm: {} : {}", alarm, e.getMessage());
+            throw new RuntimeException(e);
         }
+    }
 
-        final String nodeCriteria = OpennmsMapper.toNodeCriteria(alarm.getNodeCriteria());
-        String managedObjectInstance = null;
-        String managedObjectType = null;
-        switch(type) {
-            case Node:
-                // Nothing to do here
-                break;
-            case SnmpInterfaceLink:
-                ios.add(OpennmsMapper.fromInventory(TypeToInventory
-                        .getSnmpInterfaceLink(alarm.getManagedObjectInstance())));
-            break;
-            case EntPhysicalEntity:
-                ios.add(OpennmsMapper.fromInventory(TypeToInventory
-                        .getEntPhysicalEntity(alarm.getManagedObjectInstance(), nodeCriteria)));
-                break;
-            case BgpPeer:
-                ios.add(OpennmsMapper.fromInventory(TypeToInventory
-                        .getBgpPeer(alarm.getManagedObjectInstance(), nodeCriteria)));
-                break;
-            case VpnTunnel:
-                ios.add(OpennmsMapper.fromInventory(TypeToInventory
-                        .getVpnTunnel(alarm.getManagedObjectInstance(), nodeCriteria)));
-                break;
-            default:
-                managedObjectType = type.getName();
-                // Scope the object id by node
-                managedObjectInstance = String.format("%s:%s", nodeCriteria, alarm.getManagedObjectInstance());
+    private static ScriptedInventoryFactory getScriptedInventoryFactory() {
+        URL scriptUri = ClassLoader.getSystemResource("inventory.groovy");
+        try {
+            File script = new File(scriptUri.toURI());
+            return new ScriptedInventoryFactory(script);
+        } catch (URISyntaxException | IOException | ScriptException e) {
+            LOG.error("Failed to retrieve ScriptInventoryFactory : {}", e.getMessage());
+            throw new RuntimeException(e);
         }
-        return new InventoryFromAlarm(ios, managedObjectInstance, managedObjectType);
     }
 }

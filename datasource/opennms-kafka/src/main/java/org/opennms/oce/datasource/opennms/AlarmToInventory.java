@@ -28,13 +28,6 @@
 
 package org.opennms.oce.datasource.opennms;
 
-import java.io.File;
-import java.io.IOException;
-import java.net.URISyntaxException;
-import java.net.URL;
-
-import javax.script.ScriptException;
-
 import org.opennms.oce.datasource.opennms.proto.OpennmsModelProtos;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -45,8 +38,8 @@ public class AlarmToInventory {
 
     public static EnrichedAlarm enrichAlarm(OpennmsModelProtos.Alarm alarm) {
         try {
-            return getScriptedInventoryFactory().enrichAlarm(alarm);
-        } catch (NoSuchMethodException | ScriptException e) {
+            return ScriptedInventoryFactory.getFactory().enrichAlarm(alarm);
+        } catch (ScriptedInventoryException e) {
             LOG.error("Failed to enrich Alarm: {} : {}", alarm, e.getLocalizedMessage());
             throw new RuntimeException(e);
         }
@@ -54,21 +47,11 @@ public class AlarmToInventory {
 
     public static InventoryFromAlarm getInventoryFromAlarm(OpennmsModelProtos.Alarm alarm) {
         try {
-            return getScriptedInventoryFactory().getInventoryFromAlarm(alarm);
-        } catch (NoSuchMethodException | ScriptException e) {
+            return ScriptedInventoryFactory.getFactory().getInventoryFromAlarm(alarm);
+        } catch (ScriptedInventoryException e) {
             LOG.error("Failed to get Inventory for Alarm: {} : {}", alarm, e.getMessage());
             throw new RuntimeException(e);
         }
     }
 
-    private static ScriptedInventoryFactory getScriptedInventoryFactory() {
-        URL scriptUri = ClassLoader.getSystemResource("inventory.groovy");
-        try {
-            File script = new File(scriptUri.toURI());
-            return new ScriptedInventoryFactory(script);
-        } catch (URISyntaxException | IOException | ScriptException e) {
-            LOG.error("Failed to retrieve ScriptInventoryFactory : {}", e.getMessage());
-            throw new RuntimeException(e);
-        }
-    }
 }

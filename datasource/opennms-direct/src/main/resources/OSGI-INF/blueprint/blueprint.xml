@@ -4,6 +4,11 @@
     <reference id="nodeDao" interface="org.opennms.integration.api.v1.dao.NodeDao" />
     <reference id="eventForwarder" interface="org.opennms.integration.api.v1.events.EventForwarder" />
 
+    <bean id="scriptFactory" class="org.opennms.oce.datasource.opennms.jvm.SCriptInventoryFactory" init-method="init" >
+        <argument ref="scriptFile"/>
+    </bean>
+    <service ref="scriptFactory" interface="org.opennms.oce.datasource.api.ScriptFactory"/>
+
     <bean id="directAlarmDatasource" class="org.opennms.oce.datasource.opennms.jvm.DirectAlarmDatasource" init-method="init" >
         <argument ref="alarmDao"/>
         <argument ref="eventForwarder"/>

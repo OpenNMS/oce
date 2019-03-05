@@ -26,7 +26,7 @@
  *     http://www.opennms.com/
  *******************************************************************************/
 
-package org.opennms.oce.datasource.opennms;
+package org.opennms.oce.datasource.common;
 
 /**
  * @author smith
@@ -34,7 +34,7 @@ package org.opennms.oce.datasource.opennms;
  */
 public class ScriptedInventoryException extends Exception {
 
-    private static final long serialVersionUID = -4386347546763514513L;
+    private static final long serialVersionUID = 1L;
 
     public ScriptedInventoryException(String string, Exception e) {
         super(string, e);

@@ -1,8 +1,8 @@
 /*******************************************************************************
  * This file is part of OpenNMS(R).
  *
- * Copyright (C) 2018 The OpenNMS Group, Inc.
- * OpenNMS(R) is Copyright (C) 1999-2018 The OpenNMS Group, Inc.
+ * Copyright (C) 2017-2017 The OpenNMS Group, Inc.
+ * OpenNMS(R) is Copyright (C) 1999-2017 The OpenNMS Group, Inc.
  *
  * OpenNMS(R) is a registered trademark of The OpenNMS Group, Inc.
  *
@@ -26,14 +26,13 @@
  *     http://www.opennms.com/
  *******************************************************************************/
 
-package org.opennms.oce.datasource.opennms;
+package org.opennms.oce.datasource.opennms.jvm;
 
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.net.URL;
-import java.util.Collection;
 import java.util.List;
 
 import javax.script.Invocable;
@@ -42,21 +41,26 @@ import javax.script.ScriptEngine;
 import javax.script.ScriptEngineManager;
 import javax.script.ScriptException;
 
+import org.opennms.integration.api.v1.model.Alarm;
+import org.opennms.integration.api.v1.model.Node;
+import org.opennms.oce.datasource.api.InventoryObject;
+import org.opennms.oce.datasource.common.ImmutableAlarm;
 import org.opennms.oce.datasource.common.ScriptedInventoryException;
-import org.opennms.oce.datasource.opennms.proto.InventoryModelProtos;
-import org.opennms.oce.datasource.opennms.proto.OpennmsModelProtos;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.google.common.io.Files;
 
 /**
- * @author smith
+ * Uses an external script, executed via JSR-223, to generate a
+ * {@link CollectionSet} from some given object using the
+ * {@link CollectionSetBuilder}.
  *
+ * @author jwhite
  */
-public class ScriptedInventoryFactory {
+public class ScriptedInventoryImpl implements ScriptedInventoryService {
 
-    private static final Logger LOG = LoggerFactory.getLogger(ScriptedInventoryFactory.class);
+    private static final Logger LOG = LoggerFactory.getLogger(ScriptedInventoryImpl.class);
 
     private final Invocable invocable;
 
@@ -64,9 +68,10 @@ public class ScriptedInventoryFactory {
 
     private static long timestamp;
 
-    private static ScriptedInventoryFactory cached;
+    private static ScriptedInventoryImpl cached;
 
-    public ScriptedInventoryFactory(File script) throws IOException, ScriptException {
+    public ScriptedInventoryImpl(String scriptPath) throws IOException, ScriptException {
+        File script = new File(scriptPath);
         if (!script.canRead()) {
             throw new IllegalStateException("Cannot read script at '" + script + "'.");
         }
@@ -88,51 +93,56 @@ public class ScriptedInventoryFactory {
         invocable = (Invocable) engine;
     }
 
-    public EnrichedAlarm enrichAlarm(OpennmsModelProtos.Alarm alarm) throws ScriptedInventoryException {
+    private ScriptedInventoryImpl(File script, ScriptEngineManager manager) throws IOException, ScriptException {
+        if (!script.canRead()) {
+            throw new IllegalStateException("Cannot read script at '" + script + "'.");
+        }
+
+        final String ext = Files.getFileExtension(script.getAbsolutePath());
+
+        final ScriptEngine engine = manager.getEngineByExtension(ext);
+        if (engine == null) {
+            throw new IllegalStateException("No engine found for extension: " + ext);
+        }
+
+        engine.eval(new FileReader(script));
+        invocable = (Invocable) engine;
+    }
+
+    /**
+     * Overrides the inventory type and instance for an alarm if they aren't already scoped.
+     *
+     * @param alarmBuilder the alarm builder to update
+     * @param alarm the original alarm to derive from
+     * @throws ScriptedInventoryException 
+     */
+    public synchronized void overrideTypeAndInstance(ImmutableAlarm.Builder alarmBuilder,
+            org.opennms.integration.api.v1.model.Alarm alarm) throws ScriptedInventoryException {
         try {
-            return (EnrichedAlarm) invocable.invokeFunction("enrichAlarm", alarm);
+            getInvocable().invokeFunction("overrideTypeAndInstance", alarmBuilder, alarm);
         } catch (NoSuchMethodException | ScriptException e) {
-            throw new ScriptedInventoryException("Failed enrichAlarm", e);
+            throw new ScriptedInventoryException("Failed to override inventory for alarm", e);
+        }
+    }
+    @SuppressWarnings("unchecked")
+    public synchronized List<InventoryObject> createInventoryObjects(Alarm alarm) throws ScriptedInventoryException {
+        try {
+            return (List<InventoryObject>) getInvocable().invokeFunction("alarmToInventory", alarm);
+        } catch (NoSuchMethodException | ScriptException e) {
+            throw new ScriptedInventoryException("Failed to create inventory from alarm", e);
         }
     }
 
-    public InventoryFromAlarm getInventoryFromAlarm(OpennmsModelProtos.Alarm alarm) throws ScriptedInventoryException {
+    @SuppressWarnings("unchecked")
+    public synchronized List<InventoryObject> createInventoryObjects(Node node) throws ScriptedInventoryException {
         try {
-            return (InventoryFromAlarm) invocable.invokeFunction("getInventoryFromAlarm", alarm);
+            return (List<InventoryObject>) getInvocable().invokeFunction("nodeToInventory", node);
         } catch (NoSuchMethodException | ScriptException e) {
-            throw new ScriptedInventoryException("Failed getInventoryFromAlarm", e);
+            throw new ScriptedInventoryException("Failed to create inventory from node", e);
         }
     }
 
-    public InventoryModelProtos.InventoryObject toInventoryObject(OpennmsModelProtos.SnmpInterface snmpInterface,
-            InventoryModelProtos.InventoryObject parent) throws ScriptedInventoryException {
-        try {
-            return (InventoryModelProtos.InventoryObject) invocable.invokeFunction("toInventoryObject", snmpInterface, parent);
-        } catch (NoSuchMethodException | ScriptException e) {
-            throw new ScriptedInventoryException("Failed snmpInterface toInventoryObject", e);
-        }
-    }
-
-    public Collection<InventoryModelProtos.InventoryObject> toInventoryObjects(OpennmsModelProtos.Node node) throws ScriptedInventoryException {
-        try {
-            return (List<InventoryModelProtos.InventoryObject>) invocable.invokeFunction("toInventoryObjects", node);
-        } catch (NoSuchMethodException | ScriptException e) {
-            throw new ScriptedInventoryException("Failed node toInventoryObjects", e);
-        }
-    }
-
-    public Object createInventoryObjects(OpennmsModelProtos.SnmpInterface snmpInterface, InventoryModelProtos.InventoryObject parent) {
-        // TODO - move this down to script....
-        return InventoryModelProtos.InventoryObject.newBuilder()
-            .setType("snmp-interface")
-                .setId(parent.getId() + ":" + snmpInterface.getIfIndex())
-                .setFriendlyName(snmpInterface.getIfDescr())
-                .setParentType(parent.getType())
-                .setParentId(parent.getId())
-                .build();
-    }
-
-    public static ScriptedInventoryFactory getFactory() throws ScriptedInventoryException {
+    private Invocable getInvocable() throws ScriptedInventoryException {
         // TODO - parameterize
         String script = "inventory.groovy";
         // TODO - test for script being updated otherwise can return cached version.
@@ -141,14 +151,14 @@ public class ScriptedInventoryFactory {
         try {
             File file = new File(scriptUri.toURI());
             if (file.lastModified() <= timestamp && cached != null) {
-                return cached;
+                return cached.invocable;
             }
             LOG.info("Loading script {} from {} with timestamp: {}", script, scriptUri, file.lastModified());
             timestamp = file.lastModified();
             pathToScript = scriptUri.getPath();
-            cached = new ScriptedInventoryFactory(file);
+            cached = new ScriptedInventoryImpl(script);
 
-            return cached;
+            return cached.invocable;
         } catch (URISyntaxException | IOException | ScriptException e) {
             LOG.error("Failed to retrieve ScriptInventoryFactory : {}", e.getMessage());
             throw new ScriptedInventoryException("Failed to retrieve ScriptInventoryFactory.", e);

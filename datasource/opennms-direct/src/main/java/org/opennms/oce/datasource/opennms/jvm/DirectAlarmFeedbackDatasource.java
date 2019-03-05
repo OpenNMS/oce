@@ -80,11 +80,11 @@ public class DirectAlarmFeedbackDatasource implements AlarmFeedbackListener, Ala
      */
     private final Set<AlarmFeedback> feedback = new LinkedHashSet<>();
 
-    /**
-     * @param feedbackDao used to retrieve the current feedback
-     */
-    public DirectAlarmFeedbackDatasource(AlarmFeedbackDao feedbackDao) {
-        this.feedbackDao = Objects.requireNonNull(feedbackDao);
+    private final Mappers mappers;
+
+    public DirectAlarmFeedbackDatasource(AlarmFeedbackDao alarmFeedbackDao, Mappers mappers) {
+        this.feedbackDao = Objects.requireNonNull(alarmFeedbackDao);
+        this.mappers = Objects.requireNonNull(mappers);
     }
 
     /**
@@ -93,7 +93,7 @@ public class DirectAlarmFeedbackDatasource implements AlarmFeedbackListener, Ala
     public void init() {
         feedback.addAll(feedbackDao.getFeedback()
                 .stream()
-                .map(Mappers::toAlarmFeedback)
+            .map(a -> mappers.toAlarmFeedback(a))
                 .collect(Collectors.toList()));
         initLock.countDown();
     }
@@ -116,7 +116,7 @@ public class DirectAlarmFeedbackDatasource implements AlarmFeedbackListener, Ala
         waitForInit();
         rwLock.writeLock().lock();
         try {
-            AlarmFeedback newFeedback = Mappers.toAlarmFeedback(feedback);
+            AlarmFeedback newFeedback = mappers.toAlarmFeedback(feedback);
             this.feedback.add(newFeedback);
             feedbackHandlers.forEach(handler -> handler.handleAlarmFeedback(newFeedback));
         } finally {

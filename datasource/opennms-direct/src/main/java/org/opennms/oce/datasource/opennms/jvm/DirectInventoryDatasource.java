@@ -112,6 +112,8 @@ public class DirectInventoryDatasource implements InventoryDatasource, AlarmLife
      */
     private final AlarmDao alarmDao;
 
+    private Mappers mappers;
+
     /**
      * @param nodeDao  used to retrieve the current inventory
      * @param alarmDao used to retrieve the current inventory
@@ -126,7 +128,7 @@ public class DirectInventoryDatasource implements InventoryDatasource, AlarmLife
      * {@link AlarmDao}.
      */
     public void init() {
-        nodeDao.getNodes().forEach(n -> inventoryFromAlarms.addAll(Mappers.toInventory(n)));
+        nodeDao.getNodes().forEach(n -> inventoryFromAlarms.addAll(mappers.toInventory(n)));
         alarmDao.getAlarms().forEach(a -> processAlarm(a, false));
         initLock.countDown();
     }
@@ -189,10 +191,10 @@ public class DirectInventoryDatasource implements InventoryDatasource, AlarmLife
         Node nodeForAlarm = alarm.getNode();
 
         if (nodeForAlarm != null) {
-            inventoryToAdd.addAll(Mappers.toInventory(nodeForAlarm));
+            inventoryToAdd.addAll(mappers.toInventory(nodeForAlarm));
 
         } else {
-            inventoryToAdd.addAll(Mappers.toInventory(alarm));
+            inventoryToAdd.addAll(mappers.toInventory(alarm));
         }
 
         addInventory(inventoryToAdd, waitForInit);

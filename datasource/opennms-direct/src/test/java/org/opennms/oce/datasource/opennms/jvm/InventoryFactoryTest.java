@@ -33,8 +33,11 @@ import static org.junit.Assert.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
+
+import javax.script.ScriptException;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -42,17 +45,21 @@ import org.opennms.integration.api.v1.model.Alarm;
 import org.opennms.integration.api.v1.model.Node;
 import org.opennms.integration.api.v1.model.SnmpInterface;
 import org.opennms.oce.datasource.api.InventoryObject;
+import org.opennms.oce.datasource.common.ScriptedInventoryException;
 import org.opennms.oce.datasource.common.inventory.ManagedObjectType;
 
 public class InventoryFactoryTest {
 
+    private ScriptedInventoryService inventoryService;
+
     @Before
-    public void before() {
+    public void before() throws IOException, ScriptException {
         System.setProperty("log4j.skipJansi", "true");
+        inventoryService = new ScriptedInventoryImpl("inventory.groovy");
     }
 
     @Test
-    public void testCreateFromNode() {
+    public void testCreateFromNode() throws ScriptedInventoryException {
         SnmpInterface snmpInterface = mock(SnmpInterface.class);
         when(snmpInterface.getIfDescr()).thenReturn("descr");
         when(snmpInterface.getIfIndex()).thenReturn(2);
@@ -65,7 +72,7 @@ public class InventoryFactoryTest {
         when(node.getLabel()).thenReturn("label");
         when(node.getSnmpInterfaces()).thenReturn(Collections.singletonList(snmpInterface));
 
-        List<InventoryObject> ios = InventoryFactory.createInventoryObjects(node);
+        List<InventoryObject> ios = inventoryService.createInventoryObjects(node);
 
         // Verify we created a node inventory object and an SNMP inventory object
         assertThat(ios.get(0).getType(), equalTo(ManagedObjectType.Node.getName()));
@@ -73,12 +80,12 @@ public class InventoryFactoryTest {
     }
 
     @Test
-    public void testCreateFromAlarm() {
+    public void testCreateFromAlarm() throws ScriptedInventoryException {
         Alarm alarm = mock(Alarm.class);
         when(alarm.getManagedObjectInstance()).thenReturn("instance");
         when(alarm.getManagedObjectType()).thenReturn(ManagedObjectType.EntPhysicalEntity.getName());
 
-        List<InventoryObject> ios = InventoryFactory.createInventoryObjects(alarm);
+        List<InventoryObject> ios = inventoryService.createInventoryObjects(alarm);
         // Test that we got an inventory object back with the correct type
         assertThat(ios.get(0).getType(), equalTo(ManagedObjectType.EntPhysicalEntity.getName()));
     }

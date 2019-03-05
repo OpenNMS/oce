@@ -1,5 +1,6 @@
 
 import org.opennms.oce.datasource.api.InventoryObject
+import org.opennms.oce.datasource.common.ImmutableAlarm
 import org.opennms.oce.datasource.common.ImmutableInventoryObject
 import org.opennms.oce.datasource.common.inventory.ManagedObjectType;
 import static org.opennms.oce.datasource.common.inventory.ManagedObjectType.*;
@@ -67,6 +68,43 @@ def alarmToInventory(alarm) {
         default:
             return Collections.emptyList();
     }
+}
+
+def overrideTypeAndInstance (ImmutableAlarm.Builder alarmBuilder,
+                                                org.opennms.integration.api.v1.model.Alarm alarm ) {
+    if (!Strings.isNullOrEmpty(alarm.getManagedObjectType()) &&
+    !Strings.isNullOrEmpty(alarm.getManagedObjectInstance())) {
+        ManagedObjectType type;
+
+        try {
+            type = ManagedObjectType.fromName(alarm.getManagedObjectType());
+        } catch (NoSuchElementException nse) {
+            LOG.warn("Found unsupported type: {} with id: {}. Skipping.", alarm.getManagedObjectType(),
+                    alarm.getManagedObjectInstance());
+            return;
+        }
+
+        Set<ManagedObjectType> alreadyScoped = new HashSet<>(Arrays.asList(
+                ManagedObjectType.Node,
+                ManagedObjectType.SnmpInterfaceLink,
+                ManagedObjectType.EntPhysicalEntity,
+                ManagedObjectType.BgpPeer,
+                ManagedObjectType.VpnTunnel
+                ));
+
+        if (!alreadyScoped.contains(type)) {
+            alarmBuilder.setInventoryObjectType(type.getName());
+            alarmBuilder.setInventoryObjectId(String.format("%s:%s", alarm.getNode(),
+                    alarm.getManagedObjectInstance()));
+        }
+    }
+
+    if ((alarm.getManagedObjectType() == null || alarm.getManagedObjectInstance() == null) &&
+    alarm.getNode() != null) {
+        alarmBuilder.setInventoryObjectType(ManagedObjectType.Node.getName());
+        alarmBuilder.setInventoryObjectId(alarm.getNode().getId().toString());
+    }
+
 }
 
 def toInventoryObject(SnmpInterface snmpInterface, InventoryObject parent) {

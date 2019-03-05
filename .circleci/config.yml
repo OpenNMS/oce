@@ -213,17 +213,6 @@ jobs:
               docker load --input /tmp/docker/"$dockerTargz"
             done
             docker image ls
-
-      # Note: this will be removed when we switch to vanilla sentinel
-      - run:
-          name: Create a OCE container
-          command: |
-            [ -f "/tmp/docker/oce.tgz" ] && exit 0
-            cd ~
-            git clone https://github.com/opennms-forge/docker-sentinel.git
-            cd docker-sentinel/
-            git checkout -b release-oce origin/release-oce
-            docker build -t opennms/sentinel:oce .
   
       - run:
           name: Run the tests

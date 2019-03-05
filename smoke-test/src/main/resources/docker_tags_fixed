@@ -3,8 +3,4 @@
 
 helm=opennms/helm:2.0.0
 kafka=spotify/kafka
-
-# Note this will be moving to the docker_tags file since it will be based on opennms/sentinel:24.0.0-rc which is not
-# fixed
-oce=opennms/sentinel:oce
 postgres=postgres:9.6.1

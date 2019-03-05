@@ -30,6 +30,8 @@ package org.opennms.e2e.stacks;
 
 import static org.awaitility.Awaitility.await;
 
+import java.io.File;
+import java.io.FilenameFilter;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -38,6 +40,7 @@ import java.nio.file.StandardOpenOption;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -106,6 +109,16 @@ public class OpenNMSHelmOCEStack extends OpenNMSHelmStack {
         Path standaloneFeatures = deployPath.resolve("features-standalone.xml");
         Path redundantFeatures = deployPath.resolve("features-redundant.xml");
 
+        // We expect to find exactly 1 kar file that will be overlayed onto the deploy directory of the sentinel
+        // container to install OCE
+        File[] karFiles = deployPath.toFile().listFiles((dir, name) -> name.endsWith(".kar"));
+        if (karFiles == null || karFiles.length < 1) {
+            throw new RuntimeException("Could not find the .kar file to deploy OCE");
+        }
+        if (karFiles.length > 1) {
+            throw new RuntimeException("Found too many .kar files for deploying OCE");
+        }
+        
         if (redundant) {
             standaloneFeatures.toFile().delete();
             redundantFeatures.toFile().renameTo(deployPath.resolve("features.xml").toFile());

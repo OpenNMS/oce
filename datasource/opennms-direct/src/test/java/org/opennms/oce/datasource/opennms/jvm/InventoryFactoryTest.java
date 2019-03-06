@@ -34,6 +34,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import java.io.IOException;
+import java.net.URISyntaxException;
 import java.util.Collections;
 import java.util.List;
 
@@ -53,7 +54,7 @@ public class InventoryFactoryTest {
     private ScriptedInventoryService inventoryService;
 
     @Before
-    public void before() throws IOException, ScriptException {
+    public void before() throws IOException, ScriptException, URISyntaxException {
         System.setProperty("log4j.skipJansi", "true");
         inventoryService = new ScriptedInventoryImpl("inventory.groovy");
     }

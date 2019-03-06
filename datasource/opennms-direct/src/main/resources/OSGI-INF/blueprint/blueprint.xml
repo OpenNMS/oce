@@ -4,10 +4,14 @@
     <reference id="nodeDao" interface="org.opennms.integration.api.v1.dao.NodeDao" />
     <reference id="eventForwarder" interface="org.opennms.integration.api.v1.events.EventForwarder" />
 
-    <bean id="scriptFactory" class="org.opennms.oce.datasource.opennms.jvm.SCriptInventoryFactory" init-method="init" >
+    <bean id="scriptFactory" class="org.opennms.oce.datasource.opennms.jvm.ScriptedInventoryImpl" init-method="init" >
         <argument ref="scriptFile"/>
     </bean>
     <service ref="scriptFactory" interface="org.opennms.oce.datasource.api.ScriptFactory"/>
+
+    <bean id="mappers" class="org.opennms.oce.datasource.opennms.jvm.Mappers" init-method="init" >
+        <argument ref="scriptFactory"/>
+    </bean>
 
     <bean id="directAlarmDatasource" class="org.opennms.oce.datasource.opennms.jvm.DirectAlarmDatasource" init-method="init" >
         <argument ref="alarmDao"/>
@@ -27,6 +31,7 @@
     <bean id="directInventoryDatasource" class="org.opennms.oce.datasource.opennms.jvm.DirectInventoryDatasource" init-method="init" >
         <argument ref="nodeDao"/>
         <argument ref="alarmDao"/>
+        <argument ref="mappers"/>
     </bean>
     <service ref="directInventoryDatasource" interface="org.opennms.oce.datasource.api.InventoryDatasource"/>
     <service ref="directInventoryDatasource" interface="org.opennms.integration.api.v1.alarms.AlarmLifecycleListener"/>

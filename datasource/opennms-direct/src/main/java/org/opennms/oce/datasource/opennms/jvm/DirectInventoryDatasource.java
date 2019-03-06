@@ -118,9 +118,10 @@ public class DirectInventoryDatasource implements InventoryDatasource, AlarmLife
      * @param nodeDao  used to retrieve the current inventory
      * @param alarmDao used to retrieve the current inventory
      */
-    public DirectInventoryDatasource(NodeDao nodeDao, AlarmDao alarmDao) {
+    public DirectInventoryDatasource(NodeDao nodeDao, AlarmDao alarmDao, Mappers mappers) {
         this.nodeDao = Objects.requireNonNull(nodeDao);
         this.alarmDao = Objects.requireNonNull(alarmDao);
+        this.mappers = Objects.requireNonNull(mappers);
     }
 
     /**

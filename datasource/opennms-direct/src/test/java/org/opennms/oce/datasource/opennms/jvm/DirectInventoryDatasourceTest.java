@@ -33,11 +33,15 @@ import static org.hamcrest.Matchers.hasSize;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+import java.io.IOException;
+import java.net.URISyntaxException;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
+
+import javax.script.ScriptException;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -52,12 +56,17 @@ import org.opennms.oce.datasource.common.inventory.ManagedObjectType;
 public class DirectInventoryDatasourceTest {
     private final NodeDao mockNodeDao = mock(NodeDao.class);
     private final AlarmDao mockAlarmDao = mock(AlarmDao.class);
-    private final DirectInventoryDatasource dic = new DirectInventoryDatasource(mockNodeDao, mockAlarmDao);
+
+    private DirectInventoryDatasource dic;
     private final InventoryHandler inventoryHandler = new InventoryHandlerImpl();
     private final Set<InventoryObject> inventory = new HashSet<>();
 
     @Before
-    public void setUp() {
+    public void setUp() throws IOException, ScriptException, URISyntaxException {
+        // TODO - wrap exceptions...
+        ScriptedInventoryService inventoryService = new ScriptedInventoryImpl("inventory.groovy");
+        Mappers mappers = new Mappers(inventoryService);
+        dic = new DirectInventoryDatasource(mockNodeDao, mockAlarmDao, mappers);
         dic.init();
     }
 

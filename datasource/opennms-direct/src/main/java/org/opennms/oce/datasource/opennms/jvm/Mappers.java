@@ -64,6 +64,7 @@ public class Mappers {
     public Mappers(ScriptedInventoryService inventoryService) {
         this.inventoryService = inventoryService;
     }
+
     public Alarm toAlarm(org.opennms.integration.api.v1.model.Alarm alarm) {
         ImmutableAlarm.Builder alarmBuilder = ImmutableAlarm.newBuilder();
         alarmBuilder

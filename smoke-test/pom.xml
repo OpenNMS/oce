@@ -41,46 +41,6 @@
                     <skipTests>true</skipTests>
                 </configuration>
             </plugin>
-            <!-- Copy the KAR to the overlay directory on build -->
-            <plugin>
-                <artifactId>maven-resources-plugin</artifactId>
-                <version>3.1.0</version>
-                <executions>
-                    <execution>
-                        <id>copy-resources</id>
-                        <phase>validate</phase>
-                        <goals>
-                            <goal>copy-resources</goal>
-                        </goals>
-                        <configuration>
-                            <outputDirectory>${basedir}/src/main/resources/sentinel-overlay/deploy</outputDirectory>
-                            <resources>
-                                <resource>
-                                    <directory>${basedir}/../assembly/kar/target</directory>
-                                    <includes>
-                                        <include>org.opennms.oce.assembly.kar-${project.version}.kar</include>
-                                    </includes>
-                                </resource>
-                            </resources>
-                        </configuration>
-                    </execution>
-                </executions>
-            </plugin>
-            <!-- Delete the copied KAR on clean -->
-            <plugin>
-                <artifactId>maven-clean-plugin</artifactId>
-                <version>3.1.0</version>
-                <configuration>
-                    <filesets>
-                        <fileset>
-                            <directory>${basedir}/src/main/resources/sentinel-overlay/deploy</directory>
-                            <includes>
-                                <include>org.opennms.oce.assembly.kar-${project.version}.kar</include>
-                            </includes>
-                        </fileset>
-                    </filesets>
-                </configuration>
-            </plugin>
         </plugins>
     </build>
     <!-- This profile prevents all tests in the smoke-test module from running unless the -DsmokeTest flag is set -->

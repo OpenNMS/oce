@@ -228,7 +228,7 @@ public class OpennmsDatasource implements SituationDatasource, AlarmDatasource, 
         KStream<String, byte[]> alarmBytesStream = builder.stream(getAlarmTopic());
         KStream<String, OpennmsModelProtos.Alarm> allAlarmStream = alarmBytesStream.mapValues(alarmBytes -> alarmDeserializer.deserialize(null, alarmBytes));
         KStream<String, OpennmsModelProtos.Alarm> alarmStream = allAlarmStream.filter((k, v) -> !isSituation(k));
-        KStream<String, EnrichedAlarm> enrichedAlarmStream = alarmStream.mapValues(AlarmToInventory::enrichAlarm);
+        KStream<String, EnrichedAlarm> enrichedAlarmStream = alarmStream.mapValues(alarmToInventory::enrichAlarm);
 
         mapEnrichedAlarmsToInventory(enrichedAlarmStream);
         processEnrichedAlarms(enrichedAlarmStream);

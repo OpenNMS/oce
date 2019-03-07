@@ -44,7 +44,9 @@ import javax.script.ScriptException;
 
 import org.opennms.oce.datasource.common.ScriptedInventoryException;
 import org.opennms.oce.datasource.opennms.proto.InventoryModelProtos;
+import org.opennms.oce.datasource.opennms.proto.InventoryModelProtos.InventoryObjects;
 import org.opennms.oce.datasource.opennms.proto.OpennmsModelProtos;
+import org.opennms.oce.datasource.opennms.proto.OpennmsModelProtos.TopologyEdge;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -174,6 +176,15 @@ public class ScriptedInventoryImpl implements ScriptedInventoryService {
         }
         */
         return true;
+    }
+
+    @Override
+    public InventoryObjects edgeToInventory(TopologyEdge edge) throws ScriptedInventoryException {
+        try {
+            return (InventoryObjects) invocable.invokeFunction("edgeToInventory", edge);
+        } catch (NoSuchMethodException | ScriptException e) {
+            throw new ScriptedInventoryException("Failed getInventoryFromAlarm", e);
+        }
     }
 
 }

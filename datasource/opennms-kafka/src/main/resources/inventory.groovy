@@ -10,8 +10,64 @@ import org.opennms.oce.datasource.opennms.InventoryFromAlarm
 import org.opennms.oce.datasource.opennms.OpennmsMapper
 import org.opennms.oce.datasource.opennms.proto.InventoryModelProtos
 import org.opennms.oce.datasource.opennms.proto.OpennmsModelProtos
+import org.opennms.oce.datasource.opennms.proto.OpennmsModelProtos.TopologyEdge
 
 import com.google.common.base.Strings;
+
+
+def edgeToInventory(TopologyEdge edge) {
+    
+    final InventoryModelProtos.InventoryObjects.Builder iosBuilder = InventoryModelProtos.InventoryObjects
+            .newBuilder();
+    final InventoryModelProtos.InventoryObject.Builder ioBuilder =
+            InventoryModelProtos.InventoryObject.newBuilder();
+
+    // The target information could be associated with a node or a segment
+    long targetIfIndex;
+    String targetNodeCriteria;
+
+    // Note: only port is supported as a target right now
+    switch (edge.getTargetCase()) {
+        case TARGETPORT:
+            targetIfIndex = edge.getTargetPort().getIfIndex();
+            targetNodeCriteria = nodeCriteriaToString(edge.getTargetPort().getNodeCriteria());
+            break;
+        case TARGETSEGMENT:
+            // Segment support needs to be added when segments are available
+        default:
+            throw new UnsupportedOperationException("Unsupported target type + " + edge.getTargetCase());
+    }
+
+    String protocol = edge.getRef().getProtocol().name();
+    String sourceNodeCriteria = nodeCriteriaToString(edge.getSource().getNodeCriteria());
+
+    // Create a link object by setting the peers to the source and target
+    ioBuilder.setType(ManagedObjectType.SnmpInterfaceLink.getName())
+            // The Id for this link will incorporate the protocol so that if multiple protocols describe a link
+            // between the same endpoints they will create multiple links (one for each protocol)
+            .setId(getIdForEdge(edge))
+            .setFriendlyName(String.format("SNMP Interface Link Between %d on %s and %d on %s discovered with " +
+                            "protocol %s", edge.getSource().getIfIndex(), sourceNodeCriteria, targetIfIndex,
+                    targetNodeCriteria, protocol))
+            .addPeer(InventoryModelProtos.InventoryObjectPeerRef.newBuilder()
+                    .setEndpoint(InventoryModelProtos.InventoryObjectPeerEndpoint.A)
+                    .setId(String.format("%s:%d", sourceNodeCriteria,
+                            edge.getSource().getIfIndex()))
+                    .setType(ManagedObjectType.SnmpInterface.getName())
+                    .build())
+            .addPeer(InventoryModelProtos.InventoryObjectPeerRef.newBuilder()
+                    .setEndpoint(InventoryModelProtos.InventoryObjectPeerEndpoint.Z)
+                    .setId(String.format("%s:%d", targetNodeCriteria,
+                            targetIfIndex))
+                    .setType(ManagedObjectType.SnmpInterface.getName())
+                    .build())
+            .build();
+
+    iosBuilder.addInventoryObject(ioBuilder.build());
+
+    return iosBuilder.build();
+
+}
 
 def  enrichAlarm(OpennmsModelProtos.Alarm alarm) {
            if (alarm == null) {

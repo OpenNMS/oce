@@ -28,24 +28,21 @@
 
 package org.opennms.oce.datasource.opennms;
 
-import org.opennms.oce.datasource.common.inventory.ManagedObjectType;
+import org.opennms.oce.datasource.common.ScriptedInventoryException;
 import org.opennms.oce.datasource.opennms.proto.InventoryModelProtos;
 import org.opennms.oce.datasource.opennms.proto.OpennmsModelProtos;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.google.common.annotations.VisibleForTesting;
 
 public class EdgeToInventory {
-    public static InventoryModelProtos.InventoryObjects toInventoryObjects(OpennmsModelProtos.TopologyEdge edge) {
-        final InventoryModelProtos.InventoryObjects.Builder iosBuilder = InventoryModelProtos.InventoryObjects
-                .newBuilder();
-        final InventoryModelProtos.InventoryObject.Builder ioBuilder =
-                InventoryModelProtos.InventoryObject.newBuilder();
 
-        // The target information could be associated with a node or a segment
-        long targetIfIndex;
-        String targetNodeCriteria;
+    private static final Logger LOG = LoggerFactory.getLogger(EdgeToInventory.class);
 
-        // Note: only port is supported as a target right now
+	private final ScriptedInventoryService inventoryService;
+    
+    // Note: only port is supported as a target right now
         switch (edge.getTargetCase()) {
             case TARGETPORT:
                 targetIfIndex = edge.getTargetPort().getIfIndex();
@@ -82,13 +79,21 @@ public class EdgeToInventory {
                         .build())
                 .build();
 
-        iosBuilder.addInventoryObject(ioBuilder.build());
+    public EdgeToInventory(ScriptedInventoryService inventoryService) {
+        this.inventoryService = inventoryService;
+    }
 
-        return iosBuilder.build();
+    public InventoryModelProtos.InventoryObjects toInventoryObjects(OpennmsModelProtos.TopologyEdge edge) {
+        try {
+            return inventoryService.edgeToInventory(edge);
+        } catch (ScriptedInventoryException e) {
+            LOG.error("Failed to get Inventory for Edge: {} : {}", edge, e.getLocalizedMessage());
+            throw new RuntimeException(e);
+        }
     }
 
     @VisibleForTesting
-    static String getIdForEdge(OpennmsModelProtos.TopologyEdge edge) {
+    String getIdForEdge(OpennmsModelProtos.TopologyEdge edge) {
         return String.format("%s:%s:%d:%s:%d", edge.getRef().getProtocol(),
                 OpennmsMapper.toNodeCriteria(edge.getSource().getNodeCriteria()), edge.getSource().getIfIndex(),
                 OpennmsMapper.toNodeCriteria(edge.getTargetPort().getNodeCriteria()), edge.getTargetPort().getIfIndex());

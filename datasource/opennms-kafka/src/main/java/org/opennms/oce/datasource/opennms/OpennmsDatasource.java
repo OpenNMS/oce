@@ -147,10 +147,14 @@ public class OpennmsDatasource implements SituationDatasource, AlarmDatasource, 
 
     private final AlarmToInventory alarmToInventory;
 
-    public OpennmsDatasource(ConfigurationAdmin configAdmin, NodeToInventory nodeToInventory, AlarmToInventory alarmToInventory) {
+    private final EdgeToInventory edgeToInventory;
+
+    public OpennmsDatasource(ConfigurationAdmin configAdmin, NodeToInventory nodeToInventory, AlarmToInventory alarmToInventory,
+            EdgeToInventory edgeToInventory) {
         this.configAdmin = Objects.requireNonNull(configAdmin);
         this.nodeToInventory = Objects.requireNonNull(nodeToInventory);
         this.alarmToInventory = Objects.requireNonNull(alarmToInventory);
+        this.edgeToInventory = Objects.requireNonNull(edgeToInventory);
     }
 
     public void init() throws IOException {
@@ -286,7 +290,7 @@ public class OpennmsDatasource implements SituationDatasource, AlarmDatasource, 
                     if (topologyEdge == null) {
                         return KeyValue.pair(key, null);
                     }
-                    return KeyValue.pair(key, EdgeToInventory.toInventoryObjects(topologyEdge));
+                    return KeyValue.pair(key, edgeToInventory.toInventoryObjects(topologyEdge));
                 });
         // Take the newly created stream of inventory objects and serialize them onto the inventory topic
         edgesInventoryStream.mapValues(ios -> ios != null ? ios.toByteArray() : null).to(getInventoryTopic());

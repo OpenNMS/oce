@@ -31,7 +31,6 @@ package org.opennms.oce.datasource.opennms;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
-import static org.opennms.oce.datasource.opennms.EdgeToInventory.getIdForEdge;
 
 import java.util.Collections;
 
@@ -45,6 +44,8 @@ import org.opennms.oce.datasource.opennms.proto.InventoryModelProtos;
 import org.opennms.oce.datasource.opennms.proto.OpennmsModelProtos;
 
 public class EdgeToInventoryTest {
+    private EdgeToInventory edgeToInventory;
+
     @Test
     public void canMapEdgeToInventory() {
         OpennmsModelProtos.TopologyEdge edge = OpennmsModelProtos.TopologyEdge.newBuilder()
@@ -69,7 +70,7 @@ public class EdgeToInventoryTest {
                                 .build())
                         .build())
                 .build();
-        InventoryModelProtos.InventoryObjects inventory = EdgeToInventory.toInventoryObjects(edge);
+        InventoryModelProtos.InventoryObjects inventory = edgeToInventory.toInventoryObjects(edge);
         assertThat(inventory.getInventoryObjectList(), hasSize(1));
         InventoryModelProtos.InventoryObject io = inventory.getInventoryObjectList().iterator().next();
         verifyLinkIo(edge, io);

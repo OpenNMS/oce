@@ -32,9 +32,11 @@ import java.util.Collection;
 
 import org.opennms.oce.datasource.common.ScriptedInventoryException;
 import org.opennms.oce.datasource.opennms.proto.InventoryModelProtos.InventoryObject;
+import org.opennms.oce.datasource.opennms.proto.InventoryModelProtos.InventoryObjects;
 import org.opennms.oce.datasource.opennms.proto.OpennmsModelProtos.Alarm;
 import org.opennms.oce.datasource.opennms.proto.OpennmsModelProtos.Node;
 import org.opennms.oce.datasource.opennms.proto.OpennmsModelProtos.SnmpInterface;
+import org.opennms.oce.datasource.opennms.proto.OpennmsModelProtos.TopologyEdge;
 
 /**
  * @author smith
@@ -66,5 +68,11 @@ public interface ScriptedInventoryService {
      * @return
      */
     InventoryFromAlarm getInventoryFromAlarm(Alarm alarm) throws ScriptedInventoryException;
+
+    /**
+     * @param edge
+     * @return
+     */
+    InventoryObjects edgeToInventory(TopologyEdge edge) throws ScriptedInventoryException;
 
 }

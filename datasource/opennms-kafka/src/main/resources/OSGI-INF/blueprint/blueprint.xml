@@ -13,12 +13,28 @@
             <cm:property name="edgesTopic" value="edges"/>
             <cm:property name="inventoryTtlMs" value="86400000"/> <!-- 24 hours -->
             <cm:property name="inventoryGcIntervalMs" value="300000"/> <!-- 5 minutes -->
+			<cm:property name="scriptFile" value="inventory.groovy"/>
         </cm:default-properties>
     </cm:property-placeholder>
+
+    <bean id="scriptFactory" class="org.opennms.oce.datasource.opennms.ScriptedInventoryImpl" init-method="init" >
+        <argument ref="scriptFile"/>
+    </bean>
+    <service ref="scriptFactory" interface="org.opennms.oce.datasource.api.ScriptInventoryService"/>
+
+    <bean id="nodeToInventory" class="org.opennms.oce.datasource.opennms.NodeToInventory" init-method="init" >
+        <argument ref="scriptFactory"/>
+    </bean>
+
+    <bean id="alarmToInventory" class="org.opennms.oce.datasource.opennms.AlarmToInventory" init-method="init" >
+        <argument ref="scriptFactory"/>
+    </bean>
 
     <reference id="configAdmin" interface="org.osgi.service.cm.ConfigurationAdmin" />
     <bean id="opennmsDatasource" class="org.opennms.oce.datasource.opennms.OpennmsDatasource" init-method="init" destroy-method="destroy">
         <argument ref="configAdmin"/>
+        <argument ref="nodeToInventory"/>
+        <argument ref="alarmToInventory"/>
         <property name="alarmTopic" value="${alarmTopic}"/>
         <property name="alarmFeedbackTopic" value="${alarmFeedbackTopic}"/>
         <property name="nodeTopic" value="${nodeTopic}"/>

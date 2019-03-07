@@ -7,7 +7,7 @@
     <bean id="scriptFactory" class="org.opennms.oce.datasource.opennms.jvm.ScriptedInventoryImpl" init-method="init" >
         <argument ref="scriptFile"/>
     </bean>
-    <service ref="scriptFactory" interface="org.opennms.oce.datasource.api.ScriptFactory"/>
+    <service ref="scriptFactory" interface="org.opennms.oce.datasource.api.ScriptInventoryService"/>
 
     <bean id="mappers" class="org.opennms.oce.datasource.opennms.jvm.Mappers" init-method="init" >
         <argument ref="scriptFactory"/>

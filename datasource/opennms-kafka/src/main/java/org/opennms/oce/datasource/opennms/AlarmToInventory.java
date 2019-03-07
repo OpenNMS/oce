@@ -37,18 +37,24 @@ public class AlarmToInventory {
 
     private static final Logger LOG = LoggerFactory.getLogger(AlarmToInventory.class);
 
-    public static EnrichedAlarm enrichAlarm(OpennmsModelProtos.Alarm alarm) {
+    private final ScriptedInventoryService inventoryService;
+
+    public AlarmToInventory(ScriptedInventoryService inventoryService) {
+        this.inventoryService = inventoryService;
+    }
+
+    public EnrichedAlarm enrichAlarm(OpennmsModelProtos.Alarm alarm) {
         try {
-            return ScriptedInventoryFactory.getFactory().enrichAlarm(alarm);
+            return inventoryService.enrichAlarm(alarm);
         } catch (ScriptedInventoryException e) {
             LOG.error("Failed to enrich Alarm: {} : {}", alarm, e.getLocalizedMessage());
             throw new RuntimeException(e);
         }
     }
 
-    public static InventoryFromAlarm getInventoryFromAlarm(OpennmsModelProtos.Alarm alarm) {
+    public InventoryFromAlarm getInventoryFromAlarm(OpennmsModelProtos.Alarm alarm) {
         try {
-            return ScriptedInventoryFactory.getFactory().getInventoryFromAlarm(alarm);
+            return inventoryService.getInventoryFromAlarm(alarm);
         } catch (ScriptedInventoryException e) {
             LOG.error("Failed to get Inventory for Alarm: {} : {}", alarm, e.getMessage());
             throw new RuntimeException(e);

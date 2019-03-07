@@ -74,7 +74,10 @@ public abstract class OpennmsDatasourceIT {
         producer = new KafkaProducer<>(senderProps);
 
         // Create the datasource
-        datasource = new OpennmsDatasource(getDatasourceConfig());
+        ScriptedInventoryService inventoryService = new ScriptedInventoryImpl("inventory.groovy");
+        NodeToInventory nodeToInventory = new NodeToInventory(inventoryService);
+        AlarmToInventory alarmToInventory = new AlarmToInventory(inventoryService);
+        datasource = new OpennmsDatasource(getDatasourceConfig(), nodeToInventory, alarmToInventory);
     }
 
     public ConfigurationAdmin getDatasourceConfig() throws IOException {

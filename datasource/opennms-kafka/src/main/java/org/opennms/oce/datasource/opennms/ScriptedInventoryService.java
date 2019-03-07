@@ -29,36 +29,42 @@
 package org.opennms.oce.datasource.opennms;
 
 import java.util.Collection;
-import java.util.Collections;
 
 import org.opennms.oce.datasource.common.ScriptedInventoryException;
-import org.opennms.oce.datasource.opennms.proto.InventoryModelProtos;
-import org.opennms.oce.datasource.opennms.proto.OpennmsModelProtos;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.opennms.oce.datasource.opennms.proto.InventoryModelProtos.InventoryObject;
+import org.opennms.oce.datasource.opennms.proto.OpennmsModelProtos.Alarm;
+import org.opennms.oce.datasource.opennms.proto.OpennmsModelProtos.Node;
+import org.opennms.oce.datasource.opennms.proto.OpennmsModelProtos.SnmpInterface;
 
-public class NodeToInventory {
+/**
+ * @author smith
+ *
+ */
+public interface ScriptedInventoryService {
 
-    private static final Logger LOG = LoggerFactory.getLogger(NodeToInventory.class);
+    /**
+     * @param snmpInterface
+     * @param parent
+     * @return
+     */
+    InventoryObject toInventoryObject(SnmpInterface snmpInterface, InventoryObject parent) throws ScriptedInventoryException;
 
-    private final ScriptedInventoryService inventoryService;
+    /**
+     * @param node
+     * @return
+     */
+    Collection<InventoryObject> toInventoryObjects(Node node) throws ScriptedInventoryException;
 
-    public NodeToInventory(ScriptedInventoryService inventoryService) {
-        this.inventoryService = inventoryService;
-    }
+    /**
+     * @param alarm
+     * @return
+     */
+    EnrichedAlarm enrichAlarm(Alarm alarm) throws ScriptedInventoryException;
 
-    public Collection<InventoryModelProtos.InventoryObject> toInventoryObjects(OpennmsModelProtos.Node node) {
-        try {
-            return inventoryService.toInventoryObjects(node);
-        } catch (ScriptedInventoryException e) {
-            LOG.warn("Failed to create inventory for node {} : {}", node, e.getMessage());
-            return Collections.emptyList();
-        }
-    }
-
-    public InventoryModelProtos.InventoryObject toInventoryObject(OpennmsModelProtos.SnmpInterface snmpInterface,
-            InventoryModelProtos.InventoryObject parent) throws ScriptedInventoryException {
-        return inventoryService.toInventoryObject(snmpInterface, parent);
-    }
+    /**
+     * @param alarm
+     * @return
+     */
+    InventoryFromAlarm getInventoryFromAlarm(Alarm alarm) throws ScriptedInventoryException;
 
 }

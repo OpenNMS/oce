@@ -143,8 +143,14 @@ public class OpennmsDatasource implements SituationDatasource, AlarmDatasource, 
 
     private KafkaProducer<String, String> producer;
 
-    public OpennmsDatasource(ConfigurationAdmin configAdmin) {
+    private final NodeToInventory nodeToInventory;
+
+    private final AlarmToInventory alarmToInventory;
+
+    public OpennmsDatasource(ConfigurationAdmin configAdmin, NodeToInventory nodeToInventory, AlarmToInventory alarmToInventory) {
         this.configAdmin = Objects.requireNonNull(configAdmin);
+        this.nodeToInventory = Objects.requireNonNull(nodeToInventory);
+        this.alarmToInventory = Objects.requireNonNull(alarmToInventory);
     }
 
     public void init() throws IOException {
@@ -220,8 +226,7 @@ public class OpennmsDatasource implements SituationDatasource, AlarmDatasource, 
         // Produce a KStream of EnrichedAlarm objects from the alarm stream
         final AlarmDeserializer alarmDeserializer = new AlarmDeserializer();
         KStream<String, byte[]> alarmBytesStream = builder.stream(getAlarmTopic());
-        KStream<String, OpennmsModelProtos.Alarm> allAlarmStream =
-                alarmBytesStream.mapValues(alarmBytes -> alarmDeserializer.deserialize(null, alarmBytes));
+        KStream<String, OpennmsModelProtos.Alarm> allAlarmStream = alarmBytesStream.mapValues(alarmBytes -> alarmDeserializer.deserialize(null, alarmBytes));
         KStream<String, OpennmsModelProtos.Alarm> alarmStream = allAlarmStream.filter((k, v) -> !isSituation(k));
         KStream<String, EnrichedAlarm> enrichedAlarmStream = alarmStream.mapValues(AlarmToInventory::enrichAlarm);
 
@@ -306,7 +311,7 @@ public class OpennmsDatasource implements SituationDatasource, AlarmDatasource, 
                 return KeyValue.pair(key, null);
             }
             final InventoryModelProtos.InventoryObjects.Builder iosBuilder = InventoryModelProtos.InventoryObjects.newBuilder();
-            for (InventoryModelProtos.InventoryObject io : NodeToInventory.toInventoryObjects(node)) {
+            for (InventoryModelProtos.InventoryObject io : nodeToInventory.toInventoryObjects(node)) {
                 iosBuilder.addInventoryObject(io);
             }
             return KeyValue.pair(key, iosBuilder.build());

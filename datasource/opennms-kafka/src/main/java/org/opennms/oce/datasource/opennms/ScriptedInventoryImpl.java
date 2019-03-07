@@ -54,38 +54,53 @@ import com.google.common.io.Files;
  * @author smith
  *
  */
-public class ScriptedInventoryFactory {
+public class ScriptedInventoryImpl implements ScriptedInventoryService {
 
-    private static final Logger LOG = LoggerFactory.getLogger(ScriptedInventoryFactory.class);
+    private static final Logger LOG = LoggerFactory.getLogger(ScriptedInventoryImpl.class);
 
-    private final Invocable invocable;
+    private Invocable invocable;
 
-    private static String pathToScript;
+    private String pathToScript;
 
-    private static long timestamp;
+    private long timestamp;
 
-    private static ScriptedInventoryFactory cached;
+    public ScriptedInventoryImpl(String scriptName) {
 
-    public ScriptedInventoryFactory(File script) throws IOException, ScriptException {
-        if (!script.canRead()) {
-            throw new IllegalStateException("Cannot read script at '" + script + "'.");
+        URL scriptUri = ClassLoader.getSystemResource(scriptName);
+
+        try {
+            File file = new File(scriptUri.toURI());
+            if (!file.canRead()) {
+                throw new IllegalStateException("Cannot read script at '" + file + "'.");
+            }
+
+            LOG.info("Loading script {} from {} with timestamp: {}", scriptName, scriptUri, file.lastModified());
+            timestamp = file.lastModified();
+            pathToScript = scriptUri.getPath();
+
+            final String ext = Files.getFileExtension(file.getAbsolutePath());
+
+            ScriptEngineManager manager = new ScriptEngineManager();
+            final ScriptEngine engine = manager.getEngineByExtension(ext);
+            if (engine == null) {
+                throw new IllegalStateException("No engine found for extension: " + ext);
+            }
+
+            engine.eval(new FileReader(file));
+            javax.script.SimpleBindings globals = (javax.script.SimpleBindings) engine.getBindings(ScriptContext.GLOBAL_SCOPE);
+            javax.script.SimpleBindings engines = (javax.script.SimpleBindings) engine.getBindings(ScriptContext.ENGINE_SCOPE);
+
+            LOG.info("GLOBAL Bindings: {}", globals);
+            LOG.info("ENGINE Bindings: {}", engines);
+            invocable = (Invocable) engine;
+
+        } catch (URISyntaxException | IOException | ScriptException e) {
+            LOG.error("Failed to retrieve ScriptInventoryFactory : {}", e.getMessage());
+            throw new IllegalStateException("Failed to retrieve ScriptInventoryFactory.", e);
         }
 
-        final String ext = Files.getFileExtension(script.getAbsolutePath());
 
-        ScriptEngineManager manager = new ScriptEngineManager();
-        final ScriptEngine engine = manager.getEngineByExtension(ext);
-        if (engine == null) {
-            throw new IllegalStateException("No engine found for extension: " + ext);
-        }
 
-        engine.eval(new FileReader(script));
-        javax.script.SimpleBindings globals = (javax.script.SimpleBindings) engine.getBindings(ScriptContext.GLOBAL_SCOPE);
-        javax.script.SimpleBindings engines = (javax.script.SimpleBindings) engine.getBindings(ScriptContext.ENGINE_SCOPE);
-
-        LOG.info("GLOBAL Bindings: {}", globals);
-        LOG.info("ENGINE Bindings: {}", engines);
-        invocable = (Invocable) engine;
     }
 
     public EnrichedAlarm enrichAlarm(OpennmsModelProtos.Alarm alarm) throws ScriptedInventoryException {
@@ -113,6 +128,7 @@ public class ScriptedInventoryFactory {
         }
     }
 
+    @SuppressWarnings("unchecked")
     public Collection<InventoryModelProtos.InventoryObject> toInventoryObjects(OpennmsModelProtos.Node node) throws ScriptedInventoryException {
         try {
             return (List<InventoryModelProtos.InventoryObject>) invocable.invokeFunction("toInventoryObjects", node);
@@ -132,27 +148,32 @@ public class ScriptedInventoryFactory {
                 .build();
     }
 
-    public static ScriptedInventoryFactory getFactory() throws ScriptedInventoryException {
-        // TODO - parameterize
-        String script = "inventory.groovy";
-        // TODO - test for script being updated otherwise can return cached version.
-        URL scriptUri = ClassLoader.getSystemResource(script);
-
-        try {
-            File file = new File(scriptUri.toURI());
-            if (file.lastModified() <= timestamp && cached != null) {
-                return cached;
-            }
-            LOG.info("Loading script {} from {} with timestamp: {}", script, scriptUri, file.lastModified());
-            timestamp = file.lastModified();
-            pathToScript = scriptUri.getPath();
-            cached = new ScriptedInventoryFactory(file);
-
-            return cached;
-        } catch (URISyntaxException | IOException | ScriptException e) {
-            LOG.error("Failed to retrieve ScriptInventoryFactory : {}", e.getMessage());
-            throw new ScriptedInventoryException("Failed to retrieve ScriptInventoryFactory.", e);
+    private Invocable getInvocable() throws ScriptedInventoryException {
+        if (cachedIsLatest()) {
+            return invocable;
+        } else {
+            return getNewIvocable();
         }
+    }
+
+    /**
+     * 
+     */
+    private Invocable getNewIvocable() throws ScriptedInventoryException {
+        return invocable;
+        // TODO == refresh script
+
+    }
+
+    private boolean cachedIsLatest() {
+        // TODO return false if script on disc has been updated
+        // TODO - test for script being updated otherwise can return cached version.
+
+        /*if (file.lastModified() <= timestamp && cached != null) {
+            return cached.i;
+        }
+        */
+        return true;
     }
 
 }

@@ -29,6 +29,7 @@
 package org.opennms.oce.datasource.opennms.jvm;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 import java.net.URISyntaxException;
@@ -68,12 +69,22 @@ public class ScriptedInventoryImpl implements ScriptedInventoryService {
 
     private long timestamp;
 
-    public ScriptedInventoryImpl(String scriptPath) throws IOException, ScriptException, URISyntaxException {
+    public ScriptedInventoryImpl(String scriptPath) {
         this.scriptPath = scriptPath;
 
         URL scriptUri = ClassLoader.getSystemResource(scriptPath);
 
-        File file = new File(scriptUri.toURI());
+        if (scriptUri == null) {
+            throw new IllegalArgumentException("Cannot find script : '" + scriptUri + "' on resource classpath.");
+        }
+
+        File file;
+        try {
+            file = new File(scriptUri.toURI());
+        } catch (URISyntaxException e1) {
+            throw new IllegalArgumentException("Invalid script URL: '" + scriptUri + "'.");
+
+        }
         if (!file.canRead()) {
             throw new IllegalStateException("Cannot read script at '" + file + "'.");
         }
@@ -93,7 +104,11 @@ public class ScriptedInventoryImpl implements ScriptedInventoryService {
             throw new IllegalStateException("No engine found for extension: " + ext);
         }
 
-        engine.eval(new FileReader(file));
+        try {
+            engine.eval(new FileReader(file));
+        } catch (FileNotFoundException | ScriptException e) {
+            throw new IllegalStateException("Failed to eval() script file", e);
+        }
         timestamp = file.lastModified();
 
         javax.script.SimpleBindings globals = (javax.script.SimpleBindings) engine.getBindings(ScriptContext.GLOBAL_SCOPE);
@@ -173,6 +188,12 @@ public class ScriptedInventoryImpl implements ScriptedInventoryService {
     private boolean cachedIsLatest() {
         // TODO return false if script on disc has been updated
         // TODO - test for script being updated otherwise can return cached version.
+        if (scriptPath.equals(scriptPath)) {
+            // TODO read timestamp
+        }
+        if (0 > timestamp) {
+            return false;
+        }
         return true;
     }
 

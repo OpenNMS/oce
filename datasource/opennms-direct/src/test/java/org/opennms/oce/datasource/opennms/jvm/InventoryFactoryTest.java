@@ -73,6 +73,7 @@ public class InventoryFactoryTest {
         when(node.getLabel()).thenReturn("label");
         when(node.getSnmpInterfaces()).thenReturn(Collections.singletonList(snmpInterface));
 
+        inventoryService = new ScriptedInventoryImpl("inventory.groovy");
         List<InventoryObject> ios = inventoryService.createInventoryObjects(node);
 
         // Verify we created a node inventory object and an SNMP inventory object
@@ -86,8 +87,44 @@ public class InventoryFactoryTest {
         when(alarm.getManagedObjectInstance()).thenReturn("instance");
         when(alarm.getManagedObjectType()).thenReturn(ManagedObjectType.EntPhysicalEntity.getName());
 
+        inventoryService = new ScriptedInventoryImpl("inventory.groovy");
         List<InventoryObject> ios = inventoryService.createInventoryObjects(alarm);
         // Test that we got an inventory object back with the correct type
         assertThat(ios.get(0).getType(), equalTo(ManagedObjectType.EntPhysicalEntity.getName()));
     }
+
+    @Test
+    public void testOverrideInventoryFromNode() throws ScriptedInventoryException {
+        SnmpInterface snmpInterface = mock(SnmpInterface.class);
+        when(snmpInterface.getIfDescr()).thenReturn("descr");
+        when(snmpInterface.getIfIndex()).thenReturn(2);
+        when(snmpInterface.getIfName()).thenReturn("name");
+
+        Node node = mock(Node.class);
+        when(node.getId()).thenReturn(1);
+        when(node.getForeignId()).thenReturn("foreignId");
+        when(node.getForeignSource()).thenReturn("foreignSource");
+        when(node.getLabel()).thenReturn("label");
+        when(node.getSnmpInterfaces()).thenReturn(Collections.singletonList(snmpInterface));
+
+        inventoryService = new ScriptedInventoryImpl("inventory.override.groovy");
+        List<InventoryObject> ios = inventoryService.createInventoryObjects(node);
+
+        // Verify we created a node inventory object and an SNMP inventory object
+        assertThat(ios.get(0).getType(), equalTo(ManagedObjectType.Node.getName() + "XXXXX"));
+        assertThat(ios.get(1).getType(), equalTo(ManagedObjectType.SnmpInterface.getName() + "XXXXX"));
+    }
+
+    @Test
+    public void testOverrideInventoryFromAlarm() throws ScriptedInventoryException {
+        Alarm alarm = mock(Alarm.class);
+        when(alarm.getManagedObjectInstance()).thenReturn("instance");
+        when(alarm.getManagedObjectType()).thenReturn(ManagedObjectType.EntPhysicalEntity.getName());
+
+        inventoryService = new ScriptedInventoryImpl("inventory.override.groovy");
+        List<InventoryObject> ios = inventoryService.createInventoryObjects(alarm);
+        // Test that we got an inventory object back with the correct type
+        assertThat(ios.get(0).getType(), equalTo(ManagedObjectType.EntPhysicalEntity.getName() + "XXXXX"));
+    }
+
 }

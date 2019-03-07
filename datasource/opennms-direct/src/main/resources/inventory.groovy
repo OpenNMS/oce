@@ -15,7 +15,7 @@ import com.google.common.base.Strings;
 
 // @Slf4j
 
-def nodeToInventory(node) {
+def nodeToInventory(Node node) {
     List<InventoryObject> inventoryObjects = new ArrayList<>();
 
     InventoryObject inventoryObject = ImmutableInventoryObject.newBuilder()
@@ -33,7 +33,7 @@ def nodeToInventory(node) {
     return inventoryObjects;
 }
 
-def alarmToInventory(alarm) {
+def alarmToInventory(Alarm alarm) {
     // Only derive inventory if the alarm has an MO type and instance
     if (Strings.isNullOrEmpty(alarm.getManagedObjectType()) ||
     Strings.isNullOrEmpty(alarm.getManagedObjectInstance())) {

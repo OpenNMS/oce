@@ -117,6 +117,7 @@ public class OpennmsDatasource implements SituationDatasource, AlarmDatasource, 
 
     public static final long DEFAULT_INVENTORY_GC_INTERVAL_MS = TimeUnit.MINUTES.toMillis(5);
     public static final long DEFAULT_INVENTORY_TTL_MS = TimeUnit.DAYS.toMillis(1);
+    public static final long DEFAULT_KAFKA_STORE_INIT_MS = TimeUnit.MILLISECONDS.convert(20, TimeUnit.SECONDS);
 
     private static final String INVENTORY_STORE_NODE_PREFIX = "node:";
     private static final String INVENTORY_STORE_ALARM_PREFIX = "alarm:";
@@ -146,6 +147,7 @@ public class OpennmsDatasource implements SituationDatasource, AlarmDatasource, 
 
     private long inventoryGcIntervalMs = DEFAULT_INVENTORY_GC_INTERVAL_MS;
     private long inventoryTtlMs = DEFAULT_INVENTORY_TTL_MS;
+    private long kafkaStoreInitMs = DEFAULT_KAFKA_STORE_INIT_MS;
 
     private KafkaProducer<String, String> producer;
     private boolean alreadyWaitedForStores;
@@ -544,7 +546,7 @@ public class OpennmsDatasource implements SituationDatasource, AlarmDatasource, 
 
         Stopwatch stopwatch = Stopwatch.createStarted();
 
-        while (stopwatch.elapsed(TimeUnit.SECONDS) <= 20) {
+        while (stopwatch.elapsed(TimeUnit.MILLISECONDS) <= getKafkaStoreInitMs()) {
             try {
                 ReadOnlyKeyValueStore<K, V> store = streams.store(storeName, QueryableStoreTypes.keyValueStore());
                 LOG.debug("Store {} is queryable", storeName);
@@ -649,6 +651,14 @@ public class OpennmsDatasource implements SituationDatasource, AlarmDatasource, 
 
     public void setInventoryTtlMs(long inventoryTtlMs) {
         this.inventoryTtlMs = inventoryTtlMs;
+    }
+
+    public long getKafkaStoreInitMs() {
+        return kafkaStoreInitMs;
+    }
+
+    public void setKafkaStoreInitMs(long kafkaStoreInitMs) {
+        this.kafkaStoreInitMs = kafkaStoreInitMs;
     }
 
     @Override

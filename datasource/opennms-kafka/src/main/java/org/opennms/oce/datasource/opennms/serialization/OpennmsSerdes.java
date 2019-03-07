@@ -133,7 +133,7 @@ public class OpennmsSerdes {
     }
 
     /**
-     * A serde for nullable {@code FeedbackModelProtos.AlarmFeedbacks} type.
+     * A serde for nullable {@code OpennmsModelProtos.TopologyEdge} type.
      */
     static public Serde<OpennmsModelProtos.TopologyEdge> TopologyEdge() {
         return new TopologyEdgeSerde();

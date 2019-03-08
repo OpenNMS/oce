@@ -93,7 +93,7 @@ public class EdgeToInventory {
     }
 
     @VisibleForTesting
-    String getIdForEdge(OpennmsModelProtos.TopologyEdge edge) {
+    static String getIdForEdge(OpennmsModelProtos.TopologyEdge edge) {
         return String.format("%s:%s:%d:%s:%d", edge.getRef().getProtocol(),
                 OpennmsMapper.toNodeCriteria(edge.getSource().getNodeCriteria()), edge.getSource().getIfIndex(),
                 OpennmsMapper.toNodeCriteria(edge.getTargetPort().getNodeCriteria()), edge.getTargetPort().getIfIndex());

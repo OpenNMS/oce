@@ -117,7 +117,8 @@ public class OpennmsAlarmFeedbackDatasourceIT extends OpennmsDatasourceIT implem
         ScriptedInventoryService inventoryService = new ScriptedInventoryImpl("inventory.groovy");
         NodeToInventory nodeToInventory = new NodeToInventory(inventoryService);
         AlarmToInventory alarmToInventory = new AlarmToInventory(inventoryService);
-        datasource = new OpennmsDatasource(getDatasourceConfig(), nodeToInventory, alarmToInventory);
+        EdgeToInventory edgeToInventory = new EdgeToInventory(inventoryService);
+        datasource = new OpennmsDatasource(getDatasourceConfig(), nodeToInventory, alarmToInventory, edgeToInventory);
         datasource.init();
 
         // One alarm feedback initially

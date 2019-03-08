@@ -35,6 +35,7 @@ import static org.hamcrest.Matchers.is;
 import java.util.Collections;
 
 import org.hamcrest.Matchers;
+import org.junit.Before;
 import org.junit.Test;
 import org.opennms.oce.datasource.api.InventoryObject;
 import org.opennms.oce.datasource.api.InventoryObjectPeerEndpoint;
@@ -45,6 +46,12 @@ import org.opennms.oce.datasource.opennms.proto.OpennmsModelProtos;
 
 public class EdgeToInventoryTest {
     private EdgeToInventory edgeToInventory;
+
+    @Before
+    public void setup() {
+        ScriptedInventoryService inventoryService = new ScriptedInventoryImpl("inventory.groovy");
+        edgeToInventory = new EdgeToInventory(inventoryService);
+    }
 
     @Test
     public void canMapEdgeToInventory() {
@@ -86,7 +93,7 @@ public class EdgeToInventoryTest {
     static void verifyLinkIo(OpennmsModelProtos.TopologyEdge edge, InventoryObject io) {
         assertThat(io.getType(), is(Matchers.equalTo(ManagedObjectType.SnmpInterfaceLink.getName())));
         assertThat(io.getPeers(), hasSize(2));
-        assertThat(io.getId(), is(Matchers.equalTo(getIdForEdge(edge))));
+        assertThat(io.getId(), is(Matchers.equalTo(EdgeToInventory.getIdForEdge(edge))));
 
         long aIfIndex = edge.getSource().getIfIndex();
         long zIfIndex = edge.getTargetPort().getIfIndex();
@@ -103,4 +110,5 @@ public class EdgeToInventoryTest {
             }
         });
     }
+
 }

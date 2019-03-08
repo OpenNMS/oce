@@ -5,12 +5,14 @@ import org.opennms.oce.datasource.common.inventory.ManagedObjectType;
 import static org.opennms.oce.datasource.common.inventory.ManagedObjectType.*;
 
 import org.opennms.oce.datasource.common.inventory.TypeToInventory;
+import org.opennms.oce.datasource.opennms.EdgeToInventory
 import org.opennms.oce.datasource.opennms.EnrichedAlarm
 import org.opennms.oce.datasource.opennms.InventoryFromAlarm
 import org.opennms.oce.datasource.opennms.OpennmsMapper
 import org.opennms.oce.datasource.opennms.proto.InventoryModelProtos
 import org.opennms.oce.datasource.opennms.proto.OpennmsModelProtos
 import org.opennms.oce.datasource.opennms.proto.OpennmsModelProtos.TopologyEdge
+import org.opennms.oce.datasource.opennms.proto.OpennmsModelProtos.TopologyEdge.TargetCase
 
 import com.google.common.base.Strings;
 
@@ -28,24 +30,24 @@ def edgeToInventory(TopologyEdge edge) {
 
     // Note: only port is supported as a target right now
     switch (edge.getTargetCase()) {
-        case TARGETPORT:
+        case TargetCase.TARGETPORT:
             targetIfIndex = edge.getTargetPort().getIfIndex();
-            targetNodeCriteria = nodeCriteriaToString(edge.getTargetPort().getNodeCriteria());
+            targetNodeCriteria = EdgeToInventory.nodeCriteriaToString(edge.getTargetPort().getNodeCriteria());
             break;
-        case TARGETSEGMENT:
+        case TargetCase.TARGETSEGMENT:
             // Segment support needs to be added when segments are available
         default:
             throw new UnsupportedOperationException("Unsupported target type + " + edge.getTargetCase());
     }
 
     String protocol = edge.getRef().getProtocol().name();
-    String sourceNodeCriteria = nodeCriteriaToString(edge.getSource().getNodeCriteria());
+    String sourceNodeCriteria = EdgeToInventory.nodeCriteriaToString(edge.getSource().getNodeCriteria());
 
     // Create a link object by setting the peers to the source and target
     ioBuilder.setType(ManagedObjectType.SnmpInterfaceLink.getName())
             // The Id for this link will incorporate the protocol so that if multiple protocols describe a link
             // between the same endpoints they will create multiple links (one for each protocol)
-            .setId(getIdForEdge(edge))
+            .setId(EdgeToInventory.getIdForEdge(edge))
             .setFriendlyName(String.format("SNMP Interface Link Between %d on %s and %d on %s discovered with " +
                             "protocol %s", edge.getSource().getIfIndex(), sourceNodeCriteria, targetIfIndex,
                     targetNodeCriteria, protocol))

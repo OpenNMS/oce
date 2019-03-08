@@ -83,7 +83,8 @@ public class OpennmsDatasourceStoreTest {
         ScriptedInventoryService inventoryService = new ScriptedInventoryImpl("inventory.groovy");
         NodeToInventory nodeToInventory = new NodeToInventory(inventoryService);
         AlarmToInventory alarmToInventory = new AlarmToInventory(inventoryService);
-        OpennmsDatasource datasource = new OpennmsDatasource(configAdmin, nodeToInventory, alarmToInventory);
+        EdgeToInventory edgeToInventory = new EdgeToInventory(inventoryService);
+        OpennmsDatasource datasource = new OpennmsDatasource(configAdmin, nodeToInventory, alarmToInventory, edgeToInventory);
         datasource.setInventoryTtlMs(step-1);
         datasource.setInventoryGcIntervalMs(step);
 

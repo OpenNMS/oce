@@ -1,0 +1,10 @@
+# Use this file for docker images/tags that are fixed to a specific version and aren't changing
+# These will be eligible for caching in the CI system
+
+helm=opennms/helm:2.0.0
+kafka=spotify/kafka
+
+# Note this will be moving to the docker_tags file since it will be based on opennms/sentinel:24.0.0-rc which is not
+# fixed
+oce=opennms/sentinel:oce
+postgres=postgres:9.6.1

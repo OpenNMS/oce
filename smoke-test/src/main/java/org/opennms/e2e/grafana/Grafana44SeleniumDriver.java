@@ -36,10 +36,8 @@ import java.net.URL;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.TimeUnit;
-import java.util.stream.IntStream;
 
 import org.apache.commons.lang3.tuple.Pair;
-import org.awaitility.core.ConditionTimeoutException;
 import org.openqa.selenium.By;
 import org.openqa.selenium.Keys;
 import org.openqa.selenium.NoSuchElementException;
@@ -47,8 +45,11 @@ import org.openqa.selenium.StaleElementReferenceException;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.interactions.Actions;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class Grafana44SeleniumDriver {
+    private static final Logger LOG = LoggerFactory.getLogger(Grafana44SeleniumDriver.class);
     private final WebDriver driver;
     private final URL url;
     private final GrafanaRestClient restClient;
@@ -116,16 +117,18 @@ public class Grafana44SeleniumDriver {
                 moveToAndClick(By.xpath("//div[contains(@class, 'table-panel-scroll')]/table/tbody/tr"));
                 moveToAndDoubleClick(By.xpath("//div[contains(@class, 'table-panel-scroll')]/table/tbody/tr"));
                 waitFor(By.xpath("//span[text()='Alarm Details']"));
-            } catch (ConditionTimeoutException e) {
+                LOG.info("Found alarm in alarm table");
+                break;
+            } catch (Exception e) {
                 if (i < 4) {
+                    LOG.warn("Timed out while attempting to verify alarm, will retry");
                     continue;
                 }
-                
+
                 // Give up on the last try and throw the exception
+                LOG.error("Could not verify alarm");
                 throw e;
             }
-
-            break;
         }
 
         return this;

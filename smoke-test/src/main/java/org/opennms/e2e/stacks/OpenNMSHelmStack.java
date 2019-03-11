@@ -66,7 +66,7 @@ public class OpenNMSHelmStack extends EmptyDockerStack {
     @Override
     public Map<String, Function<GizmoDockerStacker, ContainerConfig>> getContainersByAlias() {
         return ImmutableMap.of(OPENNMS, (stacker) -> ContainerConfig.builder()
-                        .image("opennms/horizon-core-web:24.0.0-rc")
+                        .image(DockerTagResolver.getTag("opennms"))
                         .exposedPorts("8980/tcp")
                         .env("POSTGRES_HOST=db",
                                 "POSTGRES_PORT=5432",
@@ -88,7 +88,7 @@ public class OpenNMSHelmStack extends EmptyDockerStack {
                         .cmd("-s")
                         .build(),
                 HELM, (stacker) -> ContainerConfig.builder()
-                        .image("opennms/helm:2.0.0")
+                        .image(DockerTagResolver.getTag("helm"))
                         .exposedPorts("3000/tcp")
                         .hostConfig(HostConfig.builder()
                                 .publishAllPorts(true)
@@ -221,7 +221,7 @@ public class OpenNMSHelmStack extends EmptyDockerStack {
         LOG.debug("Checking for active bundle with prefix {}", bundleName);
 
         await()
-                .atMost(1, TimeUnit.MINUTES)
+                .atMost(5, TimeUnit.MINUTES)
                 .pollInterval(5, TimeUnit.SECONDS)
                 .ignoreExceptions()
                 .until(() -> {

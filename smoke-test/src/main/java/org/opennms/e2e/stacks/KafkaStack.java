@@ -56,7 +56,7 @@ public class KafkaStack extends EmptyDockerStack {
     @Override
     public Map<String, Function<GizmoDockerStacker, ContainerConfig>> getContainersByAlias() {
         return ImmutableMap.of(KAFKA, (stacker) -> ContainerConfig.builder()
-                .image("spotify/kafka")
+                .image(DockerTagResolver.getTag("kafka"))
                 .exposedPorts("2181/tcp", "9092/tcp")
                 .env("KAFKA_LISTENERS: PLAINTEXT://:9092", "KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092")
                 .hostConfig(HostConfig.builder()

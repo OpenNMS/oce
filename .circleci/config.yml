@@ -7,7 +7,8 @@ executors:
         environment:
           MAVEN_OPTS: -Xmx2g
 
-  # TODO: Use our own image and have it configured so we can run docker inside docker
+  # Note: Need to investigate how we can use our own image and have it configured so we can run docker inside docker
+  # rather than rely on the circleci machine VM
   smoke-test-executor:
     machine: true
     environment:
@@ -110,6 +111,11 @@ jobs:
             ln -s /tmp/.m2 ~/.m2
             mvn -DskipTests clean install dependency:resolve-plugins dependency:go-offline
 
+      - run:
+          name: Build
+          command: |
+            mvn -DskipTests clean install dependency:resolve-plugins dependency:go-offline
+
       - save_cache:
           paths:
             - /tmp/.m2
@@ -162,6 +168,10 @@ jobs:
           - v3-dependencies-{{ checksum "pom.xml" }}
           # fallback to using the latest cache if no exact match is found
           - v3-dependencies-
+          
+      - restore_cache:
+          keys:
+          - v1-docker-{{ checksum "smoke-test/src/main/resources/docker_tags_fixed" }}
   
       # Link the cached maven repo
       # Note: this is needed since we are using a circleci vm that is running as circleci whereas our images run as root
@@ -175,19 +185,14 @@ jobs:
           command: |
             mkdir -p ~/assembly/kar/target/
             ln -s ~/dist/opennms-oce-plugin.kar ~/assembly/kar/target/opennms-oce-plugin.kar
-  
-      - run:
-          name: Temporary test
-          command: |
-            ls ~/assembly/kar/target/opennms-oce-plugin.kar
-  
+
       - run:
           name: Generate a unique tunnel id
           command: echo $(uuidgen) > ~/sauce_tunnel_id
   
       - run: |
-          wget https://saucelabs.com/downloads/sc-4.5.1-linux.tar.gz
-          tar -xzf sc-4.5.1-linux.tar.gz
+          wget https://saucelabs.com/downloads/sc-4.5.3-linux.tar.gz
+          tar -xzf sc-4.5.3-linux.tar.gz
   
       - run:
           name: Create the Sauce Connect tunnel
@@ -197,10 +202,24 @@ jobs:
       - run:
           name: Wait for the tunnel to be ready
           command: while [ ! -e ~/sauce_is_ready ]; do sleep 1; done
-  
+
+      - run:
+          name: Import docker images
+          command: |
+            if [ -z "$(ls /tmp/docker 2> /dev/null)" ]; then exit 0; fi
+            source smoke-test/src/main/resources/docker_tags_fixed
+            for dockerTargz in $(ls /tmp/docker); do
+              dockerName="${dockerTargz%.*}"
+              echo "Importing ${!dockerName} from $dockerTargz"
+              docker load --input /tmp/docker/"$dockerTargz"
+            done
+            docker image ls
+
+      # Note: this will be removed when we switch to vanilla sentinel
       - run:
           name: Create a OCE container
           command: |
+            [ -f "/tmp/docker/oce.tgz" ] && exit 0
             cd ~
             git clone https://github.com/opennms-forge/docker-sentinel.git
             cd docker-sentinel/
@@ -212,7 +231,24 @@ jobs:
           command: |
             export SAUCE_TUNNEL_ID=$(cat ~/sauce_tunnel_id)
             cd smoke-test
-            mvn integration-test -DsmokeTest=true
+            mvn test -DsmokeTest=true
+
+      - run:
+          name: Save cacheable docker images
+          command: |
+            if [ -d /tmp/docker ]; then exit 0; fi
+            mkdir /tmp/docker
+            tagsFile="smoke-test/src/main/resources/docker_tags_fixed"
+            source "$tagsFile"
+            for dockerImg in $(awk -F '=' '/^[^#]/ {print $1}' "$tagsFile"); do
+              echo "Saving docker image ${!dockerImg} as ${dockerImg}.tgz"
+              docker save -o /tmp/docker/"$dockerImg".tgz "${!dockerImg}"
+            done
+
+      - save_cache:
+          paths:
+          - /tmp/docker
+          key: v1-docker-{{ checksum "smoke-test/src/main/resources/docker_tags_fixed" }}
   
       - run:
           name: Save test results
@@ -224,8 +260,7 @@ jobs:
   
       - store_test_results:
           path: ~/junit
-  
-      # TODO: Store sentinel and OpenNMS logs in the logs dir
+
       - store_artifacts:
           path: ~/logs
   
@@ -233,6 +268,10 @@ jobs:
           name: Wait for Sauce Connect to close the tunnel
           command: killall --wait sc
           when: always
+
+      # Future Improvements:
+      # - Store the logs from the sentinel and OpenNMS containers for the test run in addition to the junit logs
+      # - Add nightly test run back once tests are proven stable
 
   build-docs:
     executor: docs-executor

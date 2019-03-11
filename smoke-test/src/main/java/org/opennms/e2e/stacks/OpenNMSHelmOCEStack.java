@@ -121,9 +121,7 @@ public class OpenNMSHelmOCEStack extends OpenNMSHelmStack {
         }
 
         return ContainerConfig.builder()
-                // Note that this will be changed to the vanilla sentinel container once that is ready
-//                .image("opennms/sentinel:24.0.0-rc")
-                .image("opennms/sentinel:oce")
+                .image(DockerTagResolver.getTag("oce"))
                 .exposedPorts("8301/tcp")
                 .env("KARAF_DEBUG_LOGGING=org.opennms.oce")
                 .hostConfig(HostConfig.builder()

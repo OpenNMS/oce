@@ -64,7 +64,7 @@ public class PostgreSQLStack extends EmptyDockerStack {
     @Override
     public Map<String, Function<GizmoDockerStacker, ContainerConfig>> getContainersByAlias() {
         return ImmutableMap.of(POSTGRES, (stacker) -> ContainerConfig.builder()
-                .image("postgres:9.6.1")
+                .image(DockerTagResolver.getTag("postgres"))
                 .env("POSTGRES_PASSWORD=" + PASSWORD)
                 .hostConfig(HostConfig.builder()
                         .publishAllPorts(true)

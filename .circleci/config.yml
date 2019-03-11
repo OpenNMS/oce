@@ -3,284 +3,297 @@ version: 2.1
 executors:
   build-executor:
     docker:
-    - image: opennms/build-env:1.0-b4
-      environment:
-        MAVEN_OPTS: -Xmx2g
+      - image: opennms/build-env:1.0-b4
+        environment:
+          MAVEN_OPTS: -Xmx2g
+
+  # TODO: Use our own image and have it configured so we can run docker inside docker
+  smoke-test-executor:
+    machine: true
+    environment:
+      MAVEN_OPTS: -Xmx3200m
 
   docs-executor:
     docker:
-    - image: antora/antora:2.0.0
+      - image: antora/antora:2.0.0
 
   netlify-cli-executor:
     docker:
-    - image: opennms/netlify-cli:2.8.3-b1
+      - image: opennms/netlify-cli:2.8.3-b1
 
   package-cloud-cli-executor:
     docker:
-    - image: opennms/package-cloud-cli:0.3.05-b1
+      - image: opennms/package-cloud-cli:0.3.05-b1
 
 workflows:
   build-deploy:
     jobs:
-    # Run build jobs for all branches and any tag
-    - pre-build:
-        filters:
-          tags:
-            only: /.*/
-    - build:
-        requires:
-        - pre-build
-        filters:
-          tags:
-            only: /.*/
-    - build-docs:
-        requires:
-        - pre-build
-        filters:
-          tags:
-            only: /.*/
+      # Run build jobs for all branches and any tag
+      - pre-build:
+          filters:
+            tags:
+              only: /.*/
+      - build:
+          requires:
+            - pre-build
+          filters:
+            tags:
+              only: /.*/
+      - build-docs:
+          requires:
+            - pre-build
+          filters:
+            tags:
+              only: /.*/
+      - smoke-test:
+          requires:
+            - build
 
-    # Run deploy jobs just on version tags and master branch
-    - deploy-maven:
-        requires:
-        - build
-        filters:
-          tags:
-            only: /^v.*/
-          branches:
-            only:
-            - master
-    - deploy-packages:
-        requires:
-        - build
-        filters:
-          tags:
-            only: /^v.*/
-          branches:
-            only:
-            - master
-    - deploy-docs:
-        requires:
-        - build-docs
-        filters:
-          tags:
-            only: /^v.*/
-          branches:
-            only:
-            - master
-
-  # Runs on every commit without triggers
-  commit:
-    jobs:
-    - smoke-test
-#  # Runs on a scheduled trigger nightly
-#  nightly:
-#    triggers:
-#    - schedule:
-#        # Run daily @ 5:00am UTC
-#        cron: "0 5 * * *"
-#        filters:
-#          branches:
-#            only:
-#            - master
-#    jobs:
-#    - smoke-test 
+      # Run deploy jobs just on version tags and master branch
+      - deploy-maven:
+          requires:
+            - smoke-test
+          filters:
+            tags:
+              only: /^v.*/
+            branches:
+              only:
+                - master
+      - deploy-packages:
+          requires:
+            - smoke-test
+          filters:
+            tags:
+              only: /^v.*/
+            branches:
+              only:
+                - master
+      - deploy-docs:
+          requires:
+            - smoke-test
+          filters:
+            tags:
+              only: /^v.*/
+            branches:
+              only:
+                - master
 
 jobs:
   pre-build:
     executor: build-executor
     steps:
-    - checkout
+      - checkout
 
-    - persist_to_workspace:
-        root: ~/
-        paths:
-        - project
+      - persist_to_workspace:
+          root: ~/
+          paths:
+            - project
 
   build:
     executor: build-executor
     steps:
-    - attach_workspace:
-        at: ~/
+      - attach_workspace:
+          at: ~/
 
-    - restore_cache:
-        keys:
-        - v2-dependencies-{{ checksum "pom.xml" }}
-        # fallback to using the latest cache if no exact match is found
-        - v2-dependencies-
+      - restore_cache:
+          keys:
+          - v3-dependencies-{{ checksum "pom.xml" }}
+          # fallback to using the latest cache if no exact match is found
+          - v3-dependencies-
 
-    - run: |
-        mvn -DskipTests clean install dependency:resolve-plugins dependency:go-offline
+      # Linking /tmp/.m2 to ~/.m2 so that we can cache the /tmp/.m2 path for sharing with other images that can't write
+      # to /root
+      - run:
+          name: Link maven repo with cache
+          command: |
+            [ -d /tmp/.m2 ] || mkdir /tmp/.m2
+            ln -s /tmp/.m2 ~/.m2
+            mvn -DskipTests clean install dependency:resolve-plugins dependency:go-offline
 
-    - save_cache:
-        paths:
-        - ~/.m2
-        key: v2-dependencies-{{ checksum "pom.xml" }}
+      - save_cache:
+          paths:
+            - /tmp/.m2
+          key: v3-dependencies-{{ checksum "pom.xml" }}
 
-    - run:
-        name: Run the tests
-        command: |
-          mvn test integration-test
+      - run:
+          name: Run the tests
+          command: |
+            mvn test integration-test
 
-    - run:
-        name: Save test results
-        command: |
-          mkdir -p ~/junit/
-          find . -type f -regex ".*/target/failsafe-reports/.*xml" -exec cp {} ~/junit/ \;
-          find . -type f -regex ".*/target/surefire-reports/.*xml" -exec cp {} ~/junit/ \;
-        when: always
+      - run:
+          name: Save test results
+          command: |
+            mkdir -p ~/junit/
+            find . -type f -regex ".*/target/failsafe-reports/.*xml" -exec cp {} ~/junit/ \;
+            find . -type f -regex ".*/target/surefire-reports/.*xml" -exec cp {} ~/junit/ \;
+          when: always
 
-    - store_test_results:
-        path: ~/junit
+      - store_test_results:
+          path: ~/junit
 
-    - run:
-        name: Gather artifacts
-        command: |
-          mkdir -p ~/dist/
-          cp assembly/opennms-rpm/target/rpm/opennms-oce-plugin/RPMS/noarch/* ~/dist/
-          cp assembly/sentinel-rpm/target/rpm/sentinel-oce-plugin/RPMS/noarch/* ~/dist/
-          cp assembly/kar/target/opennms-oce-plugin.kar ~/dist/
-        when: always
+      - run:
+          name: Gather artifacts
+          command: |
+            mkdir -p ~/dist/
+            cp assembly/opennms-rpm/target/rpm/opennms-oce-plugin/RPMS/noarch/* ~/dist/
+            cp assembly/sentinel-rpm/target/rpm/sentinel-oce-plugin/RPMS/noarch/* ~/dist/
+            cp assembly/kar/target/opennms-oce-plugin.kar ~/dist/
+          when: always
 
-    - store_artifacts:
-        path: ~/dist
-        destination: dist
+      - store_artifacts:
+          path: ~/dist
+          destination: dist
 
-    - persist_to_workspace:
-        root: ~/
-        paths:
-        - project
+      - persist_to_workspace:
+          root: ~/
+          paths:
+            - project
+            - dist/*.kar
+
+  smoke-test:
+    executor: smoke-test-executor
+
+    steps:
+      - attach_workspace:
+          at: ~/
+  
+      - restore_cache:
+          keys:
+          - v3-dependencies-{{ checksum "pom.xml" }}
+          # fallback to using the latest cache if no exact match is found
+          - v3-dependencies-
+  
+      # Link the cached maven repo
+      # Note: this is needed since we are using a circleci vm that is running as circleci whereas our images run as root
+      - run:
+          name: Link maven repo with cache
+          command: |
+            ln -s /tmp/.m2 ~/.m2
+  
+      - run:
+          name: Make the kar available
+          command: |
+            mkdir -p ~/assembly/kar/target/
+            ln -s ~/dist/opennms-oce-plugin.kar ~/assembly/kar/target/opennms-oce-plugin.kar
+  
+      - run:
+          name: Temporary test
+          command: |
+            ls ~/assembly/kar/target/opennms-oce-plugin.kar
+  
+      - run:
+          name: Generate a unique tunnel id
+          command: echo $(uuidgen) > ~/sauce_tunnel_id
+  
+      - run: |
+          wget https://saucelabs.com/downloads/sc-4.5.1-linux.tar.gz
+          tar -xzf sc-4.5.1-linux.tar.gz
+  
+      - run:
+          name: Create the Sauce Connect tunnel
+          command: cd sc-*-linux && ./bin/sc --user $SAUCE_USERNAME --api-key $SAUCE_ACCESS_KEY --tunnel-identifier $(cat ~/sauce_tunnel_id) --readyfile ~/sauce_is_ready
+          background: true
+  
+      - run:
+          name: Wait for the tunnel to be ready
+          command: while [ ! -e ~/sauce_is_ready ]; do sleep 1; done
+  
+      - run:
+          name: Create a OCE container
+          command: |
+            cd ~
+            git clone https://github.com/opennms-forge/docker-sentinel.git
+            cd docker-sentinel/
+            git checkout -b release-oce origin/release-oce
+            docker build -t opennms/sentinel:oce .
+  
+      - run:
+          name: Run the tests
+          command: |
+            export SAUCE_TUNNEL_ID=$(cat ~/sauce_tunnel_id)
+            cd smoke-test
+            mvn integration-test -DsmokeTest=true
+  
+      - run:
+          name: Save test results
+          command: |
+            mkdir -p ~/junit/
+            find . -type f -regex ".*/target/failsafe-reports/.*xml" -exec cp {} ~/junit/ \;
+            find . -type f -regex ".*/target/surefire-reports/.*xml" -exec cp {} ~/junit/ \;
+          when: always
+  
+      - store_test_results:
+          path: ~/junit
+  
+      # TODO: Store sentinel and OpenNMS logs in the logs dir
+      - store_artifacts:
+          path: ~/logs
+  
+      - run:
+          name: Wait for Sauce Connect to close the tunnel
+          command: killall --wait sc
+          when: always
 
   build-docs:
     executor: docs-executor
     steps:
-    - attach_workspace:
-        at: ~/
-    - run:
-        name: Generate HTML output for documentation
-        command: |
-          antora generate site.yml
+      - attach_workspace:
+          at: ~/
+      - run:
+          name: Generate HTML output for documentation
+          command: |
+            antora generate site.yml
 
-    - store_artifacts:
-        path: build/site.zip
-        destination: site.zip
+      - store_artifacts:
+          path: build/site.zip
+          destination: site.zip
 
-    - persist_to_workspace:
-        root: ~/
-        paths:
-        - project
+      - persist_to_workspace:
+          root: ~/
+          paths:
+            - project
 
   deploy-maven:
     executor: build-executor
     steps:
-    - attach_workspace:
-        at: ~/
-    # Download and cache dependencies
-    - restore_cache:
-        keys:
-        - v2-dependencies-{{ checksum "pom.xml" }}
-        # fallback to using the latest cache if no exact match is found
-        - v2-dependencies-
-    - run:
-        name: Deploy the artifacts
-        command: |
-          mvn -s .circleci.settings.xml -DskipTests deploy
+      - attach_workspace:
+          at: ~/
+      # Download and cache dependencies
+      - restore_cache:
+          keys:
+          - v3-dependencies-{{ checksum "pom.xml" }}
+          # fallback to using the latest cache if no exact match is found
+          - v3-dependencies-
+  
+      # Link the cached maven repo
+      # Note: this is needed since we are using a circleci vm that is running as circleci whereas our images run as root
+      - run:
+          name: Link maven repo with cache
+          command: |
+            ln -s /tmp/.m2 ~/.m2
+  
+      - run:
+          name: Deploy the artifacts
+          command: |
+            mvn -s .circleci.settings.xml -DskipTests deploy
 
   deploy-packages:
-    executor: package-cloud-cli-executor
-    steps:
-    - attach_workspace:
-        at: ~/
-    - run:
-        name: Push RPM packages
-        command: |
-          package_cloud push opennms/plugin-snapshot/el/7 assembly/opennms-rpm/target/rpm/opennms-oce-plugin/RPMS/noarch/*
-          package_cloud push opennms/plugin-snapshot/el/7 assembly/sentinel-rpm/target/rpm/sentinel-oce-plugin/RPMS/noarch/*
-
+      executor: package-cloud-cli-executor
+      steps:
+        - attach_workspace:
+            at: ~/
+        - run:
+            name: Push RPM packages
+            command: |
+              package_cloud push opennms/plugin-snapshot/el/7 assembly/opennms-rpm/target/rpm/opennms-oce-plugin/RPMS/noarch/*
+              package_cloud push opennms/plugin-snapshot/el/7 assembly/sentinel-rpm/target/rpm/sentinel-oce-plugin/RPMS/noarch/*
+  
   deploy-docs:
     executor: netlify-cli-executor
     steps:
-    - attach_workspace:
-        at: ~/
-    - run:
-        name: Deploy docs to Netlify
-        command: |
-          netlify deploy --prod -d public -s ${NETLIFY_SITE_ID}
-
-  smoke-test:
-    machine: true
-
-    environment:
-      MAVEN_OPTS: -Xmx3200m
-
-    steps:
-    - checkout
-
-    # Download and cache dependencies
-    - restore_cache:
-        keys:
-        - v1-dependencies-{{ checksum "pom.xml" }}
-        # fallback to using the latest cache if no exact match is found
-        - v1-dependencies-
-
-    - run: |
-        mvn install -DskipTests=true
-        mvn dependency:go-offline
-
-    - save_cache:
-        paths:
-        - ~/.m2
-        key: v1-dependencies-{{ checksum "pom.xml" }}
-
-    - run:
-        name: Generate a unique tunnel id
-        command: echo $(uuidgen) > ~/sauce_tunnel_id
-
-    - run: |
-        wget https://saucelabs.com/downloads/sc-4.5.1-linux.tar.gz
-        tar -xzf sc-4.5.1-linux.tar.gz
-
-    - run:
-        name: Create the Sauce Connect tunnel
-        command: cd sc-*-linux && ./bin/sc --user $SAUCE_USERNAME --api-key $SAUCE_ACCESS_KEY --tunnel-identifier $(cat ~/sauce_tunnel_id) --readyfile ~/sauce_is_ready
-        background: true
-
-    - run:
-        name: Wait for the tunnel to be ready
-        command: while [ ! -e ~/sauce_is_ready ]; do sleep 1; done
-
-    - run:
-        name: Create a OCE container
-        command: |
-          cd ~
-          git clone https://github.com/opennms-forge/docker-sentinel.git
-          cd docker-sentinel/
-          git checkout -b release-oce origin/release-oce
-          docker build -t opennms/sentinel:oce .
-
-    - run:
-        name: Run the tests
-        command: |
-          export SAUCE_TUNNEL_ID=$(cat ~/sauce_tunnel_id)
-          cd smoke-test
-          mvn integration-test -DsmokeTest=true
-
-    - run:
-        name: Save test results
-        command: |
-          mkdir -p ~/junit/
-          find . -type f -regex ".*/target/failsafe-reports/.*xml" -exec cp {} ~/junit/ \;
-          find . -type f -regex ".*/target/surefire-reports/.*xml" -exec cp {} ~/junit/ \;
-        when: always
-
-    - store_test_results:
-        path: ~/junit
-
-    # TODO: Store sentinel and OpenNMS logs in the logs dir
-    - store_artifacts:
-        path: ~/logs
-
-    - run:
-        name: Wait for Sauce Connect to close the tunnel
-        command: killall --wait sc
-        when: always         
+      - attach_workspace:
+          at: ~/
+      - run:
+          name: Deploy docs to Netlify
+          command: |
+            netlify deploy --prod -d public -s ${NETLIFY_SITE_ID}

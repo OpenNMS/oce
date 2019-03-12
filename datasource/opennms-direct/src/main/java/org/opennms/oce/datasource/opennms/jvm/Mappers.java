@@ -79,7 +79,7 @@ public class Mappers {
             try {
             inventoryService.overrideTypeAndInstance(alarmBuilder, alarm);
         } catch (ScriptedInventoryException e) {
-            LOG.error("Failure overriding inventory foir alarm [{}] : {}", alarm, e.getMessage());
+            LOG.error("Failure overriding inventory for alarm [{}] : {}", alarm, e.getMessage());
         }
 
         return alarmBuilder.build();

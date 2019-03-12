@@ -13,6 +13,7 @@ executors:
     machine: true
     environment:
       MAVEN_OPTS: -Xmx3200m
+      TESTCONTAINERS_RYUK_DISABLED: true
 
   docs-executor:
     docker:

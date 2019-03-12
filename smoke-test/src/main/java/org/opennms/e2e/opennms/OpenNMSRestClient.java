@@ -86,14 +86,17 @@ public class OpenNMSRestClient {
     }
 
     public String getDisplayVersion() {
+        try {
         final WebTarget target = getTarget().path("info");
         final String json = getBuilder(target).get(String.class);
 
         final ObjectMapper mapper = new ObjectMapper();
-        try {
+        
             JsonNode actualObj = mapper.readTree(json);
             return actualObj.get("displayVersion").asText();
         } catch (IOException e) {
+            throw new RuntimeException(e);
+        } catch (Exception e) {
             throw new RuntimeException(e);
         }
     }

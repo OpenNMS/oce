@@ -26,36 +26,35 @@
  *     http://www.opennms.com/
  *******************************************************************************/
 
-package org.opennms.e2e.stacks;
+package org.opennms.e2e.oce_new;
 
-import java.io.IOException;
-import java.util.Optional;
-import java.util.Properties;
+import java.util.ArrayList;
+import java.util.Collection;
 
-public class DockerTagResolver {
-    private static String TAGS_FILE = "docker_tags";
-    private static String FIXED_TAGS_FILE = "docker_tags_fixed";
+import org.junit.Test;
+import org.opennms.e2e.containers.KafkaContainer;
+import org.opennms.e2e.containers.OCEContainer;
+import org.opennms.e2e.containers.OpenNMSHelmContainer;
+import org.opennms.e2e.containers.OpenNMSHorizonContainer;
+import org.opennms.e2e.containers.PostgreSQLContainer;
 
-    public static String getTag(String name) {
-        String tag;
-
-        try {
-            tag = getTagFromFile(TAGS_FILE, name).orElse(getTagFromFile(FIXED_TAGS_FILE, name).orElse(null));
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-
-        if (tag == null) {
-            throw new RuntimeException("Could not find tag for " + name);
-        }
-
-        return tag;
-    }
-
-    private static Optional<String> getTagFromFile(String file, String name) throws IOException {
-        Properties prop = new Properties();
-        prop.load(Thread.currentThread().getContextClassLoader().getResourceAsStream(file));
-        String tag = prop.getProperty(name);
-        return tag == null ? Optional.empty() : Optional.of(tag);
-    }
+public class Testing {
+//    @Test
+//    public void test() {
+//        Collection<Runnable> containerStartup = new ArrayList<>();
+//        
+//        containerStartup.add(() -> KafkaContainer.getContainer().start());
+//        containerStartup.add(() -> PostgreSQLContainer.getContainer().start());
+//        containerStartup.add(() -> OpenNMSHorizonContainer.getContainer().start());
+//        containerStartup.add(() -> OpenNMSHelmContainer.getContainer().start());
+//        containerStartup.add(() -> OCEContainer.getContainer().start());
+//        
+//        try {
+////            containerStartup.parallelStream().forEach(Runnable::run);
+//            containerStartup.forEach(Runnable::run);
+//        }
+//        finally {
+//            System.out.println("done");
+//        }
+//    }
 }

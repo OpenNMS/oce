@@ -4,3 +4,4 @@
 helm=opennms/helm:2.0.0
 kafka=spotify/kafka
 postgres=postgres:9.6.1
+oce=opennms/sentinel:oce

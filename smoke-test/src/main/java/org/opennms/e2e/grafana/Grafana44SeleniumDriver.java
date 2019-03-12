@@ -103,7 +103,7 @@ public class Grafana44SeleniumDriver {
     }
 
     public Grafana44SeleniumDriver dashboard(String title) {
-        driver.get(url.toString() + "d/" + title);
+        driver.get(url.toString() + "/d/" + title);
         waitFor(By.partialLinkText(title));
         return this;
     }

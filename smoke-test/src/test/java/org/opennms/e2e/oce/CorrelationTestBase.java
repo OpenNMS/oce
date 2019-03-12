@@ -66,7 +66,6 @@ abstract class CorrelationTestBase {
     GizmoDockerRule getGizmoRule() {
         return GizmoDockerRule.builder()
                 .withStack(stack)
-                .skipTearDown(true)
                 .build();
     }
 

@@ -109,7 +109,6 @@ jobs:
           command: |
             [ -d /tmp/.m2 ] || mkdir /tmp/.m2
             ln -s /tmp/.m2 ~/.m2
-            mvn -DskipTests clean install dependency:resolve-plugins dependency:go-offline
 
       - run:
           name: Build

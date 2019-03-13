@@ -31,8 +31,13 @@ package org.opennms.oce.datasource.opennms.jvm;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.MatcherAssert.assertThat;
 
+import java.io.IOException;
+import java.net.URISyntaxException;
 import java.util.Date;
 
+import javax.script.ScriptException;
+
+import org.junit.Before;
 import org.junit.Test;
 import org.opennms.integration.api.v1.model.beans.AlarmBean;
 import org.opennms.integration.api.v1.model.beans.NodeBean;
@@ -41,6 +46,14 @@ import org.opennms.oce.datasource.common.inventory.ManagedObjectType;
 
 public class MappersTest {
 
+    private Mappers mappers;
+
+    @Before
+    public void setUp() throws IOException, ScriptException, URISyntaxException {
+        // TODO - wrap exceptions...
+        ScriptedInventoryService inventoryService = new ScriptedInventoryImpl("inventory.groovy");
+        mappers = new Mappers(inventoryService);
+    }
     /**
      * Verify that we include the parent id (in this case, the fs:fid of the node)
      * in the inventory object id when we map an alarm that relates to an SnmpInterface.
@@ -60,7 +73,7 @@ public class MappersTest {
         apiNode.setId(42);
         apiAlarm.setNode(apiNode);
 
-        Alarm alarm = Mappers.toAlarm(apiAlarm);
+        Alarm alarm = mappers.toAlarm(apiAlarm);
         assertThat(alarm.getInventoryObjectType(), equalTo(ManagedObjectType.SnmpInterface.getName()));
         assertThat(alarm.getInventoryObjectId(), equalTo("fs:fid:123"));
     }

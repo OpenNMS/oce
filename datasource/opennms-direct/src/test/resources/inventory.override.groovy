@@ -18,10 +18,9 @@ import com.google.common.base.Strings;
 import groovy.util.logging.Slf4j
 
 @Slf4j
-class Inventory {
-    def Logger LOG = LoggerFactory.getLogger(ScriptedInventoryImpl.class);
+class InventoryOverride {
 
-    def nodeToInventory(Node node) {
+    static nodeToInventory(Node node) {
         List<InventoryObject> inventoryObjects = new ArrayList<>();
 
         InventoryObject inventoryObject = ImmutableInventoryObject.newBuilder()
@@ -39,7 +38,7 @@ class Inventory {
         return inventoryObjects;
     }
 
-    def alarmToInventory(Alarm alarm) {
+    static alarmToInventory(Alarm alarm) {
         // Only derive inventory if the alarm has an MO type and instance
         if (Strings.isNullOrEmpty(alarm.getManagedObjectType()) ||
         Strings.isNullOrEmpty(alarm.getManagedObjectInstance())) {
@@ -53,8 +52,7 @@ class Inventory {
         try {
             type = ManagedObjectType.fromName(alarm.getManagedObjectType());
         } catch (NoSuchElementException nse) {
-            LOG.warn("Found unsupported type: {} with id: {}. Skipping.", alarm.getManagedObjectType(),
-                    alarm.getManagedObjectInstance());
+            log.warn("Found unsupported type: {} with id: {}. Skipping.", alarm.getManagedObjectType(), alarm.getManagedObjectInstance());
             return Collections.emptyList();
         }
 
@@ -73,7 +71,7 @@ class Inventory {
         }
     }
 
-    def getOverridenPhysicalEntity(String managedObjectInstance, String nodeCriteria) {
+    static getOverridenPhysicalEntity(String managedObjectInstance, String nodeCriteria) {
         final String ioId = String.format("%s:%s", nodeCriteria, managedObjectInstance);
         return ImmutableInventoryObject.newBuilder()
                 .setType(ManagedObjectType.EntPhysicalEntity.getName() + "XXXXX")
@@ -92,7 +90,7 @@ class Inventory {
             try {
                 type = ManagedObjectType.fromName(alarm.getManagedObjectType());
             } catch (NoSuchElementException nse) {
-                LOG.warn("Found unsupported type: {} with id: {}. Skipping.", alarm.getManagedObjectType(),
+                log.warn("Found unsupported type: {} with id: {}. Skipping.", alarm.getManagedObjectType(),
                         alarm.getManagedObjectInstance());
                 return;
             }
@@ -121,7 +119,7 @@ class Inventory {
 
     }
 
-    def toInventoryObject(SnmpInterface snmpInterface, InventoryObject parent) {
+    static toInventoryObject(SnmpInterface snmpInterface, InventoryObject parent) {
         return ImmutableInventoryObject.newBuilder()
                 .setType(ManagedObjectType.SnmpInterface.getName() + "XXXXX")
                 .setId(parent.getId() + ":" + snmpInterface.getIfIndex())
@@ -131,7 +129,7 @@ class Inventory {
                 .build();
     }
 
-    def toNodeCriteria(Alarm alarm) {
+    static toNodeCriteria(Alarm alarm) {
         Node node = alarm.getNode();
 
         if (node != null) {
@@ -141,15 +139,23 @@ class Inventory {
         return toNodeCriteria(null, null, alarm.getId());
     }
 
-    def toNodeCriteria(Node node) {
+    static toNodeCriteria(Node node) {
         return toNodeCriteria(node.getForeignSource(), node.getForeignId(), node.getId());
     }
 
-    def toNodeCriteria(String foreignSource, String foreignId, int id) {
+    static toNodeCriteria(String foreignSource, String foreignId, int id) {
         if (!Strings.isNullOrEmpty(foreignSource) && !Strings.isNullOrEmpty(foreignId)) {
             return foreignSource + ":" + foreignId;
         } else {
             return Long.valueOf(id).toString();
         }
     }
+}
+
+def Collection<InventoryObject> alarmToInventory(Alarm alarm) {
+    return InventoryOverride.alarmToInventory(alarm);
+}
+
+def List<InventoryObject> nodeToInventory(Node node) {
+    return InventoryOverride.nodeToInventory(node);
 }

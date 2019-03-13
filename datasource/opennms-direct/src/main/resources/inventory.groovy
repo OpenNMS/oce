@@ -17,7 +17,7 @@ import groovy.util.logging.Slf4j
 
 @Slf4j
 class InventoryFactory {
-    static nodeToInventory(Node node) {
+    static List<InventoryObject> nodeToInventory(Node node) {
         List<InventoryObject> inventoryObjects = new ArrayList<>();
 
         InventoryObject inventoryObject = ImmutableInventoryObject.newBuilder()
@@ -35,7 +35,7 @@ class InventoryFactory {
         return inventoryObjects;
     }
 
-    static alarmToInventory(Alarm alarm) {
+    static Collection<InventoryObject> alarmToInventory(Alarm alarm) {
         // Only derive inventory if the alarm has an MO type and instance
         if (Strings.isNullOrEmpty(alarm.getManagedObjectType()) ||
         Strings.isNullOrEmpty(alarm.getManagedObjectInstance())) {
@@ -72,15 +72,14 @@ class InventoryFactory {
         }
     }
 
-    static overrideTypeAndInstance (ImmutableAlarm.Builder alarmBuilder, Alarm alarm ) {
-        log.info("HELLO^");
+    static void overrideTypeAndInstance(ImmutableAlarm.Builder alarmBuilder, Alarm alarm ) {
+        log.info("overrideTypeAndInstance");
         if (!Strings.isNullOrEmpty(alarm.getManagedObjectType()) && !Strings.isNullOrEmpty(alarm.getManagedObjectInstance())) {
             ManagedObjectType type;
             try {
                 type = ManagedObjectType.fromName(alarm.getManagedObjectType());
             } catch (NoSuchElementException nse) {
-                log.warn("Found unsupported type: {} with id: {}. Skipping.", alarm.getManagedObjectType(),
-                        alarm.getManagedObjectInstance());
+                log.error("Found unsupported type: {} with id: {}. Skipping.", alarm.getManagedObjectType(), alarm.getManagedObjectInstance());
                 return;
             }
 
@@ -93,11 +92,9 @@ class InventoryFactory {
                     ));
 
             if (!alreadyScoped.contains(type)) {
-                log.info("HELLO^");
-                
+                log.info("does not know type {} ", type);
                 alarmBuilder.setInventoryObjectType(type.getName());
-                alarmBuilder.setInventoryObjectId(String.format("%s:%s", alarm.getNode(),
-                        alarm.getManagedObjectInstance()));
+                alarmBuilder.setInventoryObjectId(String.format("%s:%s", toNodeCriteria(alarm.getNode()), alarm.getManagedObjectInstance()));
             }
         }
 
@@ -108,7 +105,7 @@ class InventoryFactory {
 
     }
 
-    static toInventoryObject(SnmpInterface snmpInterface, InventoryObject parent) {
+    static ImmutableInventoryObject toInventoryObject(SnmpInterface snmpInterface, InventoryObject parent) {
         return ImmutableInventoryObject.newBuilder()
                 .setType(ManagedObjectType.SnmpInterface.getName())
                 .setId(parent.getId() + ":" + snmpInterface.getIfIndex())
@@ -118,30 +115,38 @@ class InventoryFactory {
                 .build();
     }
 
-    static toNodeCriteria(Alarm alarm) {
+    static String toNodeCriteria(Alarm alarm) {
+        log.info("alarmToNodeCriteria {}", alarm);
         Node node = alarm.getNode();
-
         if (node != null) {
             return toNodeCriteria(node);
         }
-
         return toNodeCriteria(null, null, alarm.getId());
     }
 
-    static toNodeCriteria(Node node) {
-        log.info("NODE2 INFO");
+    static String toNodeCriteria(Node node) {
+        log.info("nodeToCriteria {}", node);
         return toNodeCriteria(node.getForeignSource(), node.getForeignId(), node.getId());
     }
 
-    static toNodeCriteria(String foreignSource, String foreignId, int id) {
+    static String toNodeCriteria(String foreignSource, String foreignId, int id) {
+        log.info("toNodeCriteria: {} {} {}", foreignSource, foreignId, id);
         if (!Strings.isNullOrEmpty(foreignSource) && !Strings.isNullOrEmpty(foreignId)) {
             return foreignSource + ":" + foreignId;
         } else {
-            return Long.valueOf(id).toString();
+            return Integer.valueOf(id).toString();
         }
     }
 }
 
+def Collection<InventoryObject> alarmToInventory(Alarm alarm) {
+    return InventoryFactory.alarmToInventory(alarm);
+}
+
+def List<InventoryObject> nodeToInventory(Node node) {
+    return InventoryFactory.nodeToInventory(node);
+}
+
 def overrideTypeAndInstance (ImmutableAlarm.Builder alarmBuilder, Alarm alarm ) {
-    return InventoryFactory.overrideTypeAndInstance(alarmBuilder, alarm);
+    InventoryFactory.overrideTypeAndInstance(alarmBuilder, alarm);
 }

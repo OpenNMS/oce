@@ -36,7 +36,6 @@ import java.util.Collection;
 
 import org.junit.Before;
 import org.junit.Test;
-import org.opennms.oce.datasource.common.ScriptedInventoryException;
 import org.opennms.oce.datasource.common.inventory.ManagedObjectType;
 import org.opennms.oce.datasource.opennms.proto.InventoryModelProtos;
 import org.opennms.oce.datasource.opennms.proto.OpennmsModelProtos;
@@ -46,8 +45,7 @@ public class NodeToInventoryTest {
     private NodeToInventory nodeToInventory;
 
     @Before
-    public void setUp() throws ScriptedInventoryException {
-        // TODO - wrap exceptions...
+    public void setUp() {
         ScriptedInventoryService inventoryService = new ScriptedInventoryImpl("inventory.groovy");
         nodeToInventory = new NodeToInventory(inventoryService);
     }

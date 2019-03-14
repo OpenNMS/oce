@@ -30,11 +30,16 @@
         <argument ref="scriptFactory"/>
     </bean>
 
+    <bean id="edgeToInventory" class="org.opennms.oce.datasource.opennms.EdgeToInventory" init-method="init" >
+        <argument ref="scriptFactory"/>
+    </bean>
+
     <reference id="configAdmin" interface="org.osgi.service.cm.ConfigurationAdmin" />
     <bean id="opennmsDatasource" class="org.opennms.oce.datasource.opennms.OpennmsDatasource" init-method="init" destroy-method="destroy">
         <argument ref="configAdmin"/>
         <argument ref="nodeToInventory"/>
         <argument ref="alarmToInventory"/>
+        <argument ref="edgeToInventory"/>
         <property name="alarmTopic" value="${alarmTopic}"/>
         <property name="alarmFeedbackTopic" value="${alarmFeedbackTopic}"/>
         <property name="nodeTopic" value="${nodeTopic}"/>

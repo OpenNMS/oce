@@ -49,8 +49,6 @@ import com.google.common.base.Strings;
 
 import groovy.util.logging.Slf4j
 
-import groovy.util.logging.Slf4j
-
 @Slf4j
 class InventoryFactory {
     
@@ -232,6 +230,10 @@ class InventoryFactory {
 
 def InventoryObjects edgeToInventory(TopologyEdge edge) {
     InventoryFactory.edgeToInventory(edge);
+}
+
+def EnrichedAlarm enrichAlarm(OpennmsModelProtos.Alarm alarm) {
+    InventoryFactory.enrichAlarm(alarm);
 }
 
 def List<InventoryObject> toInventoryObjects(OpennmsModelProtos.Node node) {

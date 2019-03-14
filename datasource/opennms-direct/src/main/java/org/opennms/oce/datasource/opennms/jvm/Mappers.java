@@ -61,6 +61,9 @@ public class Mappers {
 
     private final ScriptedInventoryService inventoryService;
 
+    /**
+     * @param inventoryService wires in the JSR 223 script
+     */
     public Mappers(ScriptedInventoryService inventoryService) {
         this.inventoryService = inventoryService;
     }
@@ -79,7 +82,7 @@ public class Mappers {
             try {
             inventoryService.overrideTypeAndInstance(alarmBuilder, alarm);
         } catch (ScriptedInventoryException e) {
-            LOG.error("Failure overriding inventory for alarm [{}] : {}", alarm, e.getMessage());
+            LOG.error("Failure overriding inventory for alarm [{}] : {}", alarm, e.getCause().getMessage());
         }
 
         return alarmBuilder.build();
@@ -198,7 +201,7 @@ public class Mappers {
         try {
             return inventoryService.createInventoryObjects(node);
         } catch (ScriptedInventoryException e) {
-            LOG.error("Failed to retrieve inventory for node {}, : {}", node, e.getMessage());
+            LOG.error("Failed to retrieve inventory for node {}, : {}", node, e.getCause().getMessage());
             return Collections.emptyList();
         }
     }
@@ -207,7 +210,7 @@ public class Mappers {
         try {
             return inventoryService.createInventoryObjects(alarm);
         } catch (ScriptedInventoryException e) {
-            LOG.error("Failed to retrieve inventory for alarm {}, : {}", alarm, e.getMessage());
+            LOG.error("Failed to retrieve inventory for alarm {}, : {}", alarm, e.getCause().getMessage());
             return Collections.emptyList();
         }
     }

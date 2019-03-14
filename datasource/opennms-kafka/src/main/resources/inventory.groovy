@@ -98,7 +98,6 @@ class InventoryFactory {
         iosBuilder.addInventoryObject(ioBuilder.build());
 
         return iosBuilder.build();
-
     }
 
     static EnrichedAlarm enrichAlarm(OpennmsModelProtos.Alarm alarm) {
@@ -206,24 +205,6 @@ class InventoryFactory {
         // TODO: Use the hardware inventory data if available
 
         return inventory;
-    }
-
-    static String toNodeCriteria(OpennmsModelProtos.Alarm alarm) {
-        // FIXME
-        log.error("Not Implemented.");
-        return null;
-    }
-
-    static String toNodeCriteria(Node node) {
-        // FIXME
-        log.error("Not Implemented.");
-        return null;
-    }
-
-    static String toNodeCriteria(String foreignSource, String foreignId, int id) {
-        // FIXME
-        log.error("Not Implemented.");
-        return null;
     }
 
 }

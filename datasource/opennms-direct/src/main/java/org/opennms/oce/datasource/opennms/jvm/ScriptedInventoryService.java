@@ -38,8 +38,7 @@ import org.opennms.oce.datasource.common.ScriptedInventoryException;
 
 public interface ScriptedInventoryService {
 
-    void overrideTypeAndInstance(ImmutableAlarm.Builder alarmBuilder, org.opennms.integration.api.v1.model.Alarm alarm)
-            throws ScriptedInventoryException;
+    void overrideTypeAndInstance(ImmutableAlarm.Builder alarmBuilder, org.opennms.integration.api.v1.model.Alarm alarm) throws ScriptedInventoryException;
 
     List<InventoryObject> createInventoryObjects(Alarm alarm) throws ScriptedInventoryException;
 

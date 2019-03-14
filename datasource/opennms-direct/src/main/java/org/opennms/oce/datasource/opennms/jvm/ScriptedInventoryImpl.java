@@ -31,13 +31,11 @@ package org.opennms.oce.datasource.opennms.jvm;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
-import java.io.IOException;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.List;
 
 import javax.script.Invocable;
-import javax.script.ScriptContext;
 import javax.script.ScriptEngine;
 import javax.script.ScriptEngineManager;
 import javax.script.ScriptException;
@@ -53,11 +51,8 @@ import org.slf4j.LoggerFactory;
 import com.google.common.io.Files;
 
 /**
- * Uses an external script, executed via JSR-223, to generate a
- * {@link CollectionSet} from some given object using the
- * {@link CollectionSetBuilder}.
+ * @author smith
  *
- * @author jwhite
  */
 public class ScriptedInventoryImpl implements ScriptedInventoryService {
 
@@ -91,11 +86,6 @@ public class ScriptedInventoryImpl implements ScriptedInventoryService {
         LOG.info("Loading script {} from {} with timestamp: {}", file, scriptUri, file.lastModified());
         timestamp = file.lastModified();
 
-        //        } catch (URISyntaxException | IOException | ScriptException e) {
-        //            LOG.error("Failed to retrieve ScriptInventoryFactory : {}", e.getMessage());
-        //            throw new ScriptedInventoryException("Failed to retrieve ScriptInventoryFactory.", e);
-        //        }
-
         final String ext = Files.getFileExtension(file.getAbsolutePath());
 
         ScriptEngineManager manager = new ScriptEngineManager();
@@ -111,27 +101,6 @@ public class ScriptedInventoryImpl implements ScriptedInventoryService {
         }
         timestamp = file.lastModified();
 
-        javax.script.SimpleBindings globals = (javax.script.SimpleBindings) engine.getBindings(ScriptContext.GLOBAL_SCOPE);
-        javax.script.SimpleBindings engines = (javax.script.SimpleBindings) engine.getBindings(ScriptContext.ENGINE_SCOPE);
-
-        LOG.info("GLOBAL Bindings: {}", globals);
-        LOG.info("ENGINE Bindings: {}", engines);
-        invocable = (Invocable) engine;
-    }
-
-    private ScriptedInventoryImpl(File script, ScriptEngineManager manager) throws IOException, ScriptException {
-        if (!script.canRead()) {
-            throw new IllegalStateException("Cannot read script at '" + script + "'.");
-        }
-
-        final String ext = Files.getFileExtension(script.getAbsolutePath());
-
-        final ScriptEngine engine = manager.getEngineByExtension(ext);
-        if (engine == null) {
-            throw new IllegalStateException("No engine found for extension: " + ext);
-        }
-
-        engine.eval(new FileReader(script));
         invocable = (Invocable) engine;
     }
 
@@ -150,6 +119,7 @@ public class ScriptedInventoryImpl implements ScriptedInventoryService {
             throw new ScriptedInventoryException("Failed to override inventory for alarm", e);
         }
     }
+
     @SuppressWarnings("unchecked")
     public synchronized List<InventoryObject> createInventoryObjects(Alarm alarm) throws ScriptedInventoryException {
         try {

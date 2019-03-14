@@ -31,11 +31,7 @@ package org.opennms.oce.datasource.opennms.jvm;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.MatcherAssert.assertThat;
 
-import java.io.IOException;
-import java.net.URISyntaxException;
 import java.util.Date;
-
-import javax.script.ScriptException;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -49,8 +45,7 @@ public class MappersTest {
     private Mappers mappers;
 
     @Before
-    public void setUp() throws IOException, ScriptException, URISyntaxException {
-        // TODO - wrap exceptions...
+    public void setUp() {
         ScriptedInventoryService inventoryService = new ScriptedInventoryImpl("inventory.groovy");
         mappers = new Mappers(inventoryService);
     }

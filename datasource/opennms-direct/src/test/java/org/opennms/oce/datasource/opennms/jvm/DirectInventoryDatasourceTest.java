@@ -33,15 +33,11 @@ import static org.hamcrest.Matchers.hasSize;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-import java.io.IOException;
-import java.net.URISyntaxException;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
-
-import javax.script.ScriptException;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -62,8 +58,7 @@ public class DirectInventoryDatasourceTest {
     private final Set<InventoryObject> inventory = new HashSet<>();
 
     @Before
-    public void setUp() throws IOException, ScriptException, URISyntaxException {
-        // TODO - wrap exceptions...
+    public void setUp() {
         ScriptedInventoryService inventoryService = new ScriptedInventoryImpl("inventory.groovy");
         Mappers mappers = new Mappers(inventoryService);
         dic = new DirectInventoryDatasource(mockNodeDao, mockAlarmDao, mappers);

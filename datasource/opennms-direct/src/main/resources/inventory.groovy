@@ -71,7 +71,7 @@ class InventoryFactory {
             return Collections.emptyList();
         }
 
-        log.warn("ALARM TO INVENTORY:  type: {} with id: {}.", alarm.getManagedObjectType(), alarm.getManagedObjectInstance());
+        log.info("alarmToInventory - type: {} with id: {}.", alarm.getManagedObjectType(), alarm.getManagedObjectInstance());
 
         ManagedObjectType type;
 
@@ -121,7 +121,6 @@ class InventoryFactory {
                     ));
 
             if (!alreadyScoped.contains(type)) {
-                log.info("does not know type {} ", type);
                 alarmBuilder.setInventoryObjectType(type.getName());
                 alarmBuilder.setInventoryObjectId(String.format("%s:%s", toNodeCriteria(alarm.getNode()), alarm.getManagedObjectInstance()));
             }

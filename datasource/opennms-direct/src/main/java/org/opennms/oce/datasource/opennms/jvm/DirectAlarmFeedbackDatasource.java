@@ -82,6 +82,10 @@ public class DirectAlarmFeedbackDatasource implements AlarmFeedbackListener, Ala
 
     private final Mappers mappers;
 
+    /**
+     * @param alarmFeedbackDao used to retrieve the current feedback
+     * @param mappers used to Map between API and OCE types
+     */
     public DirectAlarmFeedbackDatasource(AlarmFeedbackDao alarmFeedbackDao, Mappers mappers) {
         this.feedbackDao = Objects.requireNonNull(alarmFeedbackDao);
         this.mappers = Objects.requireNonNull(mappers);

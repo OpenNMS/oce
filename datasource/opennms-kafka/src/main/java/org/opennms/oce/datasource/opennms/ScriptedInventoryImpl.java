@@ -37,7 +37,6 @@ import java.util.Collection;
 import java.util.List;
 
 import javax.script.Invocable;
-import javax.script.ScriptContext;
 import javax.script.ScriptEngine;
 import javax.script.ScriptEngineManager;
 import javax.script.ScriptException;
@@ -89,22 +88,25 @@ public class ScriptedInventoryImpl implements ScriptedInventoryService {
             }
 
             engine.eval(new FileReader(file));
-            javax.script.SimpleBindings globals = (javax.script.SimpleBindings) engine.getBindings(ScriptContext.GLOBAL_SCOPE);
-            javax.script.SimpleBindings engines = (javax.script.SimpleBindings) engine.getBindings(ScriptContext.ENGINE_SCOPE);
 
-            LOG.info("GLOBAL Bindings: {}", globals);
-            LOG.info("ENGINE Bindings: {}", engines);
             invocable = (Invocable) engine;
 
         } catch (URISyntaxException | IOException | ScriptException e) {
             LOG.error("Failed to retrieve ScriptInventoryFactory : {}", e.getMessage());
             throw new IllegalStateException("Failed to retrieve ScriptInventoryFactory.", e);
         }
-
-
-
     }
 
+    @Override
+    public InventoryObjects edgeToInventory(TopologyEdge edge) throws ScriptedInventoryException {
+        try {
+            return (InventoryObjects) invocable.invokeFunction("edgeToInventory", edge);
+        } catch (NoSuchMethodException | ScriptException e) {
+            throw new ScriptedInventoryException("Failed getInventoryFromAlarm", e);
+        }
+    }
+
+    @Override
     public EnrichedAlarm enrichAlarm(OpennmsModelProtos.Alarm alarm) throws ScriptedInventoryException {
         try {
             return (EnrichedAlarm) invocable.invokeFunction("enrichAlarm", alarm);
@@ -113,6 +115,7 @@ public class ScriptedInventoryImpl implements ScriptedInventoryService {
         }
     }
 
+    @Override
     public InventoryFromAlarm getInventoryFromAlarm(OpennmsModelProtos.Alarm alarm) throws ScriptedInventoryException {
         try {
             return (InventoryFromAlarm) invocable.invokeFunction("getInventoryFromAlarm", alarm);
@@ -121,6 +124,7 @@ public class ScriptedInventoryImpl implements ScriptedInventoryService {
         }
     }
 
+    @Override
     public InventoryModelProtos.InventoryObject toInventoryObject(OpennmsModelProtos.SnmpInterface snmpInterface,
             InventoryModelProtos.InventoryObject parent) throws ScriptedInventoryException {
         try {
@@ -130,6 +134,7 @@ public class ScriptedInventoryImpl implements ScriptedInventoryService {
         }
     }
 
+    @Override
     @SuppressWarnings("unchecked")
     public Collection<InventoryModelProtos.InventoryObject> toInventoryObjects(OpennmsModelProtos.Node node) throws ScriptedInventoryException {
         try {
@@ -137,17 +142,6 @@ public class ScriptedInventoryImpl implements ScriptedInventoryService {
         } catch (NoSuchMethodException | ScriptException e) {
             throw new ScriptedInventoryException("Failed node toInventoryObjects", e);
         }
-    }
-
-    public Object createInventoryObjects(OpennmsModelProtos.SnmpInterface snmpInterface, InventoryModelProtos.InventoryObject parent) {
-        // TODO - move this down to script....
-        return InventoryModelProtos.InventoryObject.newBuilder()
-            .setType("snmp-interface")
-                .setId(parent.getId() + ":" + snmpInterface.getIfIndex())
-                .setFriendlyName(snmpInterface.getIfDescr())
-                .setParentType(parent.getType())
-                .setParentId(parent.getId())
-                .build();
     }
 
     private Invocable getInvocable() throws ScriptedInventoryException {
@@ -176,15 +170,6 @@ public class ScriptedInventoryImpl implements ScriptedInventoryService {
         }
         */
         return true;
-    }
-
-    @Override
-    public InventoryObjects edgeToInventory(TopologyEdge edge) throws ScriptedInventoryException {
-        try {
-            return (InventoryObjects) invocable.invokeFunction("edgeToInventory", edge);
-        } catch (NoSuchMethodException | ScriptException e) {
-            throw new ScriptedInventoryException("Failed getInventoryFromAlarm", e);
-        }
     }
 
 }

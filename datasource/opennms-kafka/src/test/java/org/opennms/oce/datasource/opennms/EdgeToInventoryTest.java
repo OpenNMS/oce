@@ -83,14 +83,14 @@ public class EdgeToInventoryTest {
         verifyLinkIo(edge, io);
     }
 
-    private static void verifyLinkIo(OpennmsModelProtos.TopologyEdge edge, InventoryModelProtos.InventoryObject io) {
+    void verifyLinkIo(OpennmsModelProtos.TopologyEdge edge, InventoryModelProtos.InventoryObject io) {
         InventoryModelProtos.InventoryObjects inventoryObjects =
                 InventoryModelProtos.InventoryObjects.newBuilder().addInventoryObject(io).build();
         verifyLinkIo(edge,
                 InventoryTableProcessor.toInventory(Collections.singletonList(inventoryObjects)).iterator().next());
     }
 
-    static void verifyLinkIo(OpennmsModelProtos.TopologyEdge edge, InventoryObject io) {
+    public static void verifyLinkIo(OpennmsModelProtos.TopologyEdge edge, InventoryObject io) {
         assertThat(io.getType(), is(Matchers.equalTo(ManagedObjectType.SnmpInterfaceLink.getName())));
         assertThat(io.getPeers(), hasSize(2));
         assertThat(io.getId(), is(Matchers.equalTo(EdgeToInventory.getIdForEdge(edge))));

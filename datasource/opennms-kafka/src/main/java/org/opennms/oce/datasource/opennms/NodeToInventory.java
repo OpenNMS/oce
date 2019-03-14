@@ -51,7 +51,7 @@ public class NodeToInventory {
         try {
             return inventoryService.toInventoryObjects(node);
         } catch (ScriptedInventoryException e) {
-            LOG.warn("Failed to create inventory for node {} : {}", node, e.getMessage());
+            LOG.warn("Failed to create inventory for node {} : {}", node, e.getCause().getMessage());
             return Collections.emptyList();
         }
     }

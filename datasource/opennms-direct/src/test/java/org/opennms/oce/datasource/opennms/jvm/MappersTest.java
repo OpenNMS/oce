@@ -46,7 +46,7 @@ public class MappersTest {
 
     @Before
     public void setUp() {
-        ScriptedInventoryService inventoryService = new ScriptedInventoryImpl("inventory.groovy");
+        ScriptedInventoryService inventoryService = new ScriptedInventoryImpl("/inventory.groovy");
         mappers = new Mappers(inventoryService);
     }
     /**

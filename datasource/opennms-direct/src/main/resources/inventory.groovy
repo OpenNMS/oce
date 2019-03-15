@@ -32,11 +32,11 @@ import org.opennms.oce.datasource.api.InventoryObject
 import org.opennms.oce.datasource.common.ImmutableAlarm
 import org.opennms.oce.datasource.common.ImmutableInventoryObject
 import org.opennms.oce.datasource.common.inventory.ManagedObjectType;
-import static org.opennms.oce.datasource.common.inventory.ManagedObjectType.*;
 
 import org.opennms.integration.api.v1.model.Alarm
 import org.opennms.integration.api.v1.model.Node
 import org.opennms.integration.api.v1.model.SnmpInterface
+
 import org.opennms.oce.datasource.common.inventory.TypeToInventory;
 
 import com.google.common.base.Strings;
@@ -84,16 +84,16 @@ class InventoryFactory {
         }
 
         switch (type) {
-            case SnmpInterfaceLink:
+            case ManagedObjectType.SnmpInterfaceLink:
                 return Collections.singletonList(TypeToInventory.getSnmpInterfaceLink(
                 alarm.getManagedObjectInstance()));
-            case EntPhysicalEntity:
+            case ManagedObjectType.EntPhysicalEntity:
                 return Collections.singletonList(TypeToInventory.getEntPhysicalEntity(
                 alarm.getManagedObjectInstance(), toNodeCriteria(alarm)));
-            case BgpPeer:
+            case ManagedObjectType.BgpPeer:
                 return Collections.singletonList(TypeToInventory.getBgpPeer(alarm.getManagedObjectInstance(),
                 toNodeCriteria(alarm)));
-            case VpnTunnel:
+            case ManagedObjectType.VpnTunnel:
                 return Collections.singletonList(TypeToInventory.getVpnTunnel(alarm.getManagedObjectInstance(),
                 toNodeCriteria(alarm)));
             default:

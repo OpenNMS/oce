@@ -56,7 +56,7 @@ public class InventoryFactoryTest {
     @Before
     public void before() throws IOException, ScriptException, URISyntaxException {
         System.setProperty("log4j.skipJansi", "true");
-        inventoryService = new ScriptedInventoryImpl("inventory.groovy");
+        inventoryService = new ScriptedInventoryImpl("/inventory.groovy");
     }
 
     @Test
@@ -73,7 +73,6 @@ public class InventoryFactoryTest {
         when(node.getLabel()).thenReturn("label");
         when(node.getSnmpInterfaces()).thenReturn(Collections.singletonList(snmpInterface));
 
-        inventoryService = new ScriptedInventoryImpl("inventory.groovy");
         List<InventoryObject> ios = inventoryService.createInventoryObjects(node);
 
         // Verify we created a node inventory object and an SNMP inventory object
@@ -87,7 +86,6 @@ public class InventoryFactoryTest {
         when(alarm.getManagedObjectInstance()).thenReturn("instance");
         when(alarm.getManagedObjectType()).thenReturn(ManagedObjectType.EntPhysicalEntity.getName());
 
-        inventoryService = new ScriptedInventoryImpl("inventory.groovy");
         List<InventoryObject> ios = inventoryService.createInventoryObjects(alarm);
         // Test that we got an inventory object back with the correct type
         assertThat(ios.get(0).getType(), equalTo(ManagedObjectType.EntPhysicalEntity.getName()));

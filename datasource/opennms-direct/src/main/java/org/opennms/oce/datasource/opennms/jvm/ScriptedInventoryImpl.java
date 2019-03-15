@@ -28,11 +28,15 @@
 
 package org.opennms.oce.datasource.opennms.jvm;
 
+import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.List;
 
 import javax.script.Invocable;
@@ -45,6 +49,8 @@ import org.opennms.integration.api.v1.model.Node;
 import org.opennms.oce.datasource.api.InventoryObject;
 import org.opennms.oce.datasource.common.ImmutableAlarm;
 import org.opennms.oce.datasource.common.ScriptedInventoryException;
+import org.opennms.oce.datasource.common.inventory.script.OSGiScriptEngineManager;
+import org.osgi.framework.BundleContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -58,6 +64,8 @@ public class ScriptedInventoryImpl implements ScriptedInventoryService {
 
     private static final Logger LOG = LoggerFactory.getLogger(ScriptedInventoryImpl.class);
 
+    private static final String DEFAULT_SCRIPT = "/inventory.groovy";
+
     private final Invocable invocable;
 
     private String scriptPath;
@@ -65,43 +73,82 @@ public class ScriptedInventoryImpl implements ScriptedInventoryService {
     private long timestamp;
 
     public ScriptedInventoryImpl(String scriptPath) {
-        this.scriptPath = scriptPath;
+        this(scriptPath, new ScriptEngineManager());
+    }
 
-        URL scriptUri = ClassLoader.getSystemResource(scriptPath);
+    public ScriptedInventoryImpl(String scriptPath, BundleContext bundleContext) {
+        this(scriptPath, new OSGiScriptEngineManager(bundleContext));
+    }
 
-        if (scriptUri == null) {
-            throw new IllegalArgumentException("Cannot find script : '" + scriptUri + "' on resource classpath.");
+    public ScriptedInventoryImpl(String scriptPath, ScriptEngineManager manager) {
+
+        String script;
+        String scriptExtension;
+
+        if (scriptPath.isEmpty()) {
+            // load default from classpath
+            InputStream inputStream = ScriptedInventoryImpl.class.getResourceAsStream(DEFAULT_SCRIPT);
+            StringBuilder sb = new StringBuilder();
+            try (BufferedReader br = new BufferedReader(new InputStreamReader(inputStream))) {
+                String line;
+                while ((line = br.readLine()) != null) {
+                    sb.append(line).append("\n");
+                }
+            } catch (IOException e) {
+                throw new IllegalArgumentException("Cannot find script in classpath : " + e.getMessage());
+            }
+            script = sb.toString();
+            this.scriptPath = "/inventory.groovy";
+            scriptExtension = "groovy";
+            LOG.info("Loaded inventory.groovy from the classpath");
+        } else {
+            // read the script from the file system
+            this.scriptPath = scriptPath;
+
+            URL scriptUri = ScriptedInventoryImpl.class.getResource(scriptPath);
+
+            if (scriptUri == null) {
+                throw new IllegalArgumentException("Cannot find script : '" + scriptPath);
+            }
+
+            File file;
+            try {
+                file = new File(scriptUri.toURI());
+            } catch (URISyntaxException e1) {
+                throw new IllegalArgumentException("Invalid script URL: '" + scriptUri + "'.");
+
+            }
+            if (!file.canRead()) {
+                throw new IllegalStateException("Cannot read script at '" + file + "'.");
+            }
+            try {
+                Path path = Paths.get(scriptUri.toURI());
+                byte[] fileBytes = java.nio.file.Files.readAllBytes(path);
+                script = new String(fileBytes);
+                scriptExtension = Files.getFileExtension(scriptPath);
+                timestamp = file.lastModified();
+                LOG.info("Loaded script {} from {} with timestamp: {}", file, path, timestamp);
+            } catch (URISyntaxException | IOException e) {
+                throw new IllegalStateException("Reading reading script at '" + file + "'.");
+            }
         }
 
-        File file;
-        try {
-            file = new File(scriptUri.toURI());
-        } catch (URISyntaxException e1) {
-            throw new IllegalArgumentException("Invalid script URL: '" + scriptUri + "'.");
-
-        }
-        if (!file.canRead()) {
-            throw new IllegalStateException("Cannot read script at '" + file + "'.");
-        }
-        LOG.info("Loading script {} from {} with timestamp: {}", file, scriptUri, file.lastModified());
-        timestamp = file.lastModified();
-
-        final String ext = Files.getFileExtension(file.getAbsolutePath());
-
-        ScriptEngineManager manager = new ScriptEngineManager();
-        final ScriptEngine engine = manager.getEngineByExtension(ext);
+        final ScriptEngine engine = manager.getEngineByExtension(scriptExtension);
         if (engine == null) {
-            throw new IllegalStateException("No engine found for extension: " + ext);
+            throw new IllegalStateException("No engine found for extension: " + scriptExtension);
         }
 
         try {
-            engine.eval(new FileReader(file));
-        } catch (FileNotFoundException | ScriptException e) {
-            throw new IllegalStateException("Failed to eval() script file", e);
+            engine.eval(script);
+        } catch (ScriptException e) {
+            throw new IllegalStateException("Failed to eval() script file - " + this.scriptPath, e);
         }
-        timestamp = file.lastModified();
 
         invocable = (Invocable) engine;
+    }
+
+    public void init() {
+        LOG.info("ScriptedInventoryImpl init'd");
     }
 
     /**

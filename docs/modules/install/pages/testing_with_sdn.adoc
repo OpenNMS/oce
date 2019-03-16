@@ -1,0 +1,160 @@
+= SDN
+
+Leverage the Opendaylight integration in OpenNMS to create a virtual network that can be used to exercise the correlation engine.
+
+== Setup the network
+
+Fire up OpenDaylight:
+```
+mkdir -p /tmp/sdn/odl
+cd /tmp/sdn
+wget https://nexus.opendaylight.org/content/repositories/public/org/opendaylight/integration/karaf/0.8.4/karaf-0.8.4.tar.gz
+tar zxvf karaf-0.8.4.tar.gz -C odl --strip-components=1
+./odl/bin/karaf
+```
+
+Install the following features:
+```
+feature:install odl-mdsal-clustering odl-mdsal-all odl-restconf odl-l2switch-switch odl-dlux-core odl-l2switch-switch-ui
+```
+
+Fire up Containernet:
+```
+docker pull containernet/containernet
+docker run --name containernet -it -d --privileged --pid='host' -v /var/run/docker.sock:/var/run/docker.sock containernet/containernet           
+docker exec -it containernet /bin/bash
+```
+
+Make sure you can connect back to your SDN controller from the containernet shell:
+```
+export OPENDAYLIGHT_HOST=172.17.0.1
+export OPENDAYLIGHT_PORT=6633
+telnet $OPENDAYLIGHT_HOST $OPENDAYLIGHT_PORT
+```
+
+Use a script that connects to a remote controller:
+```
+cat >net.py <<EOT
+#!/usr/bin/python
+"""
+This is the most simple example to showcase Containernet.
+"""
+from mininet.net import Mininet
+from mininet.net import Containernet
+from mininet.node import Controller, RemoteController
+from mininet.topolib import TreeTopo
+from mininet.cli import CLI
+from mininet.link import TCLink
+from mininet.log import info, setLogLevel
+setLogLevel('info')
+
+c0 = RemoteController('c0', ip='$OPENDAYLIGHT_HOST', port=$OPENDAYLIGHT_PORT)
+topo = TreeTopo(depth=2, fanout=2)
+net = Mininet(topo=topo, build=False)
+net.addController(c0)
+net.build()
+net.start()
+info('*** Running CLI\n')
+CLI(net)
+info('*** Stopping network')
+net.stop()
+EOT
+```
+
+Start the script:
+```
+chmod +x net.py
+./net.py
+```
+
+NOTE: If you encounter an error of the form `Exception: Error creating interface pair (s1-eth1,s2-eth3): RTNETLINK answers: File exists`, try running `sudo mn -c` to reset.
+
+When the shell is ready, run:
+```
+containernet> pingall
+*** Ping: testing ping reachability
+h1 -> h2 h3 h4
+h2 -> h1 h3 h4
+h3 -> h1 h2 h4
+h4 -> h1 h2 h3
+*** Results: 0% dropped (12/12 received)
+```
+
+
+== Import the network
+
+```
+git clone https://github.com/opennms-forge/opennms-odl-plugin
+cd opennms-odl-plugin
+mvn clean install
+```
+
+From the OpenNMS Karaf shell:
+```
+feature:repo-add mvn:org.opennms.plugins.odl/odl-karaf-features/1.0.0-SNAPSHOT/xml
+config:edit org.opennms.plugins.opendaylight
+property-set controllerUrl http://localhost:8181
+config:update
+feature:install opennms-plugins-odl
+```
+
+Health check:
+```
+Connect to the Opendaylight controller         [ Success  ] => Found 1 topology(s).
+```
+
+Render the requisition using:
+```
+provision:show-import -x opendaylight
+```
+
+TIP: Add a foreign source with no detectors:
+`curl -v -u admin:admin -X POST http://localhost:8980/opennms/rest/foreignSources \
+    -H "Content-Type: application/xml" \
+    --data '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><foreign-source xmlns="http://xmlns.opennms.org/xsd/config/foreign-source" name="ODL" date-stamp="2019-01-28T13:58:27.945-05:00"><scan-interval>12w</scan-interval><detectors/><policies/></foreign-source>'``
+
+Trigger the import using:
+```
+./bin/send-event.pl uei.opennms.org/internal/importer/reloadImport --parm 'url requisition://opendaylight'
+```
+
+=== Events
+
+Now that our inventory is provisioned, let's trigger a fault.
+From the Mininet console:
+```
+switch s3 stop
+```
+
+We should see an alarm associated with node that has 'openflow:3' as the label.
+
+=== OCE
+
+Load OCE.
+
+```
+feature:repo-add mvn:org.opennms.oce/oce-karaf-features/1.0.0-SNAPSHOT/xml
+feature:install oce-opennms-standalone
+```
+
+Snapshot:
+```
+feature:install oce-features-shell
+oce:datasource-snapshot /tmp/snap1
+```
+
+=== Visualize
+
+```
+docker run -p 8082:8080 -v /tmp/snap1:/dataset opennms/oce-viz
+```
+
+Open browser to: http://localhost:8082/static/index.html
+
+=== Train
+
+TODO: Give feedback
+
+TODO: We need links
+TODO: We need metrics
+TODO: We need flows

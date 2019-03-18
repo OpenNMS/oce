@@ -83,11 +83,15 @@ public class EdgeToInventory {
         this.inventoryService = inventoryService;
     }
 
+    public void init() {
+        LOG.info("EdgeToInventory init'd");
+    }
+
     public InventoryModelProtos.InventoryObjects toInventoryObjects(OpennmsModelProtos.TopologyEdge edge) {
         try {
             return inventoryService.edgeToInventory(edge);
         } catch (ScriptedInventoryException e) {
-            LOG.error("Failed to get Inventory for Edge: {} : {}", edge, e.getLocalizedMessage());
+            LOG.error("Failed to get Inventory for Edge: {} : {}", edge, e.getCause().getMessage());
             throw new RuntimeException(e);
         }
     }

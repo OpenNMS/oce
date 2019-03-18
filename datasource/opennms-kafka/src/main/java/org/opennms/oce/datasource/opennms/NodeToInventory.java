@@ -47,6 +47,10 @@ public class NodeToInventory {
         this.inventoryService = inventoryService;
     }
 
+    public void init() {
+        LOG.info("NodeToInventory init'd");
+    }
+
     public Collection<InventoryModelProtos.InventoryObject> toInventoryObjects(OpennmsModelProtos.Node node) {
         try {
             return inventoryService.toInventoryObjects(node);

@@ -43,6 +43,10 @@ public class AlarmToInventory {
         this.inventoryService = inventoryService;
     }
 
+    public void init() {
+        LOG.info("AlarmToInventory init'd");
+    }
+
     public EnrichedAlarm enrichAlarm(OpennmsModelProtos.Alarm alarm) {
         try {
             return inventoryService.enrichAlarm(alarm);

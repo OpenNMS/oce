@@ -1,6 +1,5 @@
 <blueprint xmlns="http://www.osgi.org/xmlns/blueprint/v1.0.0"
-           xmlns:cm="http://aries.apache.org/blueprint/xmlns/blueprint-cm/v1.1.0"
-           xmlns:ext="http://aries.apache.org/blueprint/xmlns/blueprint-ext/v1.0.0">
+           xmlns:cm="http://aries.apache.org/blueprint/xmlns/blueprint-cm/v1.1.0" >
 
     <!-- Configuration properties -->
     <cm:property-placeholder id="datasourceProperties" persistent-id="org.opennms.oce.datasource.opennms.kafka" update-strategy="reload">
@@ -18,9 +17,10 @@
     </cm:property-placeholder>
 
     <bean id="scriptFactory" class="org.opennms.oce.datasource.opennms.ScriptedInventoryImpl" init-method="init" >
-        <argument ref="scriptFile"/>
+        <argument value="${scriptFile}"/>
+        <argument ref="blueprintBundleContext"/>
     </bean>
-    <service ref="scriptFactory" interface="org.opennms.oce.datasource.api.ScriptInventoryService"/>
+    <service ref="scriptFactory" interface="org.opennms.oce.datasource.opennms.ScriptedInventoryService"/>
 
     <bean id="nodeToInventory" class="org.opennms.oce.datasource.opennms.NodeToInventory" init-method="init" >
         <argument ref="scriptFactory"/>

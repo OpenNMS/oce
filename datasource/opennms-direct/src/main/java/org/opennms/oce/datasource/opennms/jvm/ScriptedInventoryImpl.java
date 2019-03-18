@@ -98,7 +98,7 @@ public class ScriptedInventoryImpl implements ScriptedInventoryService {
                 throw new IllegalArgumentException("Cannot find script in classpath : " + e.getMessage());
             }
             script = sb.toString();
-            this.scriptPath = "/inventory.groovy";
+            this.scriptPath = DEFAULT_SCRIPT;
             scriptExtension = "groovy";
             LOG.info("Loaded inventory.groovy from the classpath");
         } else {

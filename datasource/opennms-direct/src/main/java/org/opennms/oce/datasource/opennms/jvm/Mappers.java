@@ -68,6 +68,10 @@ public class Mappers {
         this.inventoryService = inventoryService;
     }
 
+    public void init() {
+        // required for karaf.
+    }
+
     public Alarm toAlarm(org.opennms.integration.api.v1.model.Alarm alarm) {
         ImmutableAlarm.Builder alarmBuilder = ImmutableAlarm.newBuilder();
         alarmBuilder

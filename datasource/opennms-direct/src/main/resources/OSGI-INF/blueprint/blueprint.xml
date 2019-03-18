@@ -16,7 +16,7 @@
         <argument value="${scriptFile}"/>
         <argument ref="blueprintBundleContext"/>
     </bean>
-    <service ref="scriptFactory" interface="org.opennms.oce.datasource.api.ScriptInventoryService"/>
+    <service ref="scriptFactory" interface="org.opennms.oce.datasource.opennms.jvm.ScriptedInventoryService"/>
 
     <bean id="mappers" class="org.opennms.oce.datasource.opennms.jvm.Mappers" init-method="init" >
         <argument ref="scriptFactory"/>
@@ -25,6 +25,7 @@
     <bean id="directAlarmDatasource" class="org.opennms.oce.datasource.opennms.jvm.DirectAlarmDatasource" init-method="init" >
         <argument ref="alarmDao"/>
         <argument ref="eventForwarder"/>
+        <argument ref="mappers"/>
     </bean>
     <service ref="directAlarmDatasource" interface="org.opennms.oce.datasource.api.AlarmDatasource"/>
     <service ref="directAlarmDatasource" interface="org.opennms.oce.datasource.api.SituationDatasource"/>
@@ -33,6 +34,7 @@
     <bean id="directAlarmFeedbackDatasource"
           class="org.opennms.oce.datasource.opennms.jvm.DirectAlarmFeedbackDatasource" init-method="init">
         <argument ref="alarmFeedbackDao"/>
+        <argument ref="mappers"/>
     </bean>
     <service ref="directAlarmFeedbackDatasource" interface="org.opennms.integration.api.v1.feedback.AlarmFeedbackListener"/>
     <service ref="directAlarmFeedbackDatasource" interface="org.opennms.oce.datasource.api.AlarmFeedbackDatasource"/>

@@ -114,7 +114,7 @@ public class OpennmsAlarmFeedbackDatasourceIT extends OpennmsDatasourceIT implem
         // Stop & restart
         datasource.destroy();
         // (Re)create the datasource
-        ScriptedInventoryService inventoryService = new ScriptedInventoryImpl("inventory.groovy");
+        ScriptedInventoryService inventoryService = new ScriptedInventoryImpl("/inventory.groovy");
         NodeToInventory nodeToInventory = new NodeToInventory(inventoryService);
         AlarmToInventory alarmToInventory = new AlarmToInventory(inventoryService);
         EdgeToInventory edgeToInventory = new EdgeToInventory(inventoryService);

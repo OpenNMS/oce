@@ -46,7 +46,7 @@ public class NodeToInventoryTest {
 
     @Before
     public void setUp() {
-        ScriptedInventoryService inventoryService = new ScriptedInventoryImpl("inventory.groovy");
+        ScriptedInventoryService inventoryService = new ScriptedInventoryImpl("/inventory.groovy");
         nodeToInventory = new NodeToInventory(inventoryService);
     }
 

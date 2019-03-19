@@ -59,7 +59,7 @@ public class DirectInventoryDatasourceTest {
 
     @Before
     public void setUp() {
-        ScriptedInventoryService inventoryService = new ScriptedInventoryImpl("/inventory.groovy");
+        ScriptedInventoryService inventoryService = new ScriptedInventoryImpl("src/main/resources/inventory.groovy");
         Mappers mappers = new Mappers(inventoryService);
         dic = new DirectInventoryDatasource(mockNodeDao, mockAlarmDao, mappers);
         dic.init();

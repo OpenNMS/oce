@@ -56,7 +56,7 @@ public class InventoryFactoryTest {
     @Before
     public void before() throws IOException, ScriptException, URISyntaxException {
         System.setProperty("log4j.skipJansi", "true");
-        inventoryService = new ScriptedInventoryImpl("/inventory.groovy");
+        inventoryService = new ScriptedInventoryImpl("src/main/resources/inventory.groovy");
     }
 
     @Test

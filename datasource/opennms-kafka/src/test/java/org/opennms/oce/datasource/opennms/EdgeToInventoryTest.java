@@ -49,7 +49,7 @@ public class EdgeToInventoryTest {
 
     @Before
     public void setup() {
-        ScriptedInventoryService inventoryService = new ScriptedInventoryImpl("/inventory.groovy");
+        ScriptedInventoryService inventoryService = new ScriptedInventoryImpl("src/main/resources/inventory.groovy");
         edgeToInventory = new EdgeToInventory(inventoryService);
     }
 

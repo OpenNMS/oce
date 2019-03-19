@@ -33,10 +33,6 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.net.URISyntaxException;
-import java.net.URL;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.List;
 
 import javax.script.Invocable;
@@ -81,6 +77,9 @@ public class ScriptedInventoryImpl implements ScriptedInventoryService {
     }
 
     public ScriptedInventoryImpl(String scriptPath, ScriptEngineManager manager) {
+        if (scriptPath == null) {
+            throw new IllegalArgumentException("Null value for scriptFile.");
+        }
 
         String script;
         String scriptExtension;
@@ -105,30 +104,17 @@ public class ScriptedInventoryImpl implements ScriptedInventoryService {
             // read the script from the file system
             this.scriptPath = scriptPath;
 
-            URL scriptUri = ScriptedInventoryImpl.class.getResource(scriptPath);
-
-            if (scriptUri == null) {
-                throw new IllegalArgumentException("Cannot find script : '" + scriptPath);
-            }
-
-            File file;
-            try {
-                file = new File(scriptUri.toURI());
-            } catch (URISyntaxException e1) {
-                throw new IllegalArgumentException("Invalid script URL: '" + scriptUri + "'.");
-
-            }
+            File file = new File(scriptPath);
             if (!file.canRead()) {
                 throw new IllegalStateException("Cannot read script at '" + file + "'.");
             }
             try {
-                Path path = Paths.get(scriptUri.toURI());
-                byte[] fileBytes = java.nio.file.Files.readAllBytes(path);
+                byte[] fileBytes = java.nio.file.Files.readAllBytes(file.toPath());
                 script = new String(fileBytes);
                 scriptExtension = Files.getFileExtension(scriptPath);
                 timestamp = file.lastModified();
-                LOG.info("Loaded script {} from {} with timestamp: {}", file, path, timestamp);
-            } catch (URISyntaxException | IOException e) {
+                LOG.info("Loaded script {} from {} with timestamp: {}", file, scriptPath, timestamp);
+            } catch (IOException e) {
                 throw new IllegalStateException("Reading reading script at '" + file + "'.");
             }
         }

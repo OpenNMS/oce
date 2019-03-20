@@ -18,6 +18,7 @@
 
     <bean id="scriptFactory" class="org.opennms.oce.datasource.opennms.ScriptedInventoryImpl" init-method="init" >
         <argument value="${scriptFile}"/>
+        <argument value="${scriptCacheMillis}"/>
         <argument ref="blueprintBundleContext"/>
     </bean>
     <service ref="scriptFactory" interface="org.opennms.oce.datasource.opennms.ScriptedInventoryService"/>

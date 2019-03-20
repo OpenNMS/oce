@@ -26,7 +26,7 @@
  *     http://www.opennms.com/
  *******************************************************************************/
 
-package org.opennms.oce.datasource.opennms;
+package org.opennms.oce.datasource.common.inventory.script;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -39,7 +39,6 @@ import javax.script.ScriptEngine;
 import javax.script.ScriptEngineManager;
 import javax.script.ScriptException;
 
-import org.opennms.oce.datasource.common.inventory.script.OSGiScriptEngineManager;
 import org.osgi.framework.BundleContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -52,7 +51,7 @@ import com.google.common.io.Files;
  */
 public abstract class AbstractScriptedInventory {
 
-    protected static final Logger LOG = LoggerFactory.getLogger(ScriptedInventoryImpl.class);
+    protected static final Logger LOG = LoggerFactory.getLogger(AbstractScriptedInventory.class);
 
     protected static final String DEFAULT_SCRIPT = "/inventory.groovy";
 
@@ -64,11 +63,17 @@ public abstract class AbstractScriptedInventory {
 
     private String scriptPath;
 
+    private ScriptEngineManager manager;
+
+    private ScriptEngine engine;
+
     private long configurationTimestamp;
 
     private long scriptFileTimestamp;
 
-    public AbstractScriptedInventory(String scriptPath, BundleContext bundleContext) {
+    private long scriptCacheMillis;
+
+    public AbstractScriptedInventory(String scriptPath, long scriptCacheMillis, BundleContext bundleContext) {
         if (scriptPath == null) {
             throw new IllegalArgumentException("Null value for scriptFile.");
         }
@@ -76,11 +81,12 @@ public abstract class AbstractScriptedInventory {
         String script;
         String scriptExtension;
 
-        usingDefaultScript = true;
+        this.scriptCacheMillis = scriptCacheMillis;
 
         if (scriptPath.isEmpty()) {
             // load default from classpath
-            InputStream inputStream = ScriptedInventoryImpl.class.getResourceAsStream(DEFAULT_SCRIPT);
+            usingDefaultScript = true;
+            InputStream inputStream = AbstractScriptedInventory.class.getResourceAsStream(DEFAULT_SCRIPT);
             StringBuilder sb = new StringBuilder();
             try (BufferedReader br = new BufferedReader(new InputStreamReader(inputStream))) {
                 String line;
@@ -113,7 +119,6 @@ public abstract class AbstractScriptedInventory {
             }
         }
 
-        ScriptEngineManager manager;
         if (bundleContext == null) {
             manager = new ScriptEngineManager();
         } else {
@@ -121,7 +126,7 @@ public abstract class AbstractScriptedInventory {
             manager = new OSGiScriptEngineManager(context);
         }
 
-        final ScriptEngine engine = manager.getEngineByExtension(scriptExtension);
+        engine = manager.getEngineByExtension(scriptExtension);
         if (engine == null) {
             throw new IllegalStateException("No engine found for extension: " + scriptExtension);
         }
@@ -137,95 +142,55 @@ public abstract class AbstractScriptedInventory {
     }
 
     protected Invocable getInvocable() {
-        if (configCacheExpired()) {
-            refreshConfig();
+        // if the script is on disc, check every so often to see if it has been updated
+        if (!usingDefaultScript && scriptCacheExpired()) {
+            // reset cache
+            configurationTimestamp = System.currentTimeMillis();
+            if (scriptHasBeenUpdated()) {
+                updateInvocable();
+            }
         }
         return invocable;
     }
 
-    /**
-     * 
-     */
-    private void refreshConfig() {
-        String scriptPath = getCurrentScriptpath();
-        if (usingDefaultScript) {
-            // if still using default script, carry on
-            // if now using file script, attempt to evaluate.
-        } else {
-            // if name has changed or lastmodified is newer, attempt to re-evaluate
+    private boolean scriptHasBeenUpdated() {
+        File file = new File(scriptPath);
+        if (!file.canRead()) {
+            LOG.error("Not loading script from filesystem. Cannot read script at '" + scriptPath + "'.");
+            return false;
         }
-
-        configurationTimestamp = System.currentTimeMillis();
-    }
-
-    private String getCurrentScriptpath() {
-        // FIXME get the current value for scriptFile from the bundleContext
-        return "";
+        return file.lastModified() > scriptFileTimestamp;
     }
 
     // return TRUE if it's been more than 30 seconds since the config has been checked.
-    private boolean configCacheExpired() {
-        return System.currentTimeMillis() - configurationTimestamp > 30000;
+    private boolean scriptCacheExpired() {
+        return System.currentTimeMillis() - configurationTimestamp > scriptCacheMillis;
     }
 
-    /**
-     * 
-     */
-    private Invocable getNewIvocable(String scriptPath) {
+    private void updateInvocable() {
         try {
-            // read the script from the file system
-            this.scriptPath = scriptPath;
-
             File file = new File(scriptPath);
             if (!file.canRead()) {
-                throw new IllegalStateException("Cannot read script at '" + file + "'.");
-            }
-            String script;
-            String scriptExtension;
-
-            try {
-                byte[] fileBytes = java.nio.file.Files.readAllBytes(file.toPath());
-
-                script = new String(fileBytes);
-                scriptExtension = Files.getFileExtension(scriptPath);
-                scriptFileTimestamp = file.lastModified();
-                LOG.info("Loaded script {} from {} with timestamp: {}", file, scriptPath, scriptFileTimestamp);
-            } catch (IOException e) {
-                throw new IllegalStateException("Reading reading script at '" + file + "'.");
+                LOG.error("Not loading script from filesystem. Cannot read script at '" + scriptPath + "'.");
+                return;
             }
 
-            ScriptEngineManager manager = new OSGiScriptEngineManager(context);
-            final ScriptEngine engine = manager.getEngineByExtension(scriptExtension);
-            if (engine == null) {
-                throw new IllegalStateException("No engine found for extension: " + scriptExtension);
-            }
+            byte[] fileBytes = java.nio.file.Files.readAllBytes(file.toPath());
+
+            String script = new String(fileBytes);
+            scriptFileTimestamp = file.lastModified();
+            LOG.info("Loaded script {} from {} with timestamp: {}", file, scriptPath, scriptFileTimestamp);
+
             try {
                 engine.eval(script);
+                invocable = (Invocable) engine;
+                usingDefaultScript = false;
             } catch (ScriptException e) {
-                throw new IllegalStateException("Failed to eval() script file - " + this.scriptPath, e);
+                LOG.error("Failed to eval() script file - " + scriptPath, e);
             }
-
-            invocable = (Invocable) engine;
-            configurationTimestamp = System.currentTimeMillis();
-            usingDefaultScript = false;
-
         } catch (Exception e) {
             LOG.error("Failed to update/evaluate script [{}]: {}", scriptPath, e.getMessage());
         }
-        return invocable;
-        // TODO == refresh script
-
-    }
-
-    private boolean cachedIsLatest() {
-        // TODO return false if script on disc has been updated
-        // TODO - test for script being updated otherwise can return cached version.
-
-        /*if (file.lastModified() <= timestamp && cached != null) {
-            return cached.i;
-        }
-        */
-        return true;
     }
 
 }

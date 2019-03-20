@@ -34,11 +34,14 @@ import java.util.List;
 import javax.script.ScriptException;
 
 import org.opennms.oce.datasource.common.ScriptedInventoryException;
+import org.opennms.oce.datasource.common.inventory.script.AbstractScriptedInventory;
 import org.opennms.oce.datasource.opennms.proto.InventoryModelProtos;
 import org.opennms.oce.datasource.opennms.proto.InventoryModelProtos.InventoryObjects;
 import org.opennms.oce.datasource.opennms.proto.OpennmsModelProtos;
 import org.opennms.oce.datasource.opennms.proto.OpennmsModelProtos.TopologyEdge;
 import org.osgi.framework.BundleContext;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * @author smith
@@ -46,12 +49,14 @@ import org.osgi.framework.BundleContext;
  */
 public class ScriptedInventoryImpl extends AbstractScriptedInventory implements ScriptedInventoryService {
 
+    private static final Logger LOG = LoggerFactory.getLogger(ScriptedInventoryImpl.class);
+
     public ScriptedInventoryImpl(String scriptPath) {
-        super(scriptPath, null);
+        super(scriptPath, 30000, null);
     }
 
-    public ScriptedInventoryImpl(String scriptPath, BundleContext bundleContext) {
-        super(scriptPath, bundleContext);
+    public ScriptedInventoryImpl(String scriptPath, long scriptCacheMillis, BundleContext bundleContext) {
+        super(scriptPath, scriptCacheMillis, bundleContext);
     }
 
     public void init() {

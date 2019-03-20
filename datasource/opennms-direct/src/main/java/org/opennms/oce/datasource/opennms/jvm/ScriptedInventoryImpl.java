@@ -28,16 +28,8 @@
 
 package org.opennms.oce.datasource.opennms.jvm;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.util.List;
 
-import javax.script.Invocable;
-import javax.script.ScriptEngine;
-import javax.script.ScriptEngineManager;
 import javax.script.ScriptException;
 
 import org.opennms.integration.api.v1.model.Alarm;
@@ -45,92 +37,25 @@ import org.opennms.integration.api.v1.model.Node;
 import org.opennms.oce.datasource.api.InventoryObject;
 import org.opennms.oce.datasource.common.ImmutableAlarm;
 import org.opennms.oce.datasource.common.ScriptedInventoryException;
-import org.opennms.oce.datasource.common.inventory.script.OSGiScriptEngineManager;
+import org.opennms.oce.datasource.common.inventory.script.AbstractScriptedInventory;
 import org.osgi.framework.BundleContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import com.google.common.io.Files;
 
 /**
  * @author smith
  *
  */
-public class ScriptedInventoryImpl implements ScriptedInventoryService {
+public class ScriptedInventoryImpl extends AbstractScriptedInventory implements ScriptedInventoryService {
 
     private static final Logger LOG = LoggerFactory.getLogger(ScriptedInventoryImpl.class);
 
-    private static final String DEFAULT_SCRIPT = "/inventory.groovy";
-
-    private final Invocable invocable;
-
-    private String scriptPath;
-
-    private long timestamp;
-
     public ScriptedInventoryImpl(String scriptPath) {
-        this(scriptPath, new ScriptEngineManager());
+        super(scriptPath, 30000, null);
     }
 
-    public ScriptedInventoryImpl(String scriptPath, BundleContext bundleContext) {
-        this(scriptPath, new OSGiScriptEngineManager(bundleContext));
-    }
-
-    public ScriptedInventoryImpl(String scriptPath, ScriptEngineManager manager) {
-        if (scriptPath == null) {
-            throw new IllegalArgumentException("Null value for scriptFile.");
-        }
-
-        String script;
-        String scriptExtension;
-
-        if (scriptPath.isEmpty()) {
-            // load default from classpath
-            InputStream inputStream = ScriptedInventoryImpl.class.getResourceAsStream(DEFAULT_SCRIPT);
-            StringBuilder sb = new StringBuilder();
-            try (BufferedReader br = new BufferedReader(new InputStreamReader(inputStream))) {
-                String line;
-                while ((line = br.readLine()) != null) {
-                    sb.append(line).append("\n");
-                }
-            } catch (IOException e) {
-                throw new IllegalArgumentException("Cannot find script in classpath : " + e.getMessage());
-            }
-            script = sb.toString();
-            this.scriptPath = DEFAULT_SCRIPT;
-            scriptExtension = "groovy";
-            LOG.info("Loaded inventory.groovy from the classpath");
-        } else {
-            // read the script from the file system
-            this.scriptPath = scriptPath;
-
-            File file = new File(scriptPath);
-            if (!file.canRead()) {
-                throw new IllegalStateException("Cannot read script at '" + file + "'.");
-            }
-            try {
-                byte[] fileBytes = java.nio.file.Files.readAllBytes(file.toPath());
-                script = new String(fileBytes);
-                scriptExtension = Files.getFileExtension(scriptPath);
-                timestamp = file.lastModified();
-                LOG.info("Loaded script {} from {} with timestamp: {}", file, scriptPath, timestamp);
-            } catch (IOException e) {
-                throw new IllegalStateException("Reading reading script at '" + file + "'.");
-            }
-        }
-
-        final ScriptEngine engine = manager.getEngineByExtension(scriptExtension);
-        if (engine == null) {
-            throw new IllegalStateException("No engine found for extension: " + scriptExtension);
-        }
-
-        try {
-            engine.eval(script);
-        } catch (ScriptException e) {
-            throw new IllegalStateException("Failed to eval() script file - " + this.scriptPath, e);
-        }
-
-        invocable = (Invocable) engine;
+    public ScriptedInventoryImpl(String scriptPath, long scriptCacheMillis, BundleContext bundleContext) {
+        super(scriptPath, scriptCacheMillis, bundleContext);
     }
 
     public void init() {
@@ -169,35 +94,6 @@ public class ScriptedInventoryImpl implements ScriptedInventoryService {
         } catch (NoSuchMethodException | ScriptException e) {
             throw new ScriptedInventoryException("Failed to create inventory from node", e);
         }
-    }
-
-    private Invocable getInvocable() throws ScriptedInventoryException {
-        if (cachedIsLatest()) {
-            return invocable;
-        } else {
-            return getNewIvocable();
-        }
-    }
-
-    /**
-     * 
-     */
-    private Invocable getNewIvocable() {
-        return invocable;
-        // TODO == refresh script
-
-    }
-
-    private boolean cachedIsLatest() {
-        // TODO return false if script on disc has been updated
-        // TODO - test for script being updated otherwise can return cached version.
-        if (scriptPath.equals(scriptPath)) {
-            // TODO read timestamp
-        }
-        if (0 > timestamp) {
-            return false;
-        }
-        return true;
     }
 
 }

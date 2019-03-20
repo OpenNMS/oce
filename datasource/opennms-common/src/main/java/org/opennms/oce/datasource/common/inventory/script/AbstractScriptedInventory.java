@@ -31,8 +31,8 @@ package org.opennms.oce.datasource.common.inventory.script;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.net.URL;
 
 import javax.script.Invocable;
 import javax.script.ScriptEngine;
@@ -86,9 +86,9 @@ public abstract class AbstractScriptedInventory {
         if (scriptPath.isEmpty()) {
             // load default from classpath
             usingDefaultScript = true;
-            InputStream inputStream = AbstractScriptedInventory.class.getResourceAsStream(DEFAULT_SCRIPT);
+            URL scriptUrl = bundleContext.getBundle().getResource(DEFAULT_SCRIPT);
             StringBuilder sb = new StringBuilder();
-            try (BufferedReader br = new BufferedReader(new InputStreamReader(inputStream))) {
+            try (BufferedReader br = new BufferedReader(new InputStreamReader(scriptUrl.openStream()))) {
                 String line;
                 while ((line = br.readLine()) != null) {
                     sb.append(line).append("\n");
@@ -115,8 +115,9 @@ public abstract class AbstractScriptedInventory {
                 scriptFileTimestamp = file.lastModified();
                 LOG.info("Loaded script {} from {} with timestamp: {}", file, scriptPath, scriptFileTimestamp);
             } catch (IOException e) {
-                throw new IllegalStateException("Reading reading script at '" + file + "'.");
+                throw new IllegalStateException("IOError while Reading reading script at '" + file + "'.");
             }
+            LOG.info("Loaded script {} from the file system", scriptPath);
         }
 
         if (bundleContext == null) {
@@ -137,6 +138,7 @@ public abstract class AbstractScriptedInventory {
             throw new IllegalStateException("Failed to eval() script file - " + this.scriptPath, e);
         }
 
+        LOG.info("ScriptEngine Initialized with {}", this.scriptPath);
         invocable = (Invocable) engine;
         configurationTimestamp = System.currentTimeMillis();
     }

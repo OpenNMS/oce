@@ -286,8 +286,7 @@
     </feature>
 
     <feature name="groovy" description="Groovy" version="${groovy.version}">
-        <bundle>mvn:org.codehaus.groovy/groovy/${groovy.version}</bundle>
-        <bundle>mvn:org.codehaus.groovy/groovy-jsr223/${groovy.version}</bundle>
+        <bundle>mvn:org.codehaus.groovy/groovy-all/${groovy.version}</bundle>
     </feature>
 
 </features>

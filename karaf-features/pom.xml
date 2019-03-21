@@ -87,7 +87,7 @@
                             <features>
                                 <feature>oce-datasource-api</feature>
                                 <feature>oce-datasource-jaxb</feature>
-                                <feature>oce-datasource-opennms-kafka</feature>
+                                <!-- <feature>oce-datasource-opennms-kafka</feature>  seegroovy  below: -->
                                 <feature>oce-datasource-shell</feature>
                                 <feature>oce-engine</feature>
                                 <feature>oce-engine-cluster</feature>
@@ -129,6 +129,7 @@
                                 <feature>moxy</feature>
                                 <feature>jackson-jaxrs</feature>
                                 <feature>tensorflow</feature>
+        <!--                        <feature>groovy</feature>  broken:filter:="(osgi.extender=osgi.serviceloader.registrar)" -->
                             </features>
                         </configuration>
                     </execution>

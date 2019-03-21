@@ -29,23 +29,11 @@
 package org.opennms.e2e.oce;
 
 import org.junit.Test;
-import org.junit.rules.RuleChain;
-import org.opennms.e2e.containers.OCEContainer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class End2EndStandaloneCorrelationTest extends AbstractCorrelationTest {
     private static final Logger LOG = LoggerFactory.getLogger(End2EndStandaloneCorrelationTest.class);
-
-    @Override
-    RuleChain addTestSpecificContainers() {
-        // Define a single non-redundant OCE for these tests
-        try {
-            return RuleChain.outerRule(new OCEContainer(false));
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
-    }
 
     @Test
     public void canCorrelateAlarms() throws Exception {

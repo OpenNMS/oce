@@ -105,14 +105,6 @@ jobs:
           # fallback to using the latest cache if no exact match is found
           - v4-dependencies-
 
-      # Linking /tmp/.m2 to ~/.m2 so that we can cache the /tmp/.m2 path for sharing with other images that can't write
-      # to /root
-      - run:
-          name: Link maven repo with cache
-          command: |
-            [ -d /tmp/.m2 ] || mkdir /tmp/.m2
-            ln -s /tmp/.m2 ~/.m2
-
       - run:
           name: Build
           command: |
@@ -120,7 +112,7 @@ jobs:
 
       - save_cache:
           paths:
-            - /tmp/.m2
+            - ~/.m2
           key: v4-dependencies-{{ checksum "pom.xml" }}
 
       - run:
@@ -164,7 +156,14 @@ jobs:
     steps:
       - attach_workspace:
           at: ~/
-  
+
+      # Link root user's m2 repo from the cache with our user's m2 repo (the circleci user)
+      - run:
+          name: Link maven repo with cache
+          command: |
+            sudo chmod 777 /root
+            ln -s /root/.m2 ~/.m2
+
       - restore_cache:
           keys:
           # attempt to use the cache from the last smoke-test run
@@ -177,14 +176,7 @@ jobs:
       - restore_cache:
           keys:
           - v1-docker-{{ checksum "smoke-test/src/main/resources/docker_fixed_images" }}
-  
-      # Link the cached maven repo
-      # Note: this is needed since we are using a circleci vm that is running as circleci whereas our images run as root
-      - run:
-          name: Link maven repo with cache
-          command: |
-            ln -s /tmp/.m2 ~/.m2
-  
+
       - run:
           name: Make the kar available
           command: |
@@ -212,7 +204,7 @@ jobs:
             
       - save_cache:
           paths:
-          - /tmp/.m2
+          - /root/.m2
           key: v2-smoke-dependencies-{{ checksum "smoke-test/pom.xml" }}-{{ checksum "pom.xml" }}
 
       - run:
@@ -245,14 +237,17 @@ jobs:
 
       - store_artifacts:
           path: ~/logs
-      
+
+      # Unfortunately I can't reference the env variable containing the recording path here so I have to
+      # duplicate it
       - store_artifacts:
           path: /tmp/test-recordings
 
       # Future Improvements:
       # - Store the logs from the sentinel and OpenNMS containers for the test run in addition to the junit logs
-      #   - Maybe we could SCP them with JSCH?
+      #   - Mount the logs directories from the containers so we can copy the logs out easier
       # - Add nightly test run back once tests are proven stable
+      #   - We might want to test nightly against the floating (latest) images for opennms and sentinel
 
   build-docs:
     executor: docs-executor
@@ -284,14 +279,7 @@ jobs:
           - v4-dependencies-{{ checksum "pom.xml" }}
           # fallback to using the latest cache if no exact match is found
           - v4-dependencies-
-  
-      # Link the cached maven repo
-      # Note: this is needed since we are using a circleci vm that is running as circleci whereas our images run as root
-      - run:
-          name: Link maven repo with cache
-          command: |
-            ln -s /tmp/.m2 ~/.m2
-  
+
       - run:
           name: Deploy the artifacts
           command: |

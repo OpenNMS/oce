@@ -36,9 +36,9 @@ import static org.hamcrest.Matchers.notNullValue;
 import java.net.MalformedURLException;
 import java.net.URL;
 
-import org.opennms.e2e.containers.util.DockerImageResolver;
-import org.opennms.e2e.containers.util.Karaf;
-import org.opennms.e2e.containers.util.Network;
+import org.opennms.e2e.util.DockerImageResolver;
+import org.opennms.e2e.util.Karaf;
+import org.opennms.e2e.util.Network;
 import org.opennms.e2e.opennms.OpenNMSRestClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

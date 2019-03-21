@@ -37,10 +37,9 @@ import static org.hamcrest.collection.IsCollectionWithSize.hasSize;
 import java.net.MalformedURLException;
 import java.net.URL;
 
-import org.opennms.e2e.containers.util.DockerImageResolver;
-import org.opennms.e2e.containers.util.Network;
-import org.opennms.e2e.core.WebDriverStrategy;
 import org.opennms.e2e.grafana.GrafanaRestClient;
+import org.opennms.e2e.util.DockerImageResolver;
+import org.opennms.e2e.util.Network;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.testcontainers.containers.GenericContainer;
@@ -58,10 +57,7 @@ public class HelmContainer extends GenericContainer {
                 .waitingFor(new WaitForHelm());
     }
 
-    public URL getHelmUrlForWebDriver(WebDriverStrategy webDriverStrategy) {
-        if (!webDriverStrategy.isInternallyNetworked()) {
-            return getHelmExternalUrl();
-        }
+    public URL getHelmUrlForWebDriver() {
         return getHelmInternalUrl();
     }
 

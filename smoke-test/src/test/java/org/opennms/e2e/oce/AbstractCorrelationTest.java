@@ -56,13 +56,11 @@ import org.junit.Rule;
 import org.junit.rules.RuleChain;
 import org.opennms.e2e.containers.HelmContainer;
 import org.opennms.e2e.containers.OpenNMSContainer;
-import org.opennms.e2e.containers.util.DockerImageResolver;
-import org.opennms.e2e.containers.util.Network;
-import org.opennms.e2e.core.WebDriverStrategy;
 import org.opennms.e2e.grafana.Grafana44SeleniumDriver;
 import org.opennms.e2e.grafana.GrafanaRestClient;
 import org.opennms.e2e.opennms.OpenNMSRestClient;
-import org.openqa.selenium.WebDriver;
+import org.opennms.e2e.util.DockerImageResolver;
+import org.opennms.e2e.util.Network;
 import org.openqa.selenium.remote.DesiredCapabilities;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -130,33 +128,12 @@ public abstract class AbstractCorrelationTest {
     }
 
     void verifyGenericSituation() throws Exception {
-        try (final WebDriverStrategy webDriverStrategy = getWebDriverStrategy()) {
-            try {
-                new Grafana44SeleniumDriver(webDriverStrategy.getDriver(),
-                        helmContainer.getHelmUrlForWebDriver(webDriverStrategy))
-                        .home()
-                        .dashboard(DASHBOARD_NAME)
-                        .verifyAnAlarmIsPresent()
-                        .verifyRelatedAlarmLabels(Collections.singletonList(Pair.of(GENERIC_ALARM_TITLE, 3)));
-            } catch (Exception e) {
-                webDriverStrategy.setFailed(true);
-                throw new RuntimeException(e);
-            }
-        }
-    }
-
-    private WebDriverStrategy getWebDriverStrategy() {
-        return new WebDriverStrategy() {
-            @Override
-            public WebDriver getDriver() {
-                return webDriverContainer.getWebDriver();
-            }
-
-            @Override
-            public void close() {
-                // No-op, the web driver container will get cleaned up automatically
-            }
-        };
+        new Grafana44SeleniumDriver(webDriverContainer.getWebDriver(),
+                helmContainer.getHelmUrlForWebDriver())
+                .home()
+                .dashboard(DASHBOARD_NAME)
+                .verifyAnAlarmIsPresent()
+                .verifyRelatedAlarmLabels(Collections.singletonList(Pair.of(GENERIC_ALARM_TITLE, 3)));
     }
 
     private void setupHelm(GrafanaRestClient grafanaRestClient) throws IOException {

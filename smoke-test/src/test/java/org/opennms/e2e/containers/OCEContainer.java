@@ -41,10 +41,10 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.apache.commons.io.FileUtils;
-import org.opennms.e2e.containers.util.DockerImageResolver;
-import org.opennms.e2e.containers.util.Karaf;
-import org.opennms.e2e.containers.util.Network;
-import org.opennms.e2e.containers.util.Overlay;
+import org.opennms.e2e.util.DockerImageResolver;
+import org.opennms.e2e.util.Karaf;
+import org.opennms.e2e.util.Network;
+import org.opennms.e2e.util.Overlay;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.testcontainers.containers.BindMode;
@@ -63,7 +63,7 @@ public class OCEContainer extends GenericContainer {
     private int redundantId;
 
     public OCEContainer(boolean isRedundant) throws Exception{
-        super(DockerImageResolver.getImageAndTag("oce"));
+        super(org.opennms.e2e.util.DockerImageResolver.getImageAndTag("oce"));
         this.isRedundant = isRedundant;
         redundantId = redundantIndex.getAndIncrement();
         withExposedPorts(OCE_SSH_PORT)

@@ -40,7 +40,7 @@ import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.rules.RuleChain;
 import org.opennms.e2e.containers.OCEContainer;
-import org.opennms.e2e.containers.util.Karaf;
+import org.opennms.e2e.util.Karaf;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

@@ -26,7 +26,7 @@
  *     http://www.opennms.com/
  *******************************************************************************/
 
-package org.opennms.e2e.containers.util;
+package org.opennms.e2e.util;
 
 import java.net.InetSocketAddress;
 

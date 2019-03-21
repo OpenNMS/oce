@@ -26,7 +26,7 @@
  *     http://www.opennms.com/
  *******************************************************************************/
 
-package org.opennms.e2e.containers.util.ssh;
+package org.opennms.e2e.util.ssh;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

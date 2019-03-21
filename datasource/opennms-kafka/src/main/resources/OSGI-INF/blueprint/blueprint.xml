@@ -12,7 +12,8 @@
             <cm:property name="edgesTopic" value="edges"/>
             <cm:property name="inventoryTtlMs" value="86400000"/> <!-- 24 hours -->
             <cm:property name="inventoryGcIntervalMs" value="300000"/> <!-- 5 minutes -->
-			<cm:property name="scriptFile" value="inventory.groovy"/>
+            <cm:property name="scriptFile" value=""/>
+            <cm:property name="scriptCacheMillis" value="30000"/>  <!-- 30 seconds -->
         </cm:default-properties>
     </cm:property-placeholder>
 

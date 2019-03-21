@@ -40,45 +40,8 @@ public class EdgeToInventory {
 
     private static final Logger LOG = LoggerFactory.getLogger(EdgeToInventory.class);
 
-	private final ScriptedInventoryService inventoryService;
+    private final ScriptedInventoryService inventoryService;
     
-    // Note: only port is supported as a target right now
-        switch (edge.getTargetCase()) {
-            case TARGETPORT:
-                targetIfIndex = edge.getTargetPort().getIfIndex();
-                targetNodeCriteria = OpennmsMapper.toNodeCriteria(edge.getTargetPort().getNodeCriteria());
-                break;
-            case TARGETSEGMENT:
-                // Segment support needs to be added when segments are available
-            default:
-                throw new UnsupportedOperationException("Unsupported target type + " + edge.getTargetCase());
-        }
-
-        String protocol = edge.getRef().getProtocol().name();
-        String sourceNodeCriteria = OpennmsMapper.toNodeCriteria(edge.getSource().getNodeCriteria());
-
-        // Create a link object by setting the peers to the source and target
-        ioBuilder.setType(ManagedObjectType.SnmpInterfaceLink.getName())
-                // The Id for this link will incorporate the protocol so that if multiple protocols describe a link 
-                // between the same endpoints they will create multiple links (one for each protocol)
-                .setId(getIdForEdge(edge))
-                .setFriendlyName(String.format("SNMP Interface Link Between %d on %s and %d on %s discovered with " +
-                                "protocol %s", edge.getSource().getIfIndex(), sourceNodeCriteria, targetIfIndex,
-                        targetNodeCriteria, protocol))
-                .addPeer(InventoryModelProtos.InventoryObjectPeerRef.newBuilder()
-                        .setEndpoint(InventoryModelProtos.InventoryObjectPeerEndpoint.A)
-                        .setId(String.format("%s:%d", sourceNodeCriteria,
-                                edge.getSource().getIfIndex()))
-                        .setType(ManagedObjectType.SnmpInterface.getName())
-                        .build())
-                .addPeer(InventoryModelProtos.InventoryObjectPeerRef.newBuilder()
-                        .setEndpoint(InventoryModelProtos.InventoryObjectPeerEndpoint.Z)
-                        .setId(String.format("%s:%d", targetNodeCriteria,
-                                targetIfIndex))
-                        .setType(ManagedObjectType.SnmpInterface.getName())
-                        .build())
-                .build();
-
     public EdgeToInventory(ScriptedInventoryService inventoryService) {
         this.inventoryService = inventoryService;
     }

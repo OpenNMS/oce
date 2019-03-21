@@ -65,7 +65,7 @@ class InventoryFactory {
         switch (edge.getTargetCase()) {
             case TargetCase.TARGETPORT:
                 targetIfIndex = edge.getTargetPort().getIfIndex();
-                targetNodeCriteria = EdgeToInventory.nodeCriteriaToString(edge.getTargetPort().getNodeCriteria());
+                targetNodeCriteria = OpennmsMapper.toNodeCriteria(edge.getTargetPort().getNodeCriteria());
                 break;
             case TargetCase.TARGETSEGMENT:
             // Segment support needs to be added when segments are available
@@ -74,7 +74,7 @@ class InventoryFactory {
         }
 
         String protocol = edge.getRef().getProtocol().name();
-        String sourceNodeCriteria = EdgeToInventory.nodeCriteriaToString(edge.getSource().getNodeCriteria());
+        String sourceNodeCriteria = OpennmsMapper.toNodeCriteria(edge.getSource().getNodeCriteria());
 
         // Create a link object by setting the peers to the source and target
         ioBuilder.setType(ManagedObjectType.SnmpInterfaceLink.getName())

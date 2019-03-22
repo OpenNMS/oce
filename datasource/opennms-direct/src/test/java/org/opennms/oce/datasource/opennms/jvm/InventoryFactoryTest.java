@@ -46,8 +46,8 @@ import org.opennms.integration.api.v1.model.Alarm;
 import org.opennms.integration.api.v1.model.Node;
 import org.opennms.integration.api.v1.model.SnmpInterface;
 import org.opennms.oce.datasource.api.InventoryObject;
-import org.opennms.oce.datasource.common.ScriptedInventoryException;
 import org.opennms.oce.datasource.common.inventory.ManagedObjectType;
+import org.opennms.oce.datasource.common.inventory.script.ScriptedInventoryException;
 
 public class InventoryFactoryTest {
 

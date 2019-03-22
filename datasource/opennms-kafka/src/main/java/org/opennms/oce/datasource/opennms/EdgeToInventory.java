@@ -28,7 +28,7 @@
 
 package org.opennms.oce.datasource.opennms;
 
-import org.opennms.oce.datasource.common.ScriptedInventoryException;
+import org.opennms.oce.datasource.common.inventory.script.ScriptedInventoryException;
 import org.opennms.oce.datasource.opennms.proto.InventoryModelProtos;
 import org.opennms.oce.datasource.opennms.proto.OpennmsModelProtos;
 import org.slf4j.Logger;

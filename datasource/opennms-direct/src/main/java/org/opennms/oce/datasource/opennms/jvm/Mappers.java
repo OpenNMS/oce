@@ -48,7 +48,7 @@ import org.opennms.oce.datasource.api.Situation;
 import org.opennms.oce.datasource.common.ImmutableAlarm;
 import org.opennms.oce.datasource.common.ImmutableAlarmFeedback;
 import org.opennms.oce.datasource.common.ImmutableSituation;
-import org.opennms.oce.datasource.common.ScriptedInventoryException;
+import org.opennms.oce.datasource.common.inventory.script.ScriptedInventoryException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

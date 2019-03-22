@@ -1,8 +1,8 @@
 /*******************************************************************************
  * This file is part of OpenNMS(R).
  *
- * Copyright (C) 2018 The OpenNMS Group, Inc.
- * OpenNMS(R) is Copyright (C) 1999-2018 The OpenNMS Group, Inc.
+ * Copyright (C) 2019 The OpenNMS Group, Inc.
+ * OpenNMS(R) is Copyright (C) 1999-2019 The OpenNMS Group, Inc.
  *
  * OpenNMS(R) is a registered trademark of The OpenNMS Group, Inc.
  *
@@ -28,10 +28,8 @@
 
 package org.opennms.oce.datasource.common.inventory.script;
 
-import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.net.URL;
 
 import javax.script.Invocable;
@@ -43,7 +41,9 @@ import org.osgi.framework.BundleContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.google.common.base.Charsets;
 import com.google.common.io.Files;
+import com.google.common.io.Resources;
 
 /**
  * @author smith
@@ -87,16 +87,11 @@ public abstract class AbstractScriptedInventory {
             // load default from classpath
             usingClasspathScript = true;
             URL scriptUrl = bundleContext.getBundle().getResource(DEFAULT_SCRIPT);
-            StringBuilder sb = new StringBuilder();
-            try (BufferedReader br = new BufferedReader(new InputStreamReader(scriptUrl.openStream()))) {
-                String line;
-                while ((line = br.readLine()) != null) {
-                    sb.append(line).append("\n");
-                }
+            try {
+                script = Resources.toString(scriptUrl, Charsets.UTF_8);
             } catch (IOException e) {
                 throw new IllegalArgumentException("Cannot find script in classpath : " + e.getMessage());
             }
-            script = sb.toString();
             this.scriptPath = DEFAULT_SCRIPT;
             scriptExtension = "groovy";
             LOG.info("Loaded inventory.groovy from the classpath");
@@ -186,8 +181,6 @@ public abstract class AbstractScriptedInventory {
 
             try {
                 engine.eval(script);
-                invocable = (Invocable) engine;
-                usingClasspathScript = false;
             } catch (ScriptException e) {
                 LOG.error("Failed to eval() script file - " + scriptPath, e);
             }

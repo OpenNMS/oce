@@ -21,11 +21,11 @@
 						<Bundle-SymbolicName>${project.artifactId}</Bundle-SymbolicName>
 						<Bundle-Version>${project.version}</Bundle-Version>
 						<Import-Package>
-	org.opennms.integration.api.v1.model,
-	org.opennms.oce.datasource.api,
-	org.opennms.oce.datasource.common,
-	org.opennms.oce.datasource.common.inventory,
-	*
+                            org.opennms.integration.api.v1.model,
+                            org.opennms.oce.datasource.api,
+                            org.opennms.oce.datasource.common,
+                            org.opennms.oce.datasource.common.inventory,
+                            *
 						</Import-Package>
 					</instructions>
 				</configuration>

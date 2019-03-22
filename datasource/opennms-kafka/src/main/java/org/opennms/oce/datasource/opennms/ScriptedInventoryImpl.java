@@ -33,8 +33,8 @@ import java.util.List;
 
 import javax.script.ScriptException;
 
-import org.opennms.oce.datasource.common.ScriptedInventoryException;
 import org.opennms.oce.datasource.common.inventory.script.AbstractScriptedInventory;
+import org.opennms.oce.datasource.common.inventory.script.ScriptedInventoryException;
 import org.opennms.oce.datasource.opennms.proto.InventoryModelProtos;
 import org.opennms.oce.datasource.opennms.proto.InventoryModelProtos.InventoryObjects;
 import org.opennms.oce.datasource.opennms.proto.OpennmsModelProtos;

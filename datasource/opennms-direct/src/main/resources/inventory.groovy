@@ -71,7 +71,7 @@ class InventoryFactory {
             return Collections.emptyList();
         }
 
-        log.info("alarmToInventory - type: {} with id: {}.", alarm.getManagedObjectType(), alarm.getManagedObjectInstance());
+        log.trace("alarmToInventory - type: {} with id: {}.", alarm.getManagedObjectType(), alarm.getManagedObjectInstance());
 
         ManagedObjectType type;
 
@@ -102,7 +102,7 @@ class InventoryFactory {
     }
 
     static void overrideTypeAndInstance(ImmutableAlarm.Builder alarmBuilder, Alarm alarm ) {
-        log.info("overrideTypeAndInstance");
+        log.trace("overrideTypeAndInstance: {}", alarm);
         if (!Strings.isNullOrEmpty(alarm.getManagedObjectType()) && !Strings.isNullOrEmpty(alarm.getManagedObjectInstance())) {
             ManagedObjectType type;
             try {
@@ -144,7 +144,7 @@ class InventoryFactory {
     }
 
     static String toNodeCriteria(Alarm alarm) {
-        log.info("alarmToNodeCriteria {}", alarm);
+        log.trace("alarmToNodeCriteria {}", alarm);
         Node node = alarm.getNode();
         if (node != null) {
             return toNodeCriteria(node);
@@ -153,12 +153,12 @@ class InventoryFactory {
     }
 
     static String toNodeCriteria(Node node) {
-        log.info("nodeToCriteria {}", node);
+        log.trace("nodeToCriteria {}", node);
         return toNodeCriteria(node.getForeignSource(), node.getForeignId(), node.getId());
     }
 
     static String toNodeCriteria(String foreignSource, String foreignId, int id) {
-        log.info("toNodeCriteria: {} {} {}", foreignSource, foreignId, id);
+        log.trace("toNodeCriteria: {} {} {}", foreignSource, foreignId, id);
         if (!Strings.isNullOrEmpty(foreignSource) && !Strings.isNullOrEmpty(foreignId)) {
             return foreignSource + ":" + foreignId;
         } else {

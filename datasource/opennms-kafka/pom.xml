@@ -21,13 +21,13 @@
                         <Bundle-SymbolicName>${project.artifactId}</Bundle-SymbolicName>
                         <Bundle-Version>${project.version}</Bundle-Version>
                         <Import-Package>
-        org.opennms.oce.datasource.common.inventory.script,
-        org.opennms.oce.datasource.opennms,
-        org.opennms.oce.datasource.opennms.events,
-        org.opennms.oce.datasource.opennms.processors,
-        org.opennms.oce.datasource.opennms.proto,
-        org.opennms.oce.datasource.opennms.serialization,
-    *
+                            org.opennms.oce.datasource.common.inventory.script,
+                            org.opennms.oce.datasource.opennms,
+                            org.opennms.oce.datasource.opennms.events,
+                            org.opennms.oce.datasource.opennms.processors,
+                            org.opennms.oce.datasource.opennms.proto,
+                            org.opennms.oce.datasource.opennms.serialization,
+                            *
                         </Import-Package>
                     </instructions>
                 </configuration>

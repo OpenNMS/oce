@@ -53,7 +53,7 @@ import groovy.util.logging.Slf4j
 class InventoryFactory {
     
     static InventoryObjects edgeToInventory(TopologyEdge edge) {
-        log.info("EdgeToInventory - edge: {}", edge);
+        log.trace("EdgeToInventory - edge: {}", edge);
         final InventoryModelProtos.InventoryObjects.Builder iosBuilder = InventoryModelProtos.InventoryObjects.newBuilder();
         final InventoryModelProtos.InventoryObject.Builder ioBuilder = InventoryModelProtos.InventoryObject.newBuilder();
 
@@ -176,7 +176,7 @@ class InventoryFactory {
     }
 
     static InventoryObject toInventoryObject(OpennmsModelProtos.SnmpInterface snmpInterface, InventoryModelProtos.InventoryObject parent) {
-        log.info("toInventoryObject: {} : {}", snmpInterface, parent);
+        log.trace("toInventoryObject: {} : {}", snmpInterface, parent);
         return InventoryModelProtos.InventoryObject.newBuilder()
                 .setType(ManagedObjectType.SnmpInterface.getName())
                 .setId(parent.getId() + ":" + snmpInterface.getIfIndex())
@@ -187,7 +187,7 @@ class InventoryFactory {
     }
 
     static List<InventoryModelProtos.InventoryObject> toInventoryObjects(Node node) {
-        log.info("Node toInventoryObject: {}", node);
+        log.trace("Node toInventoryObject: {}", node);
         final List<InventoryModelProtos.InventoryObject> inventory = new ArrayList<>();
 
         InventoryModelProtos.InventoryObject nodeObj = InventoryModelProtos.InventoryObject.newBuilder()

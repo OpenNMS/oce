@@ -106,7 +106,7 @@ public class Mappers {
                 .setId(situationId)
                 .setCreationTime(alarm.getFirstEventTime().toInstant().toEpochMilli())
                 .setSeverity(toSeverity(alarm.getSeverity()))
-            .setAlarms(alarm.getRelatedAlarms().stream().map(a -> this.toAlarm(a)).collect(Collectors.toSet()))
+                .setAlarms(alarm.getRelatedAlarms().stream().map(a -> this.toAlarm(a)).collect(Collectors.toSet()))
                 .build();
     }
 

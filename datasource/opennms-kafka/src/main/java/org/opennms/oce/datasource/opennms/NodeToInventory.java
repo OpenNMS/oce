@@ -44,7 +44,7 @@ public class NodeToInventory {
     private final ScriptedInventoryService inventoryService;
 
     public NodeToInventory(ScriptedInventoryService inventoryService) {
-        this.inventoryService = inventoryService;
+        this.inventoryService = Objects.requireNonNull(inventoryService);
     }
 
     public void init() {

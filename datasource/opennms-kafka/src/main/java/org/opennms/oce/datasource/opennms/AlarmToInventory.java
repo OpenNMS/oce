@@ -40,7 +40,7 @@ public class AlarmToInventory {
     private final ScriptedInventoryService inventoryService;
 
     public AlarmToInventory(ScriptedInventoryService inventoryService) {
-        this.inventoryService = inventoryService;
+        this.inventoryService = Objects.requireNonNull(inventoryService);
     }
 
     public void init() {

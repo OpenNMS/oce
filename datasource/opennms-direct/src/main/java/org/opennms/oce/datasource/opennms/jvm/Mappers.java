@@ -65,7 +65,7 @@ public class Mappers {
      * @param inventoryService wires in the JSR 223 script
      */
     public Mappers(ScriptedInventoryService inventoryService) {
-        this.inventoryService = inventoryService;
+        this.inventoryService = Objects.requireNonNull(inventoryService);
     }
 
     public void init() {

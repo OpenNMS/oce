@@ -17,23 +17,23 @@
         </cm:default-properties>
     </cm:property-placeholder>
 
-    <bean id="scriptFactory" class="org.opennms.oce.datasource.opennms.ScriptedInventoryImpl" init-method="init" >
+    <bean id="scriptService" class="org.opennms.oce.datasource.opennms.ScriptedInventoryImpl">
         <argument value="${scriptFile}"/>
         <argument value="${scriptCacheMillis}"/>
         <argument ref="blueprintBundleContext"/>
     </bean>
-    <service ref="scriptFactory" interface="org.opennms.oce.datasource.opennms.ScriptedInventoryService"/>
+    <service ref="scriptService" interface="org.opennms.oce.datasource.opennms.ScriptedInventoryService"/>
 
-    <bean id="nodeToInventory" class="org.opennms.oce.datasource.opennms.NodeToInventory" init-method="init" >
-        <argument ref="scriptFactory"/>
+    <bean id="nodeToInventory" class="org.opennms.oce.datasource.opennms.NodeToInventory">
+        <argument ref="scriptService"/>
     </bean>
 
-    <bean id="alarmToInventory" class="org.opennms.oce.datasource.opennms.AlarmToInventory" init-method="init" >
-        <argument ref="scriptFactory"/>
+    <bean id="alarmToInventory" class="org.opennms.oce.datasource.opennms.AlarmToInventory">
+        <argument ref="scriptService"/>
     </bean>
 
-    <bean id="edgeToInventory" class="org.opennms.oce.datasource.opennms.EdgeToInventory" init-method="init" >
-        <argument ref="scriptFactory"/>
+    <bean id="edgeToInventory" class="org.opennms.oce.datasource.opennms.EdgeToInventory">
+        <argument ref="scriptService"/>
     </bean>
 
     <reference id="configAdmin" interface="org.osgi.service.cm.ConfigurationAdmin" />

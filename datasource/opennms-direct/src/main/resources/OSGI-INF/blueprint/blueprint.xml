@@ -13,15 +13,15 @@
     <reference id="nodeDao" interface="org.opennms.integration.api.v1.dao.NodeDao" />
     <reference id="eventForwarder" interface="org.opennms.integration.api.v1.events.EventForwarder" />
 
-    <bean id="scriptFactory" class="org.opennms.oce.datasource.opennms.jvm.ScriptedInventoryImpl" init-method="init" >
+    <bean id="scriptService" class="org.opennms.oce.datasource.opennms.jvm.ScriptedInventoryImpl">
         <argument value="${scriptFile}"/>
         <argument value="${scriptCacheMillis}"/>
         <argument ref="blueprintBundleContext"/>
     </bean>
-    <service ref="scriptFactory" interface="org.opennms.oce.datasource.opennms.jvm.ScriptedInventoryService"/>
+    <service ref="scriptService" interface="org.opennms.oce.datasource.opennms.jvm.ScriptedInventoryService"/>
 
-    <bean id="mappers" class="org.opennms.oce.datasource.opennms.jvm.Mappers" init-method="init" >
-        <argument ref="scriptFactory"/>
+    <bean id="mappers" class="org.opennms.oce.datasource.opennms.jvm.Mappers">
+        <argument ref="scriptService"/>
     </bean>
 
     <bean id="directAlarmDatasource" class="org.opennms.oce.datasource.opennms.jvm.DirectAlarmDatasource" init-method="init" >

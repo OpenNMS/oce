@@ -28,6 +28,8 @@
 
 package org.opennms.oce.datasource.opennms;
 
+import java.util.Objects;
+
 import org.opennms.oce.datasource.common.inventory.script.ScriptedInventoryException;
 import org.opennms.oce.datasource.opennms.proto.OpennmsModelProtos;
 import org.slf4j.Logger;
@@ -41,10 +43,6 @@ public class AlarmToInventory {
 
     public AlarmToInventory(ScriptedInventoryService inventoryService) {
         this.inventoryService = Objects.requireNonNull(inventoryService);
-    }
-
-    public void init() {
-        LOG.info("AlarmToInventory init");
     }
 
     public EnrichedAlarm enrichAlarm(OpennmsModelProtos.Alarm alarm) {

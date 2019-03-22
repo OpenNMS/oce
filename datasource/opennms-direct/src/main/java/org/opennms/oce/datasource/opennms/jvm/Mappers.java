@@ -68,10 +68,6 @@ public class Mappers {
         this.inventoryService = Objects.requireNonNull(inventoryService);
     }
 
-    public void init() {
-        // required for karaf.
-    }
-
     public Alarm toAlarm(org.opennms.integration.api.v1.model.Alarm alarm) {
         ImmutableAlarm.Builder alarmBuilder = ImmutableAlarm.newBuilder();
         alarmBuilder
@@ -87,6 +83,7 @@ public class Mappers {
             inventoryService.overrideTypeAndInstance(alarmBuilder, alarm);
         } catch (ScriptedInventoryException e) {
             LOG.error("Failure overriding inventory for alarm [{}] : {}", alarm, e.getCause().getMessage());
+            LOG.error("Failure overriding inventory for alarm", e);
         }
 
         return alarmBuilder.build();
@@ -206,6 +203,7 @@ public class Mappers {
             return inventoryService.createInventoryObjects(node);
         } catch (ScriptedInventoryException e) {
             LOG.error("Failed to retrieve inventory for node {}, : {}", node, e.getCause().getMessage());
+            LOG.error("Failed to retrieve inventory for node", e);
             return Collections.emptyList();
         }
     }
@@ -215,6 +213,7 @@ public class Mappers {
             return inventoryService.createInventoryObjects(alarm);
         } catch (ScriptedInventoryException e) {
             LOG.error("Failed to retrieve inventory for alarm {}, : {}", alarm, e.getCause().getMessage());
+            LOG.error("Failed to retrieve inventory for alarm", e);
             return Collections.emptyList();
         }
     }

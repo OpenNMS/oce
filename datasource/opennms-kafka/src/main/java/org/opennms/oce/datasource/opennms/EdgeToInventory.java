@@ -28,6 +28,8 @@
 
 package org.opennms.oce.datasource.opennms;
 
+import java.util.Objects;
+
 import org.opennms.oce.datasource.common.inventory.script.ScriptedInventoryException;
 import org.opennms.oce.datasource.opennms.proto.InventoryModelProtos;
 import org.opennms.oce.datasource.opennms.proto.OpennmsModelProtos;
@@ -44,10 +46,6 @@ public class EdgeToInventory {
     
     public EdgeToInventory(ScriptedInventoryService inventoryService) {
         this.inventoryService = Objects.requireNonNull(inventoryService);
-    }
-
-    public void init() {
-        LOG.info("EdgeToInventory init");
     }
 
     public InventoryModelProtos.InventoryObjects toInventoryObjects(OpennmsModelProtos.TopologyEdge edge) {

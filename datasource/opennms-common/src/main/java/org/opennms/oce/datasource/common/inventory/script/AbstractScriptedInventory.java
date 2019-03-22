@@ -53,25 +53,25 @@ public abstract class AbstractScriptedInventory {
 
     protected static final Logger LOG = LoggerFactory.getLogger(AbstractScriptedInventory.class);
 
-    protected static final String DEFAULT_SCRIPT = "/inventory.groovy";
+    private static final String DEFAULT_SCRIPT = "/inventory.groovy";
 
-    private boolean usingClasspathScript;
+    private static final String DEFAULT_SCRIPT_EXTENSION = "groovy";
 
-    private BundleContext context;
+    private final boolean usingClasspathScript;
 
-    private Invocable invocable;
+    private final Invocable invocable;
 
-    private String scriptPath;
+    private final String scriptPath;
 
-    private ScriptEngineManager manager;
+    private final ScriptEngineManager manager;
 
-    private ScriptEngine engine;
+    private final ScriptEngine engine;
+
+    private final long scriptCacheMillis;
 
     private long configurationTimestamp;
 
     private long scriptFileTimestamp;
-
-    private long scriptCacheMillis;
 
     public AbstractScriptedInventory(String scriptPath, long scriptCacheMillis, BundleContext bundleContext) {
         if (scriptPath == null) {
@@ -93,19 +93,19 @@ public abstract class AbstractScriptedInventory {
                 throw new IllegalArgumentException("Cannot find script in classpath : " + e.getMessage());
             }
             this.scriptPath = DEFAULT_SCRIPT;
-            scriptExtension = "groovy";
+            scriptExtension = DEFAULT_SCRIPT_EXTENSION;
             LOG.info("Loaded inventory.groovy from the classpath");
         } else {
             // read the script from the file system
             this.scriptPath = scriptPath;
+            usingClasspathScript = false;
 
             File file = new File(scriptPath);
             if (!file.canRead()) {
                 throw new IllegalStateException("Cannot read script at '" + file + "'.");
             }
             try {
-                byte[] fileBytes = java.nio.file.Files.readAllBytes(file.toPath());
-                script = new String(fileBytes);
+                script = Files.toString(file, Charsets.UTF_8);
                 scriptExtension = Files.getFileExtension(scriptPath);
                 scriptFileTimestamp = file.lastModified();
                 LOG.info("Loaded script {} from {} with timestamp: {}", file, scriptPath, scriptFileTimestamp);
@@ -118,13 +118,15 @@ public abstract class AbstractScriptedInventory {
         if (bundleContext == null) {
             manager = new ScriptEngineManager();
         } else {
-            context = bundleContext;
-            manager = new OSGiScriptEngineManager(context);
+            manager = new OSGiScriptEngineManager(bundleContext);
         }
 
         engine = manager.getEngineByExtension(scriptExtension);
         if (engine == null) {
             throw new IllegalStateException("No engine found for extension: " + scriptExtension);
+        }
+        if (!Invocable.class.isAssignableFrom(engine.getClass())) {
+            throw new IllegalStateException("engine found for extension: " + scriptExtension + " is not invocable");
         }
 
         try {
@@ -139,7 +141,7 @@ public abstract class AbstractScriptedInventory {
     }
 
     protected Invocable getInvocable() {
-        // if the script is on disc, check every so often to see if it has been updated
+        // if the script is on disk, check every so often to see if it has been updated
         if (!usingClasspathScript && scriptCacheExpired()) {
             // reset cache
             configurationTimestamp = System.currentTimeMillis();
@@ -172,10 +174,7 @@ public abstract class AbstractScriptedInventory {
                 LOG.error("Not loading script from filesystem. Cannot read script at '" + scriptPath + "'.");
                 return;
             }
-
-            byte[] fileBytes = java.nio.file.Files.readAllBytes(file.toPath());
-
-            String script = new String(fileBytes);
+            String script = Files.toString(file, Charsets.UTF_8);
             scriptFileTimestamp = file.lastModified();
             LOG.info("Loaded script {} from {} with timestamp: {}", file, scriptPath, scriptFileTimestamp);
 

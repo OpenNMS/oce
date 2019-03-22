@@ -30,6 +30,7 @@ package org.opennms.oce.datasource.opennms;
 
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Objects;
 
 import org.opennms.oce.datasource.common.inventory.script.ScriptedInventoryException;
 import org.opennms.oce.datasource.opennms.proto.InventoryModelProtos;
@@ -45,10 +46,6 @@ public class NodeToInventory {
 
     public NodeToInventory(ScriptedInventoryService inventoryService) {
         this.inventoryService = Objects.requireNonNull(inventoryService);
-    }
-
-    public void init() {
-        LOG.info("NodeToInventory init");
     }
 
     public Collection<InventoryModelProtos.InventoryObject> toInventoryObjects(OpennmsModelProtos.Node node) {

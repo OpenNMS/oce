@@ -43,7 +43,7 @@ public class EdgeToInventory {
     private final ScriptedInventoryService inventoryService;
     
     public EdgeToInventory(ScriptedInventoryService inventoryService) {
-        this.inventoryService = inventoryService;
+        this.inventoryService = Objects.requireNonNull(inventoryService);
     }
 
     public void init() {

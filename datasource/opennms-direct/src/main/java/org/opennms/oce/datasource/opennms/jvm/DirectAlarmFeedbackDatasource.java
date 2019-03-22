@@ -97,7 +97,7 @@ public class DirectAlarmFeedbackDatasource implements AlarmFeedbackListener, Ala
     public void init() {
         feedback.addAll(feedbackDao.getFeedback()
                 .stream()
-            .map(a -> mappers.toAlarmFeedback(a))
+                .map(a -> mappers.toAlarmFeedback(a))
                 .collect(Collectors.toList()));
         initLock.countDown();
     }

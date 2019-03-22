@@ -59,7 +59,7 @@ public class ScriptedInventoryImpl extends AbstractScriptedInventory implements 
     }
 
     public void init() {
-        LOG.info("ScriptedInventoryImpl init'd");
+        LOG.info("ScriptedInventoryImpl init.");
     }
 
     /**

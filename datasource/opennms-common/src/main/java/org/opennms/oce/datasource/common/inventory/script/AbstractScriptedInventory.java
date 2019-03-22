@@ -55,7 +55,7 @@ public abstract class AbstractScriptedInventory {
 
     protected static final String DEFAULT_SCRIPT = "/inventory.groovy";
 
-    private boolean usingDefaultScript;
+    private boolean usingClasspathScript;
 
     private BundleContext context;
 
@@ -85,7 +85,7 @@ public abstract class AbstractScriptedInventory {
 
         if (scriptPath.isEmpty()) {
             // load default from classpath
-            usingDefaultScript = true;
+            usingClasspathScript = true;
             URL scriptUrl = bundleContext.getBundle().getResource(DEFAULT_SCRIPT);
             StringBuilder sb = new StringBuilder();
             try (BufferedReader br = new BufferedReader(new InputStreamReader(scriptUrl.openStream()))) {
@@ -145,7 +145,7 @@ public abstract class AbstractScriptedInventory {
 
     protected Invocable getInvocable() {
         // if the script is on disc, check every so often to see if it has been updated
-        if (!usingDefaultScript && scriptCacheExpired()) {
+        if (!usingClasspathScript && scriptCacheExpired()) {
             // reset cache
             configurationTimestamp = System.currentTimeMillis();
             if (scriptHasBeenUpdated()) {
@@ -164,11 +164,12 @@ public abstract class AbstractScriptedInventory {
         return file.lastModified() > scriptFileTimestamp;
     }
 
-    // return TRUE if it's been more than 30 seconds since the config has been checked.
+    // return TRUE if it's been more than 'scriptCacheMillis' milliseconds since the config has been checked.
     private boolean scriptCacheExpired() {
         return System.currentTimeMillis() - configurationTimestamp > scriptCacheMillis;
     }
 
+    // Attempt to update the invocable but catch all exceptions so user will continue to use existing invocable.
     private void updateInvocable() {
         try {
             File file = new File(scriptPath);
@@ -186,7 +187,7 @@ public abstract class AbstractScriptedInventory {
             try {
                 engine.eval(script);
                 invocable = (Invocable) engine;
-                usingDefaultScript = false;
+                usingClasspathScript = false;
             } catch (ScriptException e) {
                 LOG.error("Failed to eval() script file - " + scriptPath, e);
             }

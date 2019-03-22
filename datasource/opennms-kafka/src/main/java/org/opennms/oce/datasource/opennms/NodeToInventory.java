@@ -48,7 +48,7 @@ public class NodeToInventory {
     }
 
     public void init() {
-        LOG.info("NodeToInventory init'd");
+        LOG.info("NodeToInventory init");
     }
 
     public Collection<InventoryModelProtos.InventoryObject> toInventoryObjects(OpennmsModelProtos.Node node) {

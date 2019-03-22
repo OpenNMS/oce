@@ -44,7 +44,7 @@ public class AlarmToInventory {
     }
 
     public void init() {
-        LOG.info("AlarmToInventory init'd");
+        LOG.info("AlarmToInventory init");
     }
 
     public EnrichedAlarm enrichAlarm(OpennmsModelProtos.Alarm alarm) {

@@ -47,7 +47,7 @@ public class EdgeToInventory {
     }
 
     public void init() {
-        LOG.info("EdgeToInventory init'd");
+        LOG.info("EdgeToInventory init");
     }
 
     public InventoryModelProtos.InventoryObjects toInventoryObjects(OpennmsModelProtos.TopologyEdge edge) {

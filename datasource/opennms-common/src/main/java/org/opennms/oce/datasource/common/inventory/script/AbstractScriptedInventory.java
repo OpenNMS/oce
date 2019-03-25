@@ -86,6 +86,9 @@ public abstract class AbstractScriptedInventory {
         if (scriptPath.isEmpty()) {
             // load default from classpath
             usingClasspathScript = true;
+            if (bundleContext == null) {
+                throw new IllegalArgumentException("Path to Inventory Script must be provided.");
+            }
             URL scriptUrl = bundleContext.getBundle().getResource(DEFAULT_SCRIPT);
             try {
                 script = Resources.toString(scriptUrl, Charsets.UTF_8);

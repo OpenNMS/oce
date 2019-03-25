@@ -28,10 +28,6 @@
 
 package org.opennms.oce.datasource.common.inventory.script;
 
-/**
- * @author smith
- *
- */
 public class ScriptedInventoryException extends Exception {
 
     private static final long serialVersionUID = 1L;

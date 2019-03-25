@@ -20,5 +20,9 @@
 * xref:engines:deeplearning.adoc[Deep Learning Engine]
 * xref:engines:dbscan.adoc[DBSCAN Engine]
 
+.Walkthroughs
+* xref:walkthroughs:migrating_from_cpn.adoc[Migrating from CPN]
+* xref:walkthroughs:testing_with_sdn.adoc[Testing with SDN]
+
 .Reference
 * xref:reference:model.adoc[Model]

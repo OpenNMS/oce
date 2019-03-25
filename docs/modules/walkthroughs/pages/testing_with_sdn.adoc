@@ -1,6 +1,7 @@
-= SDN
+= SDN Walkthrough
+:imagesdir: ../assets/images
 
-Leverage the Opendaylight integration in OpenNMS to create a virtual network that can be used to exercise the correlation engine.
+Let's leverage the Opendaylight integration in OpenNMS to create a virtual network that can be used to exercise the correlation engine.
 
 == Setup the network
 
@@ -12,6 +13,8 @@ wget https://nexus.opendaylight.org/content/repositories/public/org/opendaylight
 tar zxvf karaf-0.8.4.tar.gz -C odl --strip-components=1
 ./odl/bin/karaf
 ```
+
+IMPORTANT: When running both OpenNMS and OpenDaylight on the same host you'll need to A) disable the `PollerBackEnd` service in OpenNMS (RMI port conflict) and B) change the SSH port for one of the containers in `org.apache.karaf.shell.cfg` (SSH port conflict).
 
 Install the following features:
 ```
@@ -36,9 +39,6 @@ Use a script that connects to a remote controller:
 ```
 cat >net.py <<EOT
 #!/usr/bin/python
-"""
-This is the most simple example to showcase Containernet.
-"""
 from mininet.net import Mininet
 from mininet.net import Containernet
 from mininet.node import Controller, RemoteController
@@ -80,15 +80,34 @@ h4 -> h1 h2 h3
 *** Results: 0% dropped (12/12 received)
 ```
 
+=== Enable flows
+
+In a separate shell in the Mininet container run:
+```
+export COLLECTOR_IP=172.17.0.1
+export COLLECTOR_PORT=9999
+
+for SWITCH in "s1" "s2" "s3"
+do
+ovs-vsctl -- set Bridge $SWITCH netflow=@nf -- --id=@nf create NetFlow targets=\"${COLLECTOR_IP}:${COLLECTOR_PORT}\" active-timeout=10
+done
+```
+
+NOTE: This uses Netflow v5.
+Open vSwitch also supports IPFIX, which would be prefered, but I haven't had any success with it in this environment yet.
+
+TIP: Use `iperf h1 h4` in the Mininet console to generate traffic.
 
 == Import the network
 
+Compile the OpenDaylight plugin:
 ```
 git clone https://github.com/opennms-forge/opennms-odl-plugin
 cd opennms-odl-plugin
 mvn clean install
 ```
 
+Install the OpenDaylight plugin.
 From the OpenNMS Karaf shell:
 ```
 feature:repo-add mvn:org.opennms.plugins.odl/odl-karaf-features/1.0.0-SNAPSHOT/xml
@@ -98,7 +117,7 @@ config:update
 feature:install opennms-plugins-odl
 ```
 
-Health check:
+Verify controller communication using the `health:check` command:
 ```
 Connect to the Opendaylight controller         [ Success  ] => Found 1 topology(s).
 ```
@@ -111,31 +130,45 @@ provision:show-import -x opendaylight
 TIP: Add a foreign source with no detectors:
 `curl -v -u admin:admin -X POST http://localhost:8980/opennms/rest/foreignSources \
     -H "Content-Type: application/xml" \
-    --data '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><foreign-source xmlns="http://xmlns.opennms.org/xsd/config/foreign-source" name="ODL" date-stamp="2019-01-28T13:58:27.945-05:00"><scan-interval>12w</scan-interval><detectors/><policies/></foreign-source>'``
+    --data '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><foreign-source xmlns="http://xmlns.opennms.org/xsd/config/foreign-source" name="ODL" date-stamp="2019-01-28T13:58:27.945-05:00"><scan-interval>12w</scan-interval><detectors/><policies/></foreign-source>'`
 
 Trigger the import using:
 ```
 ./bin/send-event.pl uei.opennms.org/internal/importer/reloadImport --parm 'url requisition://opendaylight'
 ```
 
-=== Events
+== Topology
+
+Imported inventory:
+
+image::ovs_node.png[Open vSwitch Node,800]
+
+Topology:
+
+image::mininet_topology.png[Mininet topology,800]
+
+=== OCE
+
+Load OCE with the deep learning engine:
+
+```
+feature:repo-add mvn:org.opennms.oce/oce-karaf-features/1.0.0-SNAPSHOT/xml
+feature:install oce-opennms-standalone oce-engine-deeplearning
+```
+
+== Events
 
 Now that our inventory is provisioned, let's trigger a fault.
 From the Mininet console:
 ```
-switch s3 stop
+link s2 h1 down
 ```
 
 We should see an alarm associated with node that has 'openflow:3' as the label.
 
-=== OCE
+image::mininet_topology_alarms.png[Topology with alarms triggered,800]
 
-Load OCE.
-
-```
-feature:repo-add mvn:org.opennms.oce/oce-karaf-features/1.0.0-SNAPSHOT/xml
-feature:install oce-opennms-standalone
-```
+=== Visualize
 
 Snapshot:
 ```
@@ -143,18 +176,28 @@ feature:install oce-features-shell
 oce:datasource-snapshot /tmp/snap1
 ```
 
-=== Visualize
-
+Serve:
 ```
 docker run -p 8082:8080 -v /tmp/snap1:/dataset opennms/oce-viz
 ```
 
 Open browser to: http://localhost:8082/static/index.html
 
+image::oce_graph_3d.png[Topology with alarms triggered,800]
+
 === Train
+
+Ensure that the situation feedback feature is installed:
+```
+feature:install opennms-situation-feedback
+```
 
 TODO: Give feedback
 
-TODO: We need links
-TODO: We need metrics
-TODO: We need flows
+=== Metrics
+
+==== TODO
+
+We need metrics.
+Ideally collect stats, make graphs available via plugin.
+Be able to trigger a threshold alarm and make it appear on the link.

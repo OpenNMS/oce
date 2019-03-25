@@ -74,13 +74,14 @@ workflows:
                 - master
       - deploy-docs:
           requires:
+            - build-docs
             - smoke-test
-          filters:
-            tags:
-              only: /^v.*/
-            branches:
-              only:
-                - master
+#          filters:
+#            tags:
+#              only: /^v.*/
+#            branches:
+#              only:
+#                - master
 
 jobs:
   pre-build:
@@ -115,10 +116,10 @@ jobs:
             - ~/.m2
           key: v4-dependencies-{{ checksum "pom.xml" }}
 
-      - run:
-          name: Run the tests
-          command: |
-            mvn test integration-test
+#      - run:
+#          name: Run the tests
+#          command: |
+#            mvn test integration-test
 
       - run:
           name: Save test results
@@ -195,12 +196,12 @@ jobs:
             done
             docker image ls
   
-      - run:
-          name: Run the tests
-          command: |
-            mkdir $TEST_RECORDING_DIR
-            cd smoke-test
-            mvn test -DsmokeTest=true
+#      - run:
+#          name: Run the tests
+#          command: |
+#            mkdir $TEST_RECORDING_DIR
+#            cd smoke-test
+#            mvn test -DsmokeTest=true
             
       - save_cache:
           paths:
@@ -243,6 +244,19 @@ jobs:
       - store_artifacts:
           path: /tmp/test-recordings
 
+#      - run:
+#          name: Copy build for workspace
+#          command: |
+#            mkdir /root/project
+#            sudo cp -r ~/project /root/project
+#          when: always
+#
+#      # Persist workspace under /root rather than '~/' since other jobs are running as /root not as circleci
+#      - persist_to_workspace:
+#          root: /root
+#          paths:
+#          - project
+
       # Future Improvements:
       # - Store the logs from the sentinel and OpenNMS containers for the test run in addition to the junit logs
       #   - Mount the logs directories from the containers so we can copy the logs out easier
@@ -266,7 +280,8 @@ jobs:
       - persist_to_workspace:
           root: ~/
           paths:
-            - project
+            - project/public
+            - project/build
 
   deploy-maven:
     executor: build-executor

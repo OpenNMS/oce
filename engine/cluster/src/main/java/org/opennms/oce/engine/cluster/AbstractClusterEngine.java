@@ -281,6 +281,10 @@ public abstract class AbstractClusterEngine implements Engine, GraphProvider, Sp
                 for (String situationId : situationsWithFeedback) {
                     // Handle the blacklisted alarm case
                     Situation affectedSituation = situationsById.get(situationId);
+                    if (affectedSituation == null) {
+                        LOG.info("Got feedback for situation with id: {}, but the engine does not know about this situation. Ignoring feedback.");
+                        continue;
+                    }
                     Set<Alarm> prevAlarms = affectedSituation.getAlarms();
                     Set<Alarm> newAlarms = new HashSet<>(prevAlarms);
 
@@ -312,18 +316,26 @@ public abstract class AbstractClusterEngine implements Engine, GraphProvider, Sp
 
                 // GC alarms from vertices
                 int numGarbageCollectedAlarms = 0;
+                int numAlarms = 0;
                 for (CEVertex v : g.getVertices()) {
                     numGarbageCollectedAlarms += v.garbageCollectAlarms(timestampInMillis, problemTimeoutMs,
                             clearTimeoutMs);
+                    numAlarms += v.getNumAlarms();
                 }
                 LOG.debug("{}: Garbage collected {} alarms.", timestampInMillis, numGarbageCollectedAlarms);
 
-                LOG.debug("{}: Clustering alarms.", timestampInMillis);
-                final List<Cluster<AlarmInSpaceTime>> clustersOfAlarms = cluster(timestampInMillis, g);
+                LOG.debug("{}: Clustering {} alarms.", timestampInMillis, numAlarms);
+                List<Cluster<AlarmInSpaceTime>> clustersOfAlarms = cluster(timestampInMillis, g);
                 if (clustersOfAlarms == null) {
                     LOG.debug("{}: No clustering was performed.", timestampInMillis);
                     return;
                 }
+
+                // Ignore clusters with less than 2 alarms
+                clustersOfAlarms = clustersOfAlarms.stream()
+                        .filter(c -> c.getPoints().size() >= 2)
+                        .collect(Collectors.toList());
+
                 LOG.debug("{}: Found {} clusters of alarms.", timestampInMillis, clustersOfAlarms.size());
 
                 synchronized (situationsWithFeedback) {

@@ -35,18 +35,13 @@ import org.opennms.oce.datasource.opennms.proto.InventoryModelProtos.InventoryOb
 import org.opennms.oce.datasource.opennms.proto.InventoryModelProtos.InventoryObjects;
 import org.opennms.oce.datasource.opennms.proto.OpennmsModelProtos.Alarm;
 import org.opennms.oce.datasource.opennms.proto.OpennmsModelProtos.Node;
-import org.opennms.oce.datasource.opennms.proto.OpennmsModelProtos.SnmpInterface;
 import org.opennms.oce.datasource.opennms.proto.OpennmsModelProtos.TopologyEdge;
 
 public interface ScriptedInventoryService {
 
-    InventoryObject toInventoryObject(SnmpInterface snmpInterface, InventoryObject parent) throws ScriptedInventoryException;
-
     Collection<InventoryObject> toInventoryObjects(Node node) throws ScriptedInventoryException;
 
     EnrichedAlarm enrichAlarm(Alarm alarm) throws ScriptedInventoryException;
-
-    InventoryFromAlarm getInventoryFromAlarm(Alarm alarm) throws ScriptedInventoryException;
 
     InventoryObjects edgeToInventory(TopologyEdge edge) throws ScriptedInventoryException;
 

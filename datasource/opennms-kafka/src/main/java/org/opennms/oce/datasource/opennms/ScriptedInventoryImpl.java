@@ -82,25 +82,6 @@ public class ScriptedInventoryImpl extends AbstractScriptedInventory implements 
     }
 
     @Override
-    public InventoryFromAlarm getInventoryFromAlarm(OpennmsModelProtos.Alarm alarm) throws ScriptedInventoryException {
-        try {
-            return (InventoryFromAlarm) getInvocable().invokeFunction("getInventoryFromAlarm", alarm);
-        } catch (NoSuchMethodException | ScriptException e) {
-            throw new ScriptedInventoryException("Failed getInventoryFromAlarm", e);
-        }
-    }
-
-    @Override
-    public InventoryModelProtos.InventoryObject toInventoryObject(OpennmsModelProtos.SnmpInterface snmpInterface,
-            InventoryModelProtos.InventoryObject parent) throws ScriptedInventoryException {
-        try {
-            return (InventoryModelProtos.InventoryObject) getInvocable().invokeFunction("toInventoryObject", snmpInterface, parent);
-        } catch (NoSuchMethodException | ScriptException e) {
-            throw new ScriptedInventoryException("Failed snmpInterface toInventoryObject", e);
-        }
-    }
-
-    @Override
     @SuppressWarnings("unchecked")
     public Collection<InventoryModelProtos.InventoryObject> toInventoryObjects(OpennmsModelProtos.Node node) throws ScriptedInventoryException {
         try {

@@ -57,9 +57,4 @@ public class NodeToInventory {
         }
     }
 
-    public InventoryModelProtos.InventoryObject toInventoryObject(OpennmsModelProtos.SnmpInterface snmpInterface,
-            InventoryModelProtos.InventoryObject parent) throws ScriptedInventoryException {
-        return inventoryService.toInventoryObject(snmpInterface, parent);
-    }
-
 }

@@ -54,13 +54,4 @@ public class AlarmToInventory {
         }
     }
 
-    public InventoryFromAlarm getInventoryFromAlarm(OpennmsModelProtos.Alarm alarm) {
-        try {
-            return inventoryService.getInventoryFromAlarm(alarm);
-        } catch (ScriptedInventoryException e) {
-            LOG.error("Failed to get Inventory for Alarm: {} : {}", alarm, e.getCause().getMessage());
-            throw new RuntimeException(e);
-        }
-    }
-
 }

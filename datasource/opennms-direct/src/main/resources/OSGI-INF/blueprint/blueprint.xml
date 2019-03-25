@@ -20,14 +20,14 @@
     </bean>
     <service ref="scriptService" interface="org.opennms.oce.datasource.opennms.jvm.ScriptedInventoryService"/>
 
-    <bean id="mappers" class="org.opennms.oce.datasource.opennms.jvm.Mappers">
+    <bean id="mapper" class="org.opennms.oce.datasource.opennms.jvm.ApiMapper">
         <argument ref="scriptService"/>
     </bean>
 
     <bean id="directAlarmDatasource" class="org.opennms.oce.datasource.opennms.jvm.DirectAlarmDatasource" init-method="init" >
         <argument ref="alarmDao"/>
         <argument ref="eventForwarder"/>
-        <argument ref="mappers"/>
+        <argument ref="mapper"/>
     </bean>
     <service ref="directAlarmDatasource" interface="org.opennms.oce.datasource.api.AlarmDatasource"/>
     <service ref="directAlarmDatasource" interface="org.opennms.oce.datasource.api.SituationDatasource"/>
@@ -36,7 +36,7 @@
     <bean id="directAlarmFeedbackDatasource"
           class="org.opennms.oce.datasource.opennms.jvm.DirectAlarmFeedbackDatasource" init-method="init">
         <argument ref="alarmFeedbackDao"/>
-        <argument ref="mappers"/>
+        <argument ref="mapper"/>
     </bean>
     <service ref="directAlarmFeedbackDatasource" interface="org.opennms.integration.api.v1.feedback.AlarmFeedbackListener"/>
     <service ref="directAlarmFeedbackDatasource" interface="org.opennms.oce.datasource.api.AlarmFeedbackDatasource"/>
@@ -44,7 +44,7 @@
     <bean id="directInventoryDatasource" class="org.opennms.oce.datasource.opennms.jvm.DirectInventoryDatasource" init-method="init" >
         <argument ref="nodeDao"/>
         <argument ref="alarmDao"/>
-        <argument ref="mappers"/>
+        <argument ref="mapper"/>
     </bean>
     <service ref="directInventoryDatasource" interface="org.opennms.oce.datasource.api.InventoryDatasource"/>
     <service ref="directInventoryDatasource" interface="org.opennms.integration.api.v1.alarms.AlarmLifecycleListener"/>

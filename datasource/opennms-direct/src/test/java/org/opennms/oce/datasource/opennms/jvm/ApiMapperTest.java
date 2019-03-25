@@ -40,14 +40,14 @@ import org.opennms.integration.api.v1.model.beans.NodeBean;
 import org.opennms.oce.datasource.api.Alarm;
 import org.opennms.oce.datasource.common.inventory.ManagedObjectType;
 
-public class MappersTest {
+public class ApiMapperTest {
 
-    private Mappers mappers;
+    private ApiMapper mapper;
 
     @Before
     public void setUp() {
         ScriptedInventoryService inventoryService = new ScriptedInventoryImpl("src/main/resources/inventory.groovy");
-        mappers = new Mappers(inventoryService);
+        mapper = new ApiMapper(inventoryService);
     }
     /**
      * Verify that we include the parent id (in this case, the fs:fid of the node)
@@ -68,7 +68,7 @@ public class MappersTest {
         apiNode.setId(42);
         apiAlarm.setNode(apiNode);
 
-        Alarm alarm = mappers.toAlarm(apiAlarm);
+        Alarm alarm = mapper.toAlarm(apiAlarm);
         assertThat(alarm.getInventoryObjectType(), equalTo(ManagedObjectType.SnmpInterface.getName()));
         assertThat(alarm.getInventoryObjectId(), equalTo("fs:fid:123"));
     }

@@ -55,8 +55,8 @@ import org.slf4j.LoggerFactory;
 
 import com.google.common.base.Enums;
 
-public class Mappers {
-    private static final Logger LOG = LoggerFactory.getLogger(Mappers.class);
+public class ApiMapper {
+    private static final Logger LOG = LoggerFactory.getLogger(ApiMapper.class);
     public static final String SITUATION_UEI = "uei.opennms.org/alarms/situation";
     public static final String SITUATION_ID_PARM_NAME = "situationId";
 
@@ -65,7 +65,7 @@ public class Mappers {
     /**
      * @param inventoryService wires in the JSR 223 script
      */
-    public Mappers(ScriptedInventoryService inventoryService) {
+    public ApiMapper(ScriptedInventoryService inventoryService) {
         this.inventoryService = Objects.requireNonNull(inventoryService);
     }
 

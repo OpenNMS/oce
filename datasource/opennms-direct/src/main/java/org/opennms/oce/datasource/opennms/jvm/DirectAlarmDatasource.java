@@ -70,12 +70,12 @@ public class DirectAlarmDatasource implements AlarmDatasource, AlarmLifecycleLis
 
     private final AlarmDao alarmDao;
     private final EventForwarder eventForwarder;
-    private final Mappers mappers;
+    private final ApiMapper mapper;
 
-    public DirectAlarmDatasource(AlarmDao alarmDao, EventForwarder eventForwarder, Mappers mappers) {
+    public DirectAlarmDatasource(AlarmDao alarmDao, EventForwarder eventForwarder, ApiMapper mapper) {
         this.alarmDao = Objects.requireNonNull(alarmDao);
         this.eventForwarder = Objects.requireNonNull(eventForwarder);
-        this.mappers = Objects.requireNonNull(mappers);
+        this.mapper = Objects.requireNonNull(mapper);
     }
 
     public void init() {
@@ -141,7 +141,7 @@ public class DirectAlarmDatasource implements AlarmDatasource, AlarmLifecycleLis
     private void handleNewOrUpdatedAlarmNoLock(org.opennms.integration.api.v1.model.Alarm alarm) {
         final org.opennms.integration.api.v1.model.Alarm existingAlarm = alarmsById.get(alarm.getId());
         alarmsById.put(alarm.getId(), alarm);
-        final Alarm oceAlarm = mappers.toAlarm(alarm);
+        final Alarm oceAlarm = mapper.toAlarm(alarm);
 
         if (!alarm.isSituation()) {
             if (existingAlarm == null && !isCleared(alarm)) {
@@ -155,7 +155,7 @@ public class DirectAlarmDatasource implements AlarmDatasource, AlarmLifecycleLis
                 }
             }
         } else {
-            final Situation oceSituation = mappers.toSituation(existingAlarm);
+            final Situation oceSituation = mapper.toSituation(existingAlarm);
             situationHandlers.forEach(h -> h.onSituation(oceSituation));
         }
     }
@@ -176,10 +176,10 @@ public class DirectAlarmDatasource implements AlarmDatasource, AlarmLifecycleLis
         final org.opennms.integration.api.v1.model.Alarm existingAlarm = alarmsById.remove(alarmId);
         if (existingAlarm != null) {
             if (!existingAlarm.isSituation()) {
-                final Alarm oceAlarm = mappers.toAlarm(existingAlarm);
+                final Alarm oceAlarm = mapper.toAlarm(existingAlarm);
                 alarmHandlers.forEach(h -> h.onAlarmCleared(oceAlarm));
             } else {
-                final Situation oceSituation = mappers.toSituation(existingAlarm);
+                final Situation oceSituation = mapper.toSituation(existingAlarm);
                 situationHandlers.forEach(h -> h.onSituation(oceSituation));
             }
         }
@@ -193,7 +193,7 @@ public class DirectAlarmDatasource implements AlarmDatasource, AlarmLifecycleLis
         try {
             return alarmsById.values().stream()
                     .filter(a -> !a.isSituation())
-                    .map(a -> mappers.toAlarm(a))
+                    .map(a -> mapper.toAlarm(a))
                     .collect(Collectors.toList());
         } finally {
             rwLock.readLock().unlock();
@@ -234,7 +234,7 @@ public class DirectAlarmDatasource implements AlarmDatasource, AlarmLifecycleLis
         try {
             return alarmsById.values().stream()
                     .filter(org.opennms.integration.api.v1.model.Alarm::isSituation)
-                    .map(s -> mappers.toSituation(s))
+                    .map(s -> mapper.toSituation(s))
                     .collect(Collectors.toList());
         } finally {
             rwLock.readLock().unlock();
@@ -243,7 +243,7 @@ public class DirectAlarmDatasource implements AlarmDatasource, AlarmLifecycleLis
 
     @Override
     public void forwardSituation(Situation situation) {
-        final InMemoryEvent event = mappers.toEvent(situation);
+        final InMemoryEvent event = mapper.toEvent(situation);
         eventForwarder.sendSync(event);
     }
 

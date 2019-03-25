@@ -15,6 +15,11 @@
 * xref:architecture:overview.adoc[Overview]
 * xref:architecture:opennms_integration.adoc[OpenNMS Integration]
 
+.Datasources
+* xref:datasources:overview.adoc[Overview]
+* xref:datasources:overview.adoc[Monolithic]
+* xref:datasources:opennms_integration.adoc[Distributed]
+
 .Engines
 * xref:engines:cluster.adoc[Cluster Engine]
 * xref:engines:deeplearning.adoc[Deep Learning Engine]

@@ -202,8 +202,6 @@ class InventoryFactory {
                 .map{iff -> toInventoryObject(iff, nodeObj)}
                 .forEach{i -> inventory.add(i)};
 
-        // TODO: Use the hardware inventory data if available
-
         return inventory;
     }
 

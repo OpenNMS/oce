@@ -29,7 +29,7 @@ When an Alarm from OpenNMS arrives via the DirectAlarmDatasource, it is directly
 
 === Inventory
 
-As Nodes arrive via the DirectInventoryDatasource, as they are Mapped from thier OpenNMS type to the internal OCE type, there is an opportunity to derrive InventoryObjects.
+As Nodes arrive via the DirectInventoryDatasource and are Mapped from their OpenNMS type to the internal OCE type, there is an opportunity to derive InventoryObjects.
 
 ==== createInventoryObjects - Node
 

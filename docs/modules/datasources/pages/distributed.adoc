@@ -25,7 +25,7 @@ There are three methods exposed to the InventoryObject script. As the *Edges* an
 ```
 
 When *Alarms* arrive on the Kafka topic, the following method is invoked. The *EnrichedAlarm* type contains both a reference to an InventoryObject Type and a reference to an InventoryObject Identifier. Together, these denote the InventoryObject the Alarm will be attached to.
-Additionally, the EnrichedAlarm contains a list of inventory objects so multiple objects can be derrived from the alarm.
+Additionally, the EnrichedAlarm contains a list of inventory objects so multiple objects can be derived from the alarm.
 
 ```EnrichedAlarm enrichAlarm(OpennmsModelProtos.Alarm alarm)
 ```

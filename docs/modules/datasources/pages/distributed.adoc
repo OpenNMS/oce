@@ -16,7 +16,7 @@ config:update
 
 == API
 
-There are three methods exposed to the InventoryObject script. As the *Edges* and  *Nodes* are received on the Kafka topic, the following methods are invoked respectively, giving the opportunity to derrive a list of inventory objects.
+There are three methods exposed to the InventoryObject script. As the *Edges* and  *Nodes* are received on the Kafka topic, the following methods are invoked respectively, giving the opportunity to derive a list of inventory objects.
 
 ```InventoryObjects edgeToInventory(TopologyEdge edge)
 ```

@@ -24,7 +24,8 @@ When an Alarm from OpenNMS arrives via the DirectAlarmDatasource, it is directly
 
 ==== overrideTypeAndInstance
 
-```void overrideTypeAndInstance(ImmutableAlarm.Builder alarmBuilder, Alarm alarm);
+```
+void overrideTypeAndInstance(ImmutableAlarm.Builder alarmBuilder, Alarm alarm);
 ```
 
 === Inventory
@@ -35,7 +36,8 @@ As Nodes arrive via the DirectInventoryDatasource and are Mapped from their Open
 
 Each *Node* from OpenNMS is passed to the method below to derive InventoryObjects.
 
-```List<InventoryObject> nodeToInventory(Node node);
+```
+List<InventoryObject> nodeToInventory(Node node);
 ```
 
 As Alarms arrive on the Inventory Datasource, they are also processed to derive a List of InventoryObjects. If there is a *Node* in the node attribute of the alarm, the above method will be invoked. If there is no Node on the Alarm, the method below will be invoked.
@@ -44,5 +46,6 @@ As Alarms arrive on the Inventory Datasource, they are also processed to derive 
 
 As each *Alarm* from OpenNMS is received by OCE, there is an opportunity to derive InventoryObjects.
 
-```List<InventoryObject> alarmToInventory(Alarm alarm);
+```
+List<InventoryObject> alarmToInventory(Alarm alarm);
 ```

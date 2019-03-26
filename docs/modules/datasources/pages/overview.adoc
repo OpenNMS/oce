@@ -8,7 +8,7 @@ Data sources are also responsible for creating the situations in the *monitoring
 
 We provide two datasources: one for the xref:monolithic.adoc[monolithic deployment] and one for the xref:distributed.adoc[distributed deployment].
 
-*Inventory Objects* may be derived from the incoming stream of alarms, node and links. The mapping of *Alarms*, *Nodes* and *Links* to *Inventory Objects* is done with JSR-223 script that allows the user to override or extend the behaviour by modifying or replacing the script. The default implementation of this mapping can be found in the _inventory.groovy_ script of each bundle:
+*Inventory Objects* may be derived from the incoming stream of alarms, nodes and links. The mapping of *Alarms*, *Nodes* and *Links* to *Inventory Objects* is done with JSR-223 script that allows the user to override or extend the behaviour by modifying or replacing the script. The default implementation of this mapping can be found in the _inventory.groovy_ script of each bundle:
 
 * link:https://github.com/OpenNMS/oce/tree/master/datasource/opennms-direct/src/main/resources/inventory.groovy[Monolithic]
 

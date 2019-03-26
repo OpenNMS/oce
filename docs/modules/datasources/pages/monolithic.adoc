@@ -20,7 +20,7 @@ There are three methods exposed to the InventoryObject script: One is Alarm focu
 
 === Alarms
 
-When an Alarm from OpenNMS arrives via the DirectAlarmDatasource, it is directly mapped from its OpenNMS type to the corresponding OCE type. Durring this mapping, you can modify the ModelObjectType or the ModelObjectIdentifier of the InventoryObject that the Alarm will be associated with.
+When an Alarm from OpenNMS arrives via the DirectAlarmDatasource, it is directly mapped from its OpenNMS type to the corresponding OCE type. During this mapping, you can modify the ModelObjectType or the ModelObjectIdentifier of the InventoryObject that the Alarm will be associated with.
 
 ==== overrideTypeAndInstance
 

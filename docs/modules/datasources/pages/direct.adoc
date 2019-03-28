@@ -3,13 +3,16 @@
 
 == Overview
 
-The OpenNMS Direct Datasource is used when OCE is deployed in a *monolithic* installation. It runs in the same JVM as OpenNMS and acts upon new *Alarms* and *Nodes* directly.
+The OpenNMS Direct Datasource is used when OCE is deployed in a *monolithic* installation. 
+
+It runs in the same JVM as OpenNMS and acts upon new *Alarms* and *Nodes* directly.
 
 == Config
 
 To update the bundle configuration and point to a script on the file system, you must update the _scriptFile_ property of the _org.opennms.oce.datasource.opennms.direct_ PID. 
 
-```config:edit org.opennms.oce.datasource.opennms.direct
+```
+config:edit org.opennms.oce.datasource.opennms.direct
 config:property-set scriptFile /tmp/inventory.groovy
 config:update
 ```
@@ -20,7 +23,9 @@ There are three methods exposed to the InventoryObject script: One is Alarm focu
 
 === Alarms
 
-When an Alarm from OpenNMS arrives via the DirectAlarmDatasource, it is directly mapped from its OpenNMS type to the corresponding OCE type. During this mapping, you can modify the ModelObjectType or the ModelObjectIdentifier of the InventoryObject that the Alarm will be associated with.
+When an Alarm from OpenNMS arrives via the DirectAlarmDatasource, it is directly mapped from its OpenNMS type to the corresponding OCE type.
+
+During this mapping, you can modify the ModelObjectType or the ModelObjectIdentifier of the InventoryObject that the Alarm will be associated with.
 
 ==== overrideTypeAndInstance
 
@@ -40,7 +45,9 @@ Each *Node* from OpenNMS is passed to the method below to derive InventoryObject
 List<InventoryObject> nodeToInventory(Node node);
 ```
 
-As Alarms arrive on the Inventory Datasource, they are also processed to derive a List of InventoryObjects. If there is a *Node* in the node attribute of the alarm, the above method will be invoked. If there is no Node on the Alarm, the method below will be invoked.
+As Alarms arrive on the Inventory Datasource, they are also processed to derive a List of InventoryObjects.
+
+If there is a *Node* in the node attribute of the alarm, the above method will be invoked. If there is no Node on the Alarm, the method below will be invoked.
 
 ==== createInventoryObjects - Alarm
 

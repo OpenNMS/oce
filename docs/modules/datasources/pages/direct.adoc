@@ -4,7 +4,6 @@
 == Overview
 
 The OpenNMS Direct Datasource is used when OCE is deployed in a *monolithic* installation. 
-
 It runs in the same JVM as OpenNMS and acts upon new *Alarms* and *Nodes* directly.
 
 == Config
@@ -24,7 +23,6 @@ There are three methods exposed to the InventoryObject script: One is Alarm focu
 === Alarms
 
 When an Alarm from OpenNMS arrives via the DirectAlarmDatasource, it is directly mapped from its OpenNMS type to the corresponding OCE type.
-
 During this mapping, you can modify the ModelObjectType or the ModelObjectIdentifier of the InventoryObject that the Alarm will be associated with.
 
 ==== overrideTypeAndInstance
@@ -46,7 +44,6 @@ List<InventoryObject> nodeToInventory(Node node);
 ```
 
 As Alarms arrive on the Inventory Datasource, they are also processed to derive a List of InventoryObjects.
-
 If there is a *Node* in the node attribute of the alarm, the above method will be invoked. If there is no Node on the Alarm, the method below will be invoked.
 
 ==== createInventoryObjects - Alarm

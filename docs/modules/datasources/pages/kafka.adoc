@@ -4,7 +4,6 @@
 == Overview
 
 The OpenNMS Kafka Datasource is used when OCE is deployed in a *distributed* installation.
-
 It runs in the same JVM as OCE and acts upon data as it is consumed from Kafka topics.
 
 == Config

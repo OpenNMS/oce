@@ -21,8 +21,11 @@
 * xref:engines:dbscan.adoc[DBSCAN Engine]
 
 .Walkthroughs
-* xref:walkthroughs:migrating_from_cpn.adoc[Migrating from CPN]
+* xref:walkthroughs:walkthroughs.adoc[About the Walkthroughs]
 * xref:walkthroughs:testing_with_sdn.adoc[Testing with SDN]
+* xref:walkthroughs:migrating_from_cpn.adoc[Migrating from CPN]
+* xref:walkthroughs:training_with_ludwig.adoc[Training with Ludwig]
+* xref:walkthroughs:visualizing_with_oce_viz.adoc[Visualizing with OCE-Viz]
 
 .Reference
 * xref:reference:model.adoc[Model]

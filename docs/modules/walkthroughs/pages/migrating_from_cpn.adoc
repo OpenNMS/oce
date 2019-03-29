@@ -178,7 +178,7 @@ Briefly, the process is:
 5. Configure devices to send messages to OpenNMS
    * Start sending SNMP traps and Syslog messages to OpenNMS
 
-== Comparing OpenNMS and CPN
+== Comparing events in OpenNMS and CPN
 
 After running both systems in parallel you can also leverage the tooling to help validate that both systems are in fact receiving the same events.
 
@@ -186,7 +186,7 @@ IMPORTANT: This requires that both OpenNMS events and CPN events (extracted from
 
 Example usage:
 ```
-oce-tools tsaudit --from "Feb 1 2019" --to "March 1 2019"
+oce-tools cpn-opennms-event-materialization-audit --from "Feb 1 2019" --to "March 1 2019"
 ```
 
 === Exporting/imports OpenNMS events & alarms from Elasticsearch
@@ -248,3 +248,69 @@ zcat alarms.jan.2019.complete.json.gz | elasticdump \
   --input=$ \
   --output=http://localhost:9200/$ALARM_INDEX_NAME
 ```
+
+== Simulate correlation
+
+Let's export a dataset for simulation purposes:
+```
+oce-tools cpn-oce-export --from "Feb 10 2019" --to "Feb 17 2019" --output /tmp/cpn
+```
+
+From a Karaf shell, install the required features from OCE:
+```
+feature:repo-add mvn:org.opennms.oce/oce-karaf-features/1.0.0-SNAPSHOT/xml
+feature:install oce-engine-dbscan oce-datasource-jaxb oce-features-shell
+```
+
+Process the alarms:
+```
+oce:process-alarms --alarms-in /tmp/cpn/cpn.alarms.xml \
+    --inventory-in /tmp/cpn/cpn.inventory.xml \
+    --situations-out /tmp/cpn/oce.situations.dbscan.xml \
+    --engine dbscan
+```
+
+Score:
+```
+oce:score-situations -s peer /tmp/cpn/cpn.situations.xml /tmp/cpn/oce.situations.dbscan.xml
+```
+
+You should see output similar to:
+```
+karaf@root()> oce:score-situations -s peer /tmp/cpn/cpn.situations.xml /tmp/cpn/oce.situations.dbscan.xml                                                                                                          
+Score: 3614.8644 (65.88%)
+exactMatches : 6542.0
+partialMatches : 2860.0
+mismatches : 83.0
+```
+
+Install a new correlation engine:
+```
+feature:install oce-engine-deeplearning
+```
+
+Run the simulation again using the new engine:
+```
+oce:process-alarms --alarms-in /tmp/cpn/cpn.alarms.xml \
+    --inventory-in /tmp/cpn/cpn.inventory.xml \
+    --situations-out /tmp/cpn/oce.situations.deeplearning.xml \
+    --engine deeplearning
+```
+
+Re-evaluate the score:
+```
+oce:score-situations -s peer /tmp/cpn/cpn.situations.xml /tmp/cpn/oce.situations.deeplearning.xml
+```
+
+You should see output similar to:
+```
+karaf@root()> oce:score-situations -s peer /tmp/cpn/cpn.situations.xml /tmp/cpn/oce.situations.deeplearning.xml                                                                                                    
+Score: 7591.2329 (28.36%)
+exactMatches : 2168.0
+partialMatches : 7943.0
+mismatches : 281.0
+```
+
+=== Train the AI
+
+See xref:training_with_ludwig.adoc[Training with Ludwig].

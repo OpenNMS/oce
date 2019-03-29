@@ -10,4 +10,3 @@ In order to help answer this question, we provide features that include:
 * Relations between the inventory objects (binary)
 * Difference in time (numerical)
 * Distance on the graph (numerical)
-

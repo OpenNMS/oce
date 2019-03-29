@@ -1,7 +1,7 @@
-= SDN Walkthrough
+= Testing with SDN
 :imagesdir: ../assets/images
 
-Let's leverage the Opendaylight integration in OpenNMS to create a virtual network that can be used to exercise the correlation engine.
+Here we leverage the  Opendaylight integration in OpenNMS to create a virtual network that can be used to exercise and test the correlation engine.
 
 == Setup the network
 
@@ -176,28 +176,18 @@ feature:install oce-features-shell
 oce:datasource-snapshot /tmp/snap1
 ```
 
-Serve:
-```
-docker run -p 8082:8080 -v /tmp/snap1:/dataset opennms/oce-viz
-```
+See xref:visualizing_with_oce_viz.adoc[Visualizing with OCE-Viz]
 
-Open browser to: http://localhost:8082/static/index.html
+=== Further work
 
-image::oce_graph_3d.png[Topology with alarms triggered,800]
+==== Training
 
-=== Train
+* Show how to use the situation feedback features
+** `feature:install opennms-situation-feedback`
+* Use the feedback for training - see xref:training_with_ludwig.adoc[Training with Ludwig].
 
-Ensure that the situation feedback feature is installed:
-```
-feature:install opennms-situation-feedback
-```
+==== Metrics
 
-TODO: Give feedback
-
-=== Metrics
-
-==== TODO
-
-We need metrics.
-Ideally collect stats, make graphs available via plugin.
-Be able to trigger a threshold alarm and make it appear on the link.
+* Collect OpenFlow metrics from the network via the plugin
+** Graphs should also be made available via the plugin
+* Be able to ttrigger a threshold alarm and make it appear on the link

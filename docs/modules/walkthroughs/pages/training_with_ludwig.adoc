@@ -1,0 +1,116 @@
+= Training with Ludwig
+:imagesdir: ../assets/images
+
+### Load OCE in Karaf and vectorize the datasets
+
+Install the deep learning shell utilities:
+```
+feature:install oce-features-deeplearning
+```
+
+Convert the dataset to vectors: 
+```
+oce:tensorflow-vectorize --alarms-in /tmp/cpn/cpn.alarms.xml \
+               --inventory-in /tmp/cpn/cpn.inventory.xml \
+               --situations-in /tmp/cpn/cpn.situations.xml \
+                --csv-out /tmp/cpn/cpn.vector.dataset.csv
+```
+
+### Train the model
+
+Define the model:
+```
+echo 'input_features:
+  - name: type_a
+    type: category
+  - name: type_b
+    type: category
+  - name: same_instance
+    type: binary
+  - name: same_parent
+    type: binary
+  - name: share_ancestor
+    type: binary
+  - name: time_delta_seconds
+    type: numerical
+  - name: distance_on_graph
+    type: numerical
+  - name: io_id_similarity
+    type: numerical
+  - name: io_label_similarity
+    type: numerical
+output_features:
+  - name: related
+    type: binary' > model.yaml
+```
+
+Train with the dataset:
+```
+ludwig train --data_csv /tmp/cpn/cpn.vector.dataset.csv --model_definition_file model.yaml
+```
+
+You should see output similar to:
+
+image::ludwig_training.png[Ludwig Training]
+
+### Export the trained model
+
+```
+echo '#!/usr/bin/env python
+import numpy as np
+import tensorflow as tf
+from tensorflow.python.framework import graph_util
+from tensorflow.python.framework import ops
+from tensorflow.python.saved_model import builder as saved_model_builder
+from ludwig import LudwigModel
+
+model_path = "results/experiment_run_6/model"
+model = LudwigModel.load(model_path)
+
+builder = tf.saved_model.Builder("export")
+with tf.Session(graph=model.model.graph) as sess:
+  saver = tf.train.Saver()
+  saver.restore(sess, model.model.weights_save_path)
+  builder.add_meta_graph_and_variables(sess, [tf.saved_model.tag_constants.SERVING])
+builder.save()
+
+model.close()' > export_model.py
+chmod +x export_model.py
+./export_model.py
+mkdir -p /tmp/tf-export
+cp -R ./export/* /tmp/tf-export/
+cp results/experiment_run_6/model/model_hyperparameters.json /tmp/tf-export/
+```
+
+### Load the trained model in OCE
+
+Verify that the model can be loaded in OCE:
+
+```
+oce:tensorflow-load-model /tmp/tf-export
+```
+
+### Use the model in OCE
+
+```
+config:edit org.opennms.oce.engine.deeplearning
+property-set modelPath /tmp/tf-export
+config:update
+```
+
+```
+oce:process-alarms --alarms-in /tmp/cpn/cpn.alarms.xml \
+    --inventory-in /tmp/cpn/cpn.inventory.xml \
+    --situations-out /tmp/cpn/oce.situations.deeplearning.trained.xml \
+    --engine deeplearning
+```
+
+```
+oce:score-situations -s peer /tmp/cpn/cpn.situations.xml /tmp/cpn/oce.situations.deeplearning.trained.xml
+```
+
+### View the graph with TensorBoard
+
+```
+tensorboard --logdir ./results/experiment_run_0/model/
+```

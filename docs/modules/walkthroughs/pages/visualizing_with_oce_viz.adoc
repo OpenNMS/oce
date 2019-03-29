@@ -1,0 +1,11 @@
+
+
+Serve:
+```
+docker run -p 8082:8080 -v /tmp/snap1:/dataset opennms/oce-viz
+```
+
+Open browser to: http://localhost:8082/static/index.html
+
+image::oce_graph_3d.png[Topology with alarms triggered,800]
+

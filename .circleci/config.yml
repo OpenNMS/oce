@@ -175,7 +175,7 @@ jobs:
       - restore_cache:
           keys:
           # attempt to use the cache from the last smoke-test run
-          - v2-smoke-dependencies-{{ checksum "smoke-test/pom.xml" }}-{{ checksum "pom.xml" }}
+          - v3-smoke-dependencies-{{ checksum "smoke-test/pom.xml" }}-{{ checksum "pom.xml" }}
           # use the cache built for the same root pom
           - v5-dependencies-{{ checksum "pom.xml" }}
           # fallback to using the latest cache if no exact match is found
@@ -213,7 +213,7 @@ jobs:
       - save_cache:
           paths:
           - /root/.m2
-          key: v2-smoke-dependencies-{{ checksum "smoke-test/pom.xml" }}-{{ checksum "pom.xml" }}
+          key: v3-smoke-dependencies-{{ checksum "smoke-test/pom.xml" }}-{{ checksum "pom.xml" }}
 
       - run:
           name: Save cacheable docker images

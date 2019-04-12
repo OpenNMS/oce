@@ -55,7 +55,7 @@ workflows:
               only: /.*/
       - build-debian:
           requires:
-            - build
+            - pre-build
       - build-docs:
           requires:
             - pre-build
